@@ -9,6 +9,9 @@
 | 03-00 | [llama.cpp 项目综述与技术原理](./03-llama.cpp/00-项目综述与技术原理.md) | llama.cpp 整体介绍、GGML、GGUF、量化方法、后端支持 | [面试题](../../../02-面试指南/05-系统设计面试/03-llama.cpp面试题.md) |
 | 03-01 | [llama.cpp 架构详解与核心组件](./03-llama.cpp/01-架构详解与核心组件.md) | ggml 张量库、GGUF 格式、推理代码、KV Cache、量化 kernel、后端系统、采样算法、server 并发 | [面试题](../../../02-面试指南/05-系统设计面试/03-llama.cpp面试题.md) |
 | 03-02 | [llama.cpp 生产应用与工程实践](./03-llama.cpp/02-生产应用与工程实践.md) | 编译、模型下载、Python API、量化选择、llama-server、LangChain、RAG 系统、性能调优、FastAPI 服务 | [面试题](../../../02-面试指南/05-系统设计面试/03-llama.cpp面试题.md) |
+| 04-00 | [DeepSpeed 项目综述与技术原理](./04-DeepSpeed/00-项目综述与技术原理.md) | ZeRO 三阶段原理、显存计算、ZeRO-Infinity、推理优化、与 FSDP/Megatron 对比 | [面试题](../../../02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md) |
+| 04-01 | [DeepSpeed 架构详解与核心组件](./04-DeepSpeed/01-架构详解与核心组件.md) | DeepSpeedEngine、Reduce-Scatter/All-Gather 原语、参数分片重建、Activation Checkpointing、混合精度、ds_config、Pipeline Parallel、MII | [面试题](../../../02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md) |
+| 04-02 | [DeepSpeed 生产应用与工程实践](./04-DeepSpeed/02-生产应用与工程实践.md) | 环境搭建、DDP 迁移对比、ZeRO Stage 2/3 配置、HuggingFace 集成、多机训练、OOM 调试、吞吐基准 | [面试题](../../../02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md) |
 
 ## 主要内容方向
 

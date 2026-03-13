@@ -24,6 +24,9 @@
 - [llama.cpp 项目综述与技术原理](./01-技术资料/05-系统设计/03-llama.cpp/00-项目综述与技术原理.md): llama.cpp 整体介绍、GGML、GGUF、量化方法、后端支持
 - [llama.cpp 架构详解与核心组件](./01-技术资料/05-系统设计/03-llama.cpp/01-架构详解与核心组件.md): ggml 张量库/GGUF 格式/推理代码/KV Cache/量化 kernel/后端系统/采样算法/server 并发模型
 - [llama.cpp 生产应用与工程实践](./01-技术资料/05-系统设计/03-llama.cpp/02-生产应用与工程实践.md): 编译/模型下载/Python API/量化选择/llama-server/LangChain/RAG 系统/性能调优/FastAPI 服务
+- [DeepSpeed 项目综述与技术原理](./01-技术资料/05-系统设计/04-DeepSpeed/00-项目综述与技术原理.md): ZeRO 三阶段原理/显存计算/ZeRO-Infinity/推理优化/与 FSDP/Megatron 对比
+- [DeepSpeed 架构详解与核心组件](./01-技术资料/05-系统设计/04-DeepSpeed/01-架构详解与核心组件.md): DeepSpeedEngine/Reduce-Scatter+All-Gather/参数分片重建/Activation Checkpointing/混合精度/ds_config/Pipeline Parallel/MII
+- [DeepSpeed 生产应用与工程实践](./01-技术资料/05-系统设计/04-DeepSpeed/02-生产应用与工程实践.md): 环境搭建/DDP 迁移/ZeRO Stage 2/3 配置/HuggingFace 集成/多机训练/OOM 调试/吞吐基准
 - [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md): DevOps与云计算文档目录
 - [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md): AI Agent全栈开发文档目录（LLM原理→前端渲染全链路）
 - [08-LLM微调技术](./01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md): LoRA/QLoRA/RLHF/DPO/GRPO 微调全链路技术资料
@@ -39,6 +42,7 @@
 - [03-数据库面试](./02-面试指南/03-数据库面试/README.md): 数据库面试题目与解析
 - [04-算法与数据结构面试](./02-面试指南/04-算法与数据结构面试/README.md): 算法面试题目与解析
 - [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md): 系统设计面试题目与解析
+- [DeepSpeed 面试题](./02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md): ZeRO 原理/通信原语/工程实践/性能调优 25 道分层面试题
 - [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md): DevOps与云计算面试题目与解析
 - [07-AI-Agent全栈开发面试](./02-面试指南/07-AI-Agent全栈开发面试/README.md): AI Agent全栈开发高频面试题
 - [08-LLM微调技术面试题](./02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md): LoRA/QLoRA/RLHF/DPO/GRPO 25道分层面试题
