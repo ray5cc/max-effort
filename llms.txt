@@ -23,6 +23,10 @@
 - [05-系统设计](./01-技术资料/05-系统设计/README.md): 系统设计文档目录（分布式/高并发/架构）
 - [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md): DevOps与云计算文档目录
 - [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md): AI Agent全栈开发文档目录（LLM原理→前端渲染全链路）
+- [08-LLM微调技术](./01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md): LoRA/QLoRA/RLHF/DPO/GRPO 微调全链路技术资料
+- [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作技术资料
+- [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/browser-use 架构解析、沙箱安全机制与 Prompt Injection 防护
+- [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理
 
 ## 02-面试指南
 
@@ -34,6 +38,10 @@
 - [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md): 系统设计面试题目与解析
 - [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md): DevOps与云计算面试题目与解析
 - [07-AI-Agent全栈开发面试](./02-面试指南/07-AI-Agent全栈开发面试/README.md): AI Agent全栈开发高频面试题
+- [08-LLM微调技术面试题](./02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md): LoRA/QLoRA/RLHF/DPO/GRPO 25道分层面试题
+- [09-多Agent系统面试题](./02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md): AutoGen/GroupChat/多Agent架构/任务调度 28道分层面试题
+- [10-AI-CLI与代码Agent面试题](./02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md): CLI Agent架构/沙箱选型/Prompt Injection/代码执行反馈/浏览器Agent稳定性 28道分层面试题
+- [11-Transformers与模型架构面试题](./02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md): RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码/70B推理系统设计 22道分层面试题
 
 ## Optional
 
