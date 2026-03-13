@@ -50,6 +50,10 @@ Agent 框架 & 编排
 | 07 | [07-前端渲染与流式UI.md](./07-前端渲染与流式UI.md) | SSE、WebSocket、React 流式渲染 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/07-前端渲染面试题.md) |
 | 08 | [08-评测与可观测性.md](./08-评测与可观测性.md) | 单元评测、追踪、监控、反馈循环 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-评测与可观测性面试题.md) |
 | 09 | [09-生产部署与工程化.md](./09-生产部署与工程化.md) | Harness Engineering、容器化、安全 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-生产部署面试题.md) |
+| 10 | [08-LLM微调技术.md](./08-LLM微调技术.md) | LoRA/QLoRA/Adapter、RLHF/DPO/GRPO、分布式 RL 训练 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md) |
+| 11 | [09-多Agent系统.md](./09-多Agent系统.md) | AutoGen/Dify、多 Agent 架构、设计模式、通信协议 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md) |
+| 12 | [10-AI-CLI与代码Agent.md](./10-AI-CLI与代码Agent.md) | Gemini CLI/Codex CLI/browser-use、安全沙箱 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md) |
+| 13 | [11-Transformers与模型架构.md](./11-Transformers与模型架构.md) | HuggingFace Transformers、LLaMA 架构、RoPE/GQA/Flash Attention | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md) |
 
 ## 说明
 

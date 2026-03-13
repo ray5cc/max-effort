@@ -19,6 +19,10 @@
 | 07 | [07-前端渲染面试题.md](./07-前端渲染面试题.md) | SSE、WebSocket、流式 UI、React | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md) |
 | 08 | [08-评测与可观测性面试题.md](./08-评测与可观测性面试题.md) | 评估方法、追踪、监控、反馈循环 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/08-评测与可观测性.md) |
 | 09 | [09-生产部署面试题.md](./09-生产部署面试题.md) | Harness Engineering、安全、成本优化 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/09-生产部署与工程化.md) |
+| 10 | [08-LLM微调技术面试题.md](./08-LLM微调技术面试题.md) | LoRA/QLoRA 原理、RLHF vs DPO、GRPO、分布式 RL 训练 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md) |
+| 11 | [09-多Agent系统面试题.md](./09-多Agent系统面试题.md) | 多 Agent 架构、AutoGen/Dify、设计模式、冲突解决 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md) |
+| 12 | [10-AI-CLI与代码Agent面试题.md](./10-AI-CLI与代码Agent面试题.md) | CLI Agent 架构、安全沙箱、提示注入防御 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md) |
+| 13 | [11-Transformers与模型架构面试题.md](./11-Transformers与模型架构面试题.md) | Transformer 实现细节、模型优化、推理加速 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md) |
 
 ## 高频考点速查
 
