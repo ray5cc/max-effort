@@ -1,6 +1,6 @@
-# Max Effort — 技术资料与面试指南
+# Max Effort — AI Agent 全栈开发知识库
 
-> 一站式技术学习资料与面试指南知识库，涵盖前端、后端、数据库、算法、系统设计、DevOps 等核心领域。
+> 覆盖 AI Agent 全链路开发知识（LLM 原理 → Prompt 工程 → 工具调用 → 记忆系统 → Agent 框架 → 后端服务 → 前端渲染 → 评测部署），同时提供前端、后端、数据库、算法、系统设计、DevOps 等核心领域的技术资料与面试指南。
 
 ## 项目简介
 
@@ -21,6 +21,7 @@
 4. **算法与数据结构** — 常见算法、复杂度分析、LeetCode
 5. **系统设计** — 高并发、分布式、架构设计
 6. **DevOps 与云计算** — CI/CD、容器化、云服务
+7. **AI Agent 全栈开发** — LLM 原理、Prompt 工程、RAG、Agent 框架、流式渲染、生产部署
 
 ## 使用说明
 
@@ -30,9 +31,10 @@
 
 ## AI 工具接入
 
+- [`AGENTS.md`](./AGENTS.md) — AI Agent 精简入口（TOC 式，Harness Engineering 规范）
+- [`docs/operations.md`](./docs/operations.md) — 详细操作规范（渐进式披露）
 - [`llms.txt`](./llms.txt) — 符合 llms.txt 规范，供 AI 工具快速理解项目结构
-- [`Claude.md`](./Claude.md) — Claude AI 助手协作指南
-- [`agent.md`](./agent.md) — AI Agent 操作规范
+- [`CLAUDE.md`](./CLAUDE.md) — Claude AI 助手协作指南（含记忆系统最佳实践）
 
 ## 操作记录
 
