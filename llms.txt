@@ -35,6 +35,7 @@
 - [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作技术资料
 - [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/browser-use 架构解析、沙箱安全机制与 Prompt Injection 防护
 - [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理
+- [01-LLM原理](./01-技术资料/07-AI-Agent全栈开发/01-LLM原理.md): Transformer架构深度解析/Self-Attention数学推导/位置编码演进(RoPE/ALiBi)/预训练范式(CLM/MLM/Seq2Seq)/BPE/Scaling Laws/解码策略
 
 ## 02-面试指南
 
