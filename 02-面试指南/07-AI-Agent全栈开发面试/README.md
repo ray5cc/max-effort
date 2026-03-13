@@ -22,6 +22,7 @@
 | 09 | [09-生产部署面试题.md](./09-生产部署面试题.md) | Harness Engineering、安全、成本优化 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/09-生产部署与工程化.md) |
 | 09（多Agent） | [09-多Agent系统面试题.md](./09-多Agent系统面试题.md) | AutoGen/GroupChat/Hub-Spoke/P2P/分层架构/任务调度 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md) |
 | 10 | [10-AI-CLI与代码Agent面试题.md](./10-AI-CLI与代码Agent面试题.md) | CLI Agent 架构/沙箱技术选型/Prompt Injection/代码执行反馈/浏览器 Agent 稳定性 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md) |
+| 11 | [11-Transformers与模型架构面试题.md](./11-Transformers与模型架构面试题.md) | RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码/70B 推理系统设计 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md) |
 
 ## 高频考点速查
 
