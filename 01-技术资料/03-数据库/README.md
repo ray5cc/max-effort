@@ -11,6 +11,7 @@
 | 序号 | 文件名 | 覆盖技术知识点 | 关联面试题 |
 |------|--------|---------------|-----------|
 | 01 | [01-向量数据库.md](./01-向量数据库.md) | 向量嵌入 / HNSW 算法 / ANN 搜索 / 距离度量（Chroma、Milvus、Qdrant） | [面试题](../../02-面试指南/03-数据库面试/01-向量数据库面试题.md) |
+| 02 | [02-Redis核心技术.md](./02-Redis核心技术.md) | SDS / ziplist / listpack / dict 渐进式 Rehash / skiplist / quicklist / RDB / AOF / 混合持久化 / jemalloc / LRU/LFU 淘汰 / ae 事件库 / epoll / 多线程IO / 主从复制 / Sentinel / Cluster / MULTI/EXEC / Lua 脚本 | [面试题](../../02-面试指南/03-数据库面试/02-Redis面试题.md) |
 
 ## 导航
 
