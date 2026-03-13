@@ -48,10 +48,8 @@ Agent 框架 & 编排
 | 05 | [05-Agent框架与编排.md](./05-Agent框架与编排.md) | LangChain/LangGraph/AutoGen、多 Agent | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/05-Agent框架面试题.md) |
 | 06 | [06-后端服务与API设计.md](./06-后端服务与API设计.md) | 流式 API、会话管理、编排微服务 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/06-后端服务面试题.md) |
 | 07 | [07-前端渲染与流式UI.md](./07-前端渲染与流式UI.md) | SSE、WebSocket、React 流式渲染 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/07-前端渲染面试题.md) |
-| 08 | [08-评测与可观测性.md](./08-评测与可观测性.md) | 单元评测、追踪、监控、反馈循环 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-评测与可观测性面试题.md) |
-| 08（微调） | [08-LLM微调技术.md](./08-LLM微调技术.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md) |
-| 09 | [09-生产部署与工程化.md](./09-生产部署与工程化.md) | Harness Engineering、容器化、安全 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-生产部署面试题.md) |
-| 09（多Agent） | [09-多Agent系统.md](./09-多Agent系统.md) | AutoGen/GroupChat/Dify/多 Agent 协作模式 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md) |
+| 08 | [08-LLM微调技术.md](./08-LLM微调技术.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md) |
+| 09 | [09-多Agent系统.md](./09-多Agent系统.md) | AutoGen/GroupChat/Dify/多 Agent 协作模式 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md) |
 | 10 | [10-AI-CLI与代码Agent.md](./10-AI-CLI与代码Agent.md) | Gemini CLI/Codex CLI/browser-use/沙箱安全/Prompt Injection 防护 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md) |
 | 11 | [11-Transformers与模型架构.md](./11-Transformers与模型架构.md) | LLaMA 架构/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md) |
 

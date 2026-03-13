@@ -17,12 +17,10 @@
 | 05 | [05-Agent框架面试题.md](./05-Agent框架面试题.md) | LangChain、LangGraph、AutoGen、多 Agent | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/05-Agent框架与编排.md) |
 | 06 | [06-后端服务面试题.md](./06-后端服务面试题.md) | 流式 API、会话管理、编排架构 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/06-后端服务与API设计.md) |
 | 07 | [07-前端渲染面试题.md](./07-前端渲染面试题.md) | SSE、WebSocket、流式 UI、React | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md) |
-| 08 | [08-评测与可观测性面试题.md](./08-评测与可观测性面试题.md) | 评估方法、追踪、监控、反馈循环 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/08-评测与可观测性.md) |
-| 08（微调） | [08-LLM微调技术面试题.md](./08-LLM微调技术面试题.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md) |
-| 09 | [09-生产部署面试题.md](./09-生产部署面试题.md) | Harness Engineering、安全、成本优化 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/09-生产部署与工程化.md) |
-| 09（多Agent） | [09-多Agent系统面试题.md](./09-多Agent系统面试题.md) | AutoGen/GroupChat/Hub-Spoke/P2P/分层架构/任务调度 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md) |
-| 10 | [10-AI-CLI与代码Agent面试题.md](./10-AI-CLI与代码Agent面试题.md) | CLI Agent 架构/沙箱技术选型/Prompt Injection/代码执行反馈/浏览器 Agent 稳定性 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md) |
-| 11 | [11-Transformers与模型架构面试题.md](./11-Transformers与模型架构面试题.md) | RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码/70B 推理系统设计 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md) |
+| 08 | [08-LLM微调技术面试题.md](./08-LLM微调技术面试题.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md) |
+| 09 | [09-多Agent系统面试题.md](./09-多Agent系统面试题.md) | AutoGen/GroupChat/Hub-Spoke/P2P/分层架构/任务调度 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md) |
+| 10 | [10-AI-CLI与代码Agent面试题.md](./10-AI-CLI与代码Agent面试题.md) | CLI Agent 架构/沙箱技术选型/Prompt Injection/代码执行反馈 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md) |
+| 11 | [11-Transformers与模型架构面试题.md](./11-Transformers与模型架构面试题.md) | RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md) |
 
 ## 高频考点速查
 
