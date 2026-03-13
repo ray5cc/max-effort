@@ -1,63 +1,27 @@
 # 07-AI-Agent 全栈开发 — 技术资料
 
-> 覆盖 AI Agent 全链路开发知识：从 LLM 原理、Prompt 工程、工具调用、记忆系统，到 Agent 框架、后端服务、前端渲染与生产部署。
+> 覆盖 AI Agent 全链路开发的系统性技术文档，从 LLM 原理到前端渲染，再到微调部署。
 
 ## 相关链接
 
 - 对应面试指南：[07-AI-Agent全栈开发面试](../../02-面试指南/07-AI-Agent全栈开发面试/README.md)
 
-## 知识链路总览
-
-```
-LLM 原理
-  └── Transformer 架构 / 注意力机制 / 预训练 / RLHF
-        ↓
-Prompt 工程
-  └── 提示词设计 / Few-shot / CoT / 结构化输出
-        ↓
-工具调用 & Function Calling
-  └── Tool Use / 函数调用 / MCP 协议
-        ↓
-记忆系统
-  └── 上下文内记忆 / RAG / 持久化存储 / Fine-tuning
-        ↓
-Agent 框架 & 编排
-  └── LangChain / LangGraph / AutoGen / CrewAI / 多 Agent 系统
-        ↓
-后端服务
-  └── 流式 API / 会话管理 / 向量数据库 / 编排微服务
-        ↓
-前端渲染
-  └── 流式 UI / SSE / WebSocket / React / 多模态展示
-        ↓
-评测 & 可观测性
-  └── 单元评测 / 追踪 / 监控 / 错误分析
-        ↓
-生产部署
-  └── 容器化 / 扩缩容 / 安全 / 成本管理
-```
-
 ## 文档列表
 
-| 序号 | 文件名 | 描述 | 关联面试题 |
-|------|--------|------|------------|
-| 01 | [01-LLM原理.md](./01-LLM原理.md) | Transformer 架构、预训练、RLHF | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/01-LLM原理面试题.md) |
-| 02 | [02-Prompt工程.md](./02-Prompt工程.md) | 提示词设计、CoT、结构化输出 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/02-Prompt工程面试题.md) |
-| 03 | [03-工具调用与Function-Calling.md](./03-工具调用与Function-Calling.md) | Tool Use、函数调用、MCP 协议 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/03-工具调用面试题.md) |
-| 04 | [04-记忆系统与RAG.md](./04-记忆系统与RAG.md) | 四种记忆类型、RAG 架构、向量检索 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/04-记忆系统面试题.md) |
-| 05 | [05-Agent框架与编排.md](./05-Agent框架与编排.md) | LangChain/LangGraph/AutoGen、多 Agent | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/05-Agent框架面试题.md) |
-| 06 | [06-后端服务与API设计.md](./06-后端服务与API设计.md) | 流式 API、会话管理、编排微服务 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/06-后端服务面试题.md) |
-| 07 | [07-前端渲染与流式UI.md](./07-前端渲染与流式UI.md) | SSE、WebSocket、React 流式渲染 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/07-前端渲染面试题.md) |
+| 序号 | 文件名 | 覆盖技术知识点 | 关联面试题 |
+|------|--------|---------------|-----------|
 | 08 | [08-LLM微调技术.md](./08-LLM微调技术.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md) |
-| 09 | [09-多Agent系统.md](./09-多Agent系统.md) | AutoGen/GroupChat/Dify/多 Agent 协作模式 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md) |
-| 10 | [10-AI-CLI与代码Agent.md](./10-AI-CLI与代码Agent.md) | Gemini CLI/Codex CLI/browser-use/沙箱安全/Prompt Injection 防护 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md) |
-| 11 | [11-Transformers与模型架构.md](./11-Transformers与模型架构.md) | LLaMA 架构/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md) |
+| 09 | [09-多Agent系统.md](./09-多Agent系统.md) | AutoGen/GroupChat/Hub-Spoke/P2P/分层架构/任务调度 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md) |
+| 10 | [10-AI-CLI与代码Agent.md](./10-AI-CLI与代码Agent.md) | CLI Agent 架构/沙箱技术/Prompt Injection/代码执行反馈 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md) |
+| 11 | [11-Transformers与模型架构.md](./11-Transformers与模型架构.md) | RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md) |
+| 12 | [12-参数高效微调PEFT.md](./12-参数高效微调PEFT.md) | LoRA 数学原理/QLoRA/Adapter/Prefix Tuning/PEFT 生态 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/12-PEFT面试题.md) |
+| 13 | [13-对齐训练技术TRL.md](./13-对齐训练技术TRL.md) | RLHF/PPO/DPO/GRPO/SFT/奖励模型/TRL 参考实现 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/13-TRL面试题.md) |
 
 ## 说明
 
-- 各文档涵盖原理讲解、代码示例、最佳实践与常见陷阱
-- 学习路径建议按序号顺序阅读，构建完整的全链路认知
-- 每篇文档末尾提供对应面试指南的跳转链接
+- 每篇文档聚焦于**通用技术知识点**，而非特定项目介绍
+- 文档内含代码示例、ASCII 架构图、类比说明，力求深入浅出
+- 如需了解特定开源项目细节，参见文档内的"参考实现"章节
 
 ## 导航
 
