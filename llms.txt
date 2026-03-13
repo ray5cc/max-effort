@@ -31,11 +31,11 @@
 - [DeepSpeed 生产应用与工程实践](./01-技术资料/05-系统设计/04-DeepSpeed/02-生产应用与工程实践.md): 环境搭建/DDP 迁移/ZeRO Stage 2/3 配置/HuggingFace 集成/多机训练/OOM 调试/吞吐基准
 - [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md): DevOps与云计算文档目录
 - [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md): AI Agent全栈开发文档目录（LLM原理→前端渲染全链路）
+- [01-LLM原理](./01-技术资料/07-AI-Agent全栈开发/01-LLM原理.md): Transformer架构深度解析/Self-Attention数学推导/位置编码演进(RoPE/ALiBi)/预训练范式(CLM/MLM/Seq2Seq)/BPE/Scaling Laws/解码策略
 - [08-LLM微调技术](./01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md): LoRA/QLoRA/RLHF/DPO/GRPO 微调全链路技术资料
 - [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作技术资料
 - [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/browser-use 架构解析、沙箱安全机制与 Prompt Injection 防护
 - [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理
-- [01-LLM原理](./01-技术资料/07-AI-Agent全栈开发/01-LLM原理.md): Transformer架构深度解析/Self-Attention数学推导/位置编码演进(RoPE/ALiBi)/预训练范式(CLM/MLM/Seq2Seq)/BPE/Scaling Laws/解码策略
 
 ## 02-面试指南
 
