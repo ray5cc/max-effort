@@ -12,6 +12,9 @@
 | 04-00 | [DeepSpeed 项目综述与技术原理](./04-DeepSpeed/00-项目综述与技术原理.md) | ZeRO 三阶段原理、显存计算、ZeRO-Infinity、推理优化、与 FSDP/Megatron 对比 | [面试题](../../../02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md) |
 | 04-01 | [DeepSpeed 架构详解与核心组件](./04-DeepSpeed/01-架构详解与核心组件.md) | DeepSpeedEngine、Reduce-Scatter/All-Gather 原语、参数分片重建、Activation Checkpointing、混合精度、ds_config、Pipeline Parallel、MII | [面试题](../../../02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md) |
 | 04-02 | [DeepSpeed 生产应用与工程实践](./04-DeepSpeed/02-生产应用与工程实践.md) | 环境搭建、DDP 迁移对比、ZeRO Stage 2/3 配置、HuggingFace 集成、多机训练、OOM 调试、吞吐基准 | [面试题](../../../02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md) |
+| 05-00 | [Megatron-LM 项目综述与技术原理](./05-Megatron-LM/00-项目综述与技术原理.md) | 3D 并行原理、张量并行/流水线并行/数据并行、显存分析、与 DeepSpeed/FSDP 对比 | [面试题](../../02-面试指南/05-系统设计面试/05-Megatron-LM面试题.md) |
+| 05-01 | [Megatron-LM 架构详解与核心组件](./05-Megatron-LM/01-架构详解与核心组件.md) | 进程组初始化、ColumnParallelLinear/RowParallelLinear、流水线调度、分布式检查点、FlashAttention 集成 | [面试题](../../02-面试指南/05-系统设计面试/05-Megatron-LM面试题.md) |
+| 05-02 | [Megatron-LM 生产应用与工程实践](./05-Megatron-LM/02-生产应用与工程实践.md) | 环境搭建、并行策略选择、训练脚本参数、数据预处理、检查点转换、MFU 监控、常见问题调试 | [面试题](../../02-面试指南/05-系统设计面试/05-Megatron-LM面试题.md) |
 
 ## 主要内容方向
 
