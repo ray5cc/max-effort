@@ -23,6 +23,7 @@
 - [05-系统设计](./01-技术资料/05-系统设计/README.md): 系统设计文档目录（分布式/高并发/架构）
 - [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md): DevOps与云计算文档目录
 - [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md): AI Agent全栈开发文档目录（LLM原理→前端渲染全链路）
+  - [10-Browser-Use浏览器自动化框架](./01-技术资料/07-AI-Agent全栈开发/10-Browser-Use浏览器自动化框架.md): AI 驱动的浏览器自动化框架、ReAct 模式、DOM 处理
 
 ## 02-面试指南
 
@@ -34,6 +35,7 @@
 - [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md): 系统设计面试题目与解析
 - [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md): DevOps与云计算面试题目与解析
 - [07-AI-Agent全栈开发面试](./02-面试指南/07-AI-Agent全栈开发面试/README.md): AI Agent全栈开发高频面试题
+  - [10-Browser-Use浏览器自动化框架面试题](./02-面试指南/07-AI-Agent全栈开发面试/10-Browser-Use浏览器自动化框架面试题.md): Browser-Use 架构、ReAct 模式、工具系统、生产部署面试题
 
 ## Optional
 
