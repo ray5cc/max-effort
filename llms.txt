@@ -18,6 +18,7 @@
 - [技术资料总目录](./01-技术资料/README.md): 技术资料根目录，包含所有技术分类的索引
 - [01-前端](./01-技术资料/01-前端/README.md): 前端技术文档目录（HTML/CSS/JS/框架）
 - [JavaScript核心与ES6+](./01-技术资料/01-前端/02-JavaScript核心与ES6+.md): 执行机制(执行上下文/调用栈/闭包/作用域链/this绑定规则) / 事件循环(浏览器宏微任务/Node.js 6阶段) / 原型链与继承 / ES6+(Promise/async-await/Generator/Proxy/Symbol/WeakMap/ESM vs CJS) / TypeScript(泛型/条件类型/映射类型/工具类型实现原理/模块扩展)
+- [前端工程化](./01-技术资料/01-前端/03-前端工程化.md): Webpack(Entry/Output/Loader/Plugin/Chunk/Tapable构建流程) / Vite(ESM Dev Server/esbuild预构建/HMR) / Tree Shaking / 代码分割(React.lazy/SplitChunks) / pnpm(硬链接/幽灵依赖) / Monorepo(Turborepo/Nx) / ESLint/Prettier/Husky/commitlint / 微前端(Module Federation/qiankun)
 - [02-后端](./01-技术资料/02-后端/README.md): 后端技术文档目录（Java/Go/Python/Node.js）
 - [03-数据库](./01-技术资料/03-数据库/README.md): 数据库技术文档目录（MySQL/Redis/MongoDB）
 - [向量数据库](./01-技术资料/03-数据库/01-向量数据库.md): 向量嵌入 / HNSW 算法 / ANN 搜索 / 距离度量（Chroma、Milvus、Qdrant）
@@ -43,7 +44,7 @@
 ## 02-面试指南
 
 - [面试指南总目录](./02-面试指南/README.md): 面试指南根目录，包含所有面试分类的索引
-- [01-前端面试](./02-面试指南/01-前端面试/README.md): 前端面试题目与解析
+- [前端工程化面试题](./02-面试指南/01-前端面试/03-前端工程化面试题.md): Webpack/Vite打包原理/Tree Shaking/代码分割/pnpm硬链接/幽灵依赖/Monorepo/Husky+lint-staged/commitlint/微前端Module Federation/qiankun 21道分层面试题
 - [02-后端面试](./02-面试指南/02-后端面试/README.md): 后端面试题目与解析
 - [03-数据库面试](./02-面试指南/03-数据库面试/README.md): 数据库面试题目与解析
 - [向量数据库面试题](./02-面试指南/03-数据库面试/01-向量数据库面试题.md): 向量嵌入/ANN搜索/HNSW/IVF/Chroma/Milvus架构/混合搜索 22道分层面试题
