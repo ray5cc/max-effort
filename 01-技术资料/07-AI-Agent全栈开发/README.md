@@ -12,6 +12,7 @@
 |------|--------|---------------|-----------|
 | 01 | [01-LLM原理.md](./01-LLM原理.md) | Transformer架构/Self-Attention推导/RoPE/ALiBi/BPE/Scaling Laws/解码策略 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/01-LLM原理面试题.md) |
 | 02 | [02-Prompt工程.md](./02-Prompt工程.md) | PromptTemplate/CoT/ReAct/ToT/Self-Consistency/Reflexion/结构化输出/Prompt Injection防御 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/02-Prompt工程面试题.md) |
+| 03 | [03-工具调用与Function-Calling.md](./03-工具调用与Function-Calling.md) | OpenAI/Anthropic/Google协议对比/LangChain Tool源码/MCP协议/LangGraph工具编排/AgentExecutor源码 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/03-工具调用面试题.md) |
 | 08 | [08-LLM微调技术.md](./08-LLM微调技术.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md) |
 | 09 | [09-多Agent系统.md](./09-多Agent系统.md) | AutoGen/GroupChat/Hub-Spoke/P2P/分层架构/任务调度 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md) |
 | 10 | [10-AI-CLI与代码Agent.md](./10-AI-CLI与代码Agent.md) | CLI Agent 架构/沙箱技术/Prompt Injection/代码执行反馈 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md) |
