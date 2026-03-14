@@ -13,6 +13,10 @@
 | 01 | [01-LLM原理.md](./01-LLM原理.md) | Transformer架构/Self-Attention推导/RoPE/ALiBi/BPE/Scaling Laws/解码策略 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/01-LLM原理面试题.md) |
 | 02 | [02-Prompt工程.md](./02-Prompt工程.md) | PromptTemplate/CoT/ReAct/ToT/Self-Consistency/Reflexion/结构化输出/Prompt Injection防御 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/02-Prompt工程面试题.md) |
 | 03 | [03-工具调用与Function-Calling.md](./03-工具调用与Function-Calling.md) | OpenAI/Anthropic/Google协议对比/LangChain Tool源码/MCP协议/LangGraph工具编排/AgentExecutor源码 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/03-工具调用面试题.md) |
+| 04 | [04-记忆系统与RAG.md](./04-记忆系统与RAG.md) | RAG全链路/向量数据库/HNSW/语义分块/HyDE/Self-RAG/RAGAS评估/Graph RAG | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/04-记忆系统面试题.md) |
+| 05 | [05-Agent框架与编排.md](./05-Agent框架与编排.md) | ReAct/LangGraph StateGraph/AutoGen ConversableAgent/Dify工作流/Plan-and-Solve/Supervisor模式 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/05-Agent框架面试题.md) |
+| 06 | [06-后端服务与API设计.md](./06-后端服务与API设计.md) | SSE流式API/LiteLLM网关/Redis会话管理/Langfuse可观测性/Token计量/Circuit Breaker | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/06-后端服务面试题.md) |
+| 07 | [07-前端渲染与流式UI.md](./07-前端渲染与流式UI.md) | Fetch Streaming/React并发渲染/Vercel AI SDK/rAF批量渲染/Chat状态机/Zustand | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/07-前端渲染面试题.md) |
 | 08 | [08-LLM微调技术.md](./08-LLM微调技术.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md) |
 | 09 | [09-多Agent系统.md](./09-多Agent系统.md) | AutoGen/GroupChat/Hub-Spoke/P2P/分层架构/任务调度 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md) |
 | 10 | [10-AI-CLI与代码Agent.md](./10-AI-CLI与代码Agent.md) | CLI Agent 架构/沙箱技术/Prompt Injection/代码执行反馈 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md) |
