@@ -44,6 +44,7 @@
 ## 02-面试指南
 
 - [面试指南总目录](./02-面试指南/README.md): 面试指南根目录，包含所有面试分类的索引
+- [JavaScript面试题](./02-面试指南/01-前端面试/02-JavaScript面试题.md): 执行上下文/闭包/this绑定/Event Loop/原型链/Promise手写/Generator/Proxy/WeakMap/TypeScript条件类型/V8 JIT 25道分层面试题
 - [前端工程化面试题](./02-面试指南/01-前端面试/03-前端工程化面试题.md): Webpack/Vite打包原理/Tree Shaking/代码分割/pnpm硬链接/幽灵依赖/Monorepo/Husky+lint-staged/commitlint/微前端Module Federation/qiankun 21道分层面试题
 - [02-后端面试](./02-面试指南/02-后端面试/README.md): 后端面试题目与解析
 - [03-数据库面试](./02-面试指南/03-数据库面试/README.md): 数据库面试题目与解析
