@@ -18,6 +18,8 @@
 - [技术资料总目录](./01-技术资料/README.md): 技术资料根目录，包含所有技术分类的索引
 - [01-前端](./01-技术资料/01-前端/README.md): 前端技术文档目录（HTML/CSS/JS/框架）
 - [React 核心原理与源码解析](./01-技术资料/01-前端/01-React核心原理.md): Fiber 架构、双缓冲树、协调算法、并发渲染 Lane 模型、Hooks 链表实现、虚拟 DOM 渲染流水线、React Compiler
+- [JavaScript核心与ES6+](./01-技术资料/01-前端/02-JavaScript核心与ES6+.md): 执行机制(执行上下文/调用栈/闭包/作用域链/this绑定规则) / 事件循环(浏览器宏微任务/Node.js 6阶段) / 原型链与继承 / ES6+(Promise/async-await/Generator/Proxy/Symbol/WeakMap/ESM vs CJS) / TypeScript(泛型/条件类型/映射类型/工具类型实现原理/模块扩展)
+- [前端工程化](./01-技术资料/01-前端/03-前端工程化.md): Webpack(Entry/Output/Loader/Plugin/Chunk/Tapable构建流程) / Vite(ESM Dev Server/esbuild预构建/HMR) / Tree Shaking / 代码分割(React.lazy/SplitChunks) / pnpm(硬链接/幽灵依赖) / Monorepo(Turborepo/Nx) / ESLint/Prettier/Husky/commitlint / 微前端(Module Federation/qiankun)
 - [02-后端](./01-技术资料/02-后端/README.md): 后端技术文档目录（Java/Go/Python/Node.js）
 - [Java 核心与 JVM](./01-技术资料/02-后端/01-Java核心与JVM.md): JVM 内存模型/GC算法(CMS/G1/ZGC)/类加载双亲委派/synchronized 锁升级/AQS框架/volatile/JMM 内存屏障（OpenJDK HotSpot 源码）
 - [Go 核心与并发模型](./01-技术资料/02-后端/02-Go核心与并发模型.md): GMP 调度模型(runtime2.go/proc.go)/Channel(hchan/sudog)/三级内存分配器(mcache/mcentral/mheap)/三色GC与混合写屏障/iface/eface 接口实现
@@ -36,6 +38,9 @@
 - [DeepSpeed 架构详解与核心组件](./01-技术资料/05-系统设计/04-DeepSpeed/01-架构详解与核心组件.md): DeepSpeedEngine/Reduce-Scatter+All-Gather/参数分片重建/Activation Checkpointing/混合精度/ds_config/Pipeline Parallel/MII
 - [DeepSpeed 生产应用与工程实践](./01-技术资料/05-系统设计/04-DeepSpeed/02-生产应用与工程实践.md): 环境搭建/DDP 迁移/ZeRO Stage 2/3 配置/HuggingFace 集成/多机训练/OOM 调试/吞吐基准
 - [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md): DevOps与云计算文档目录
+- [Docker 与容器化技术](./01-技术资料/06-DevOps与云计算/01-Docker与容器化技术.md): Linux Namespace(PID/NET/MNT/UTS/IPC/USER) / Cgroups v1-v2 / OverlayFS 分层存储 / OCI 标准 / Docker 架构(dockerd/containerd/runc) / 多阶段构建 / 网络模式(bridge/host/overlay/macvlan) / Docker Compose / 容器安全(seccomp/AppArmor/Trivy/distroless)
+- [Kubernetes 核心技术](./01-技术资料/06-DevOps与云计算/02-Kubernetes核心技术.md): K8s 架构(kube-apiserver/etcd/kube-scheduler/controller-manager/kubelet) / Pod生命周期与设计模式 / Deployment/StatefulSet/DaemonSet/Job/CronJob / Service(ClusterIP/NodePort/LoadBalancer) / Ingress / 调度(Affinity/Taints/QoS) / 存储(PV/PVC/StorageClass/CSI) / 网络(CNI/NetworkPolicy) / 生产运维(RBAC/HPA/Helm/蓝绿/金丝雀)
+- [CI/CD 与 GitOps](./01-技术资料/06-DevOps与云计算/03-CICD与GitOps.md): CI/CD核心概念(持续集成/持续交付/持续部署) / Pipeline设计原则 / 代码质量门禁 / GitHub Actions(Workflow/Job/Step/矩阵策略/复合Action/OIDC) / GitOps原则 / ArgoCD(Application/AppProject/ApplicationSet/同步策略) / Flux CD / 多架构镜像(buildx/QEMU) / 镜像签名(cosign/Sigstore)
 - [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md): AI Agent全栈开发文档目录（LLM原理→前端渲染全链路）
 - [08-LLM微调技术](./01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md): LoRA/QLoRA/RLHF/DPO/GRPO 微调全链路技术资料
 - [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作技术资料
@@ -47,6 +52,8 @@
 - [面试指南总目录](./02-面试指南/README.md): 面试指南根目录，包含所有面试分类的索引
 - [01-前端面试](./02-面试指南/01-前端面试/README.md): 前端面试题目与解析
 - [React 核心面试题](./02-面试指南/01-前端面试/01-React面试题.md): Fiber/Hooks/并发渲染/虚拟 DOM/Compiler 35 道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景）
+- [JavaScript面试题](./02-面试指南/01-前端面试/02-JavaScript面试题.md): 执行上下文/闭包/this绑定/Event Loop/原型链/Promise手写/Generator/Proxy/WeakMap/TypeScript条件类型/V8 JIT 25道分层面试题
+- [前端工程化面试题](./02-面试指南/01-前端面试/03-前端工程化面试题.md): Webpack/Vite打包原理/Tree Shaking/代码分割/pnpm硬链接/幽灵依赖/Monorepo/Husky+lint-staged/commitlint/微前端Module Federation/qiankun 21道分层面试题
 - [02-后端面试](./02-面试指南/02-后端面试/README.md): 后端面试题目与解析
 - [Java 核心面试题](./02-面试指南/02-后端面试/01-Java核心面试题.md): JVM内存区域/GC算法与收集器(G1/ZGC)/类加载/synchronized锁升级/AQS/volatile/JMM/OOM排查 20道分层面试题
 - [Go 核心面试题](./02-面试指南/02-后端面试/02-Go核心面试题.md): GMP调度/Goroutine泄漏/Channel底层实现/工作窃取/内存分配器/混合写屏障/接口实现/pprof优化 18道分层面试题
@@ -60,6 +67,9 @@
 - [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md): 系统设计面试题目与解析
 - [DeepSpeed 面试题](./02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md): ZeRO 原理/通信原语/工程实践/性能调优 25 道分层面试题
 - [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md): DevOps与云计算面试题目与解析
+- [Docker 面试题](./02-面试指南/06-DevOps与云计算面试/01-Docker面试题.md): 容器原理/镜像架构/网络存储/Compose/容器安全 21道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
+- [Kubernetes 面试题](./02-面试指南/06-DevOps与云计算面试/02-Kubernetes面试题.md): K8s架构/调度/存储/网络/RBAC/HPA/部署策略 25道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
+- [CI/CD 面试题](./02-面试指南/06-DevOps与云计算面试/03-CICD面试题.md): CI/CD核心概念/GitHub Actions/GitOps/ArgoCD/Flux/多架构镜像/cosign镜像签名 分层面试题
 - [07-AI-Agent全栈开发面试](./02-面试指南/07-AI-Agent全栈开发面试/README.md): AI Agent全栈开发高频面试题
 - [08-LLM微调技术面试题](./02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md): LoRA/QLoRA/RLHF/DPO/GRPO 25道分层面试题
 - [09-多Agent系统面试题](./02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md): AutoGen/GroupChat/多Agent架构/任务调度 28道分层面试题
