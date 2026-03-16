@@ -7,6 +7,8 @@
 | 序号 | 文件 | 描述 | 对应技术资料 |
 |------|------|------|-------------|
 | 01 | [01-React面试题.md](./01-React面试题.md) | React 核心面试题 35 道（Fiber/Hooks/并发渲染/虚拟 DOM/Compiler） | [React 核心原理](../../01-技术资料/01-前端/01-React核心原理.md) |
+| 02 | [02-JavaScript面试题.md](./02-JavaScript面试题.md) | 执行上下文/闭包/this绑定/Event Loop/原型链/Promise/Generator/Proxy/TypeScript 25道分层面试题 | [JavaScript核心与ES6+](../../01-技术资料/01-前端/02-JavaScript核心与ES6+.md) |
+| 03 | [03-前端工程化面试题.md](./03-前端工程化面试题.md) | Webpack/Vite 打包原理、Tree Shaking、代码分割、pnpm 机制、Monorepo、Git Hooks、微前端 21道分层面试题 | [前端工程化](../../01-技术资料/01-前端/03-前端工程化.md) |
 
 ## 高频考点方向
 
