@@ -3,7 +3,8 @@
 > **参数高效微调（Parameter-Efficient Fine-Tuning，PEFT）**是一类通用技术，让大语言模型以冻结大部分参数的方式完成领域适配，极大降低训练成本。代表方法包括 LoRA、QLoRA、Adapter Tuning 等。
 
 ## 相关链接
-- 对应面试题：[12-PEFT面试题](../../../../02-面试指南/07-AI-Agent全栈开发面试/12-PEFT面试题.md)
+
+- 对应面试题：[12-PEFT面试题](../../02-面试指南/07-AI-Agent全栈开发面试/12-PEFT面试题.md)
 
 ## 目录
 1. [为什么需要 PEFT](#1-为什么需要-peft)
