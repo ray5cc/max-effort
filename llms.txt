@@ -30,13 +30,10 @@
 - [PostgreSQL 核心技术](./01-技术资料/03-数据库/03-PostgreSQL核心技术.md): 多进程架构 / 堆表页面布局 / B-tree 索引(High Key/HOT) / MVCC 快照与可见性 / WAL 与流式复制 / 火山模型执行器 / VACUUM 与 XID 冻结（postgres/postgres 源码）
 - [MySQL/InnoDB 核心技术](./01-技术资料/03-数据库/04-MySQL-InnoDB核心技术.md): Buffer Pool LRU 分区 / B+树聚簇索引 / MVCC(Read View/Undo 版本链) / Next-Key Lock / Redo Log / Doublewrite Buffer / Change Buffer（MariaDB/server storage/innobase/ 源码）
 - [04-算法与数据结构](./01-技术资料/04-算法与数据结构/README.md): 算法与数据结构文档目录
-- [05-系统设计](./01-技术资料/05-系统设计/README.md): 系统设计文档目录（分布式/高并发/架构）
-- [llama.cpp 项目综述与技术原理](./01-技术资料/05-系统设计/03-llama.cpp/00-项目综述与技术原理.md): llama.cpp 整体介绍、GGML、GGUF、量化方法、后端支持
-- [llama.cpp 架构详解与核心组件](./01-技术资料/05-系统设计/03-llama.cpp/01-架构详解与核心组件.md): ggml 张量库/GGUF 格式/推理代码/KV Cache/量化 kernel/后端系统/采样算法/server 并发模型
-- [llama.cpp 生产应用与工程实践](./01-技术资料/05-系统设计/03-llama.cpp/02-生产应用与工程实践.md): 编译/模型下载/Python API/量化选择/llama-server/LangChain/RAG 系统/性能调优/FastAPI 服务
-- [DeepSpeed 项目综述与技术原理](./01-技术资料/05-系统设计/04-DeepSpeed/00-项目综述与技术原理.md): ZeRO 三阶段原理/显存计算/ZeRO-Infinity/推理优化/与 FSDP/Megatron 对比
-- [DeepSpeed 架构详解与核心组件](./01-技术资料/05-系统设计/04-DeepSpeed/01-架构详解与核心组件.md): DeepSpeedEngine/Reduce-Scatter+All-Gather/参数分片重建/Activation Checkpointing/混合精度/ds_config/Pipeline Parallel/MII
-- [DeepSpeed 生产应用与工程实践](./01-技术资料/05-系统设计/04-DeepSpeed/02-生产应用与工程实践.md): 环境搭建/DDP 迁移/ZeRO Stage 2/3 配置/HuggingFace 集成/多机训练/OOM 调试/吞吐基准
+- [深度学习框架与计算图](./01-技术资料/04-算法与数据结构/01-深度学习框架与计算图.md): 计算图/自动微分/Eager vs 图执行/分布式训练（TensorFlow、PyTorch）
+- [05-系统设计](./01-技术资料/05-系统设计/README.md): 系统设计文档目录（LLM推理优化/分布式训练）
+- [LLM推理引擎优化](./01-技术资料/05-系统设计/01-LLM推理引擎优化.md): KV Cache/PagedAttention/Continuous Batching/量化/CPU推理（vLLM/TensorRT-LLM/llama.cpp）
+- [分布式训练技术](./01-技术资料/05-系统设计/02-分布式训练技术.md): ZeRO Stage 1/2/3/张量并行/流水线并行/3D并行（DeepSpeed/Megatron-LM）
 - [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md): DevOps与云计算文档目录
 - [Docker 与容器化技术](./01-技术资料/06-DevOps与云计算/01-Docker与容器化技术.md): Linux Namespace(PID/NET/MNT/UTS/IPC/USER) / Cgroups v1-v2 / OverlayFS 分层存储 / OCI 标准 / Docker 架构(dockerd/containerd/runc) / 多阶段构建 / 网络模式(bridge/host/overlay/macvlan) / Docker Compose / 容器安全(seccomp/AppArmor/Trivy/distroless)
 - [Kubernetes 核心技术](./01-技术资料/06-DevOps与云计算/02-Kubernetes核心技术.md): K8s 架构(kube-apiserver/etcd/kube-scheduler/controller-manager/kubelet) / Pod生命周期与设计模式 / Deployment/StatefulSet/DaemonSet/Job/CronJob / Service(ClusterIP/NodePort/LoadBalancer) / Ingress / 调度(Affinity/Taints/QoS) / 存储(PV/PVC/StorageClass/CSI) / 网络(CNI/NetworkPolicy) / 生产运维(RBAC/HPA/Helm/蓝绿/金丝雀)
@@ -53,6 +50,8 @@
 - [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作技术资料
 - [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/browser-use 架构解析、沙箱安全机制与 Prompt Injection 防护
 - [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理
+- [12-参数高效微调PEFT](./01-技术资料/07-AI-Agent全栈开发/12-参数高效微调PEFT.md): LoRA数学原理/QLoRA/Adapter Tuning/Prefix Tuning/HuggingFace PEFT生态
+- [13-对齐训练技术TRL](./01-技术资料/07-AI-Agent全栈开发/13-对齐训练技术TRL.md): RLHF/PPO/DPO/GRPO/SFT/奖励模型/TRL参考实现
 
 ## 02-面试指南
 
@@ -71,8 +70,11 @@
 - [PostgreSQL 面试题](./02-面试指南/03-数据库面试/03-PostgreSQL面试题.md): 进程架构/MVCC可见性/HOT更新/WAL/Checkpoint/B-tree High Key/SSI/VACUUM/XID Wraparound 22道分层面试题
 - [MySQL/InnoDB 面试题](./02-面试指南/03-数据库面试/04-MySQL-InnoDB面试题.md): Buffer Pool/B+树聚簇索引/MVCC Read View/Next-Key Lock/Change Buffer/Doublewrite/崩溃恢复 22道分层面试题
 - [04-算法与数据结构面试](./02-面试指南/04-算法与数据结构面试/README.md): 算法面试题目与解析
+- [深度学习框架面试题](./02-面试指南/04-算法与数据结构面试/01-深度学习框架面试题.md): 计算图/自动微分/TF vs PyTorch/分布式训练 30+道面试题
 - [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md): 系统设计面试题目与解析
-- [DeepSpeed 面试题](./02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md): ZeRO 原理/通信原语/工程实践/性能调优 25 道分层面试题
+- [LLM推理引擎面试题](./02-面试指南/05-系统设计面试/01-LLM推理引擎面试题.md): KV Cache/PagedAttention/Continuous Batching/vLLM/TensorRT-LLM/llama.cpp 30道面试题
+- [分布式训练面试题](./02-面试指南/05-系统设计面试/02-分布式训练面试题.md): ZeRO原理/通信原语/DeepSpeed工程实践/性能调优 25道分层面试题
+- [llama.cpp面试题](./02-面试指南/05-系统设计面试/03-llama.cpp面试题.md): GGUF格式/CPU量化推理/Metal/本地部署
 - [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md): DevOps与云计算面试题目与解析
 - [Docker 面试题](./02-面试指南/06-DevOps与云计算面试/01-Docker面试题.md): 容器原理/镜像架构/网络存储/Compose/容器安全 21道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
 - [Kubernetes 面试题](./02-面试指南/06-DevOps与云计算面试/02-Kubernetes面试题.md): K8s架构/调度/存储/网络/RBAC/HPA/部署策略 25道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
@@ -89,6 +91,8 @@
 - [09-多Agent系统面试题](./02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md): AutoGen/GroupChat/多Agent架构/任务调度 28道分层面试题
 - [10-AI-CLI与代码Agent面试题](./02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md): CLI Agent架构/沙箱选型/Prompt Injection/代码执行反馈/浏览器Agent稳定性 28道分层面试题
 - [11-Transformers与模型架构面试题](./02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md): RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码/70B推理系统设计 22道分层面试题
+- [12-PEFT面试题](./02-面试指南/07-AI-Agent全栈开发面试/12-PEFT面试题.md): LoRA/QLoRA/Adapter/Prefix Tuning/PEFT工程实践 26道分层面试题
+- [13-TRL面试题](./02-面试指南/07-AI-Agent全栈开发面试/13-TRL面试题.md): RLHF/DPO/PPO/GRPO/KL散度/对齐工程实践 26道分层面试题
 
 ## Optional
 
