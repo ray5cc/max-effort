@@ -2,6 +2,10 @@
 
 > 深入解析 Gemini CLI、OpenAI Codex CLI 与 browser-use 三类 AI 命令行代码 Agent 的架构原理、安全沙箱机制与工程实践，并提供从零构建安全 Code Agent 的完整指南。
 
+## 相关链接
+
+- 对应面试题：[10-AI-CLI与代码Agent面试题](../../02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md)
+
 ## 目录
 
 1. [概述](#1-概述)
