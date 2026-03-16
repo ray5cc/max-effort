@@ -6,7 +6,9 @@
 
 | 序号 | 文件 | 描述 | 对应面试题 |
 |------|------|------|-----------|
-| — | *暂无文档，欢迎贡献* | — | — |
+| 01 | [Docker 与容器化技术](./01-Docker与容器化技术.md) | Namespace/Cgroups/OverlayFS 核心原理、Docker 架构与组件、Dockerfile 最佳实践、网络存储模型、Compose 编排、容器安全 | [Docker 面试题](../../02-面试指南/06-DevOps与云计算面试/01-Docker面试题.md) |
+| 02 | [Kubernetes 核心技术](./02-Kubernetes核心技术.md) | K8s 架构（Control Plane/Node 组件）、核心资源对象（Pod/Deployment/StatefulSet/Service/Ingress）、调度机制、存储系统（PV/PVC/CSI）、网络模型（CNI/NetworkPolicy）、生产运维（RBAC/HPA/Helm/蓝绿/金丝雀） | [Kubernetes 面试题](../../02-面试指南/06-DevOps与云计算面试/02-Kubernetes面试题.md) |
+| 03 | [CI/CD 与 GitOps](./03-CICD与GitOps.md) | CI/CD 核心概念（持续集成/交付/部署）、GitHub Actions 深度解析（Workflow/Job/Step/矩阵/OIDC）、GitOps 模式（ArgoCD/Flux CD/声明式调谐）、容器镜像 CI/CD（多架构构建/镜像签名/cosign） | [CI/CD 面试题](../../02-面试指南/06-DevOps与云计算面试/03-CICD面试题.md) |
 
 ## 主要内容方向
 
