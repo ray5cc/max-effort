@@ -19,9 +19,14 @@
 - [01-前端](./01-技术资料/01-前端/README.md): 前端技术文档目录（HTML/CSS/JS/框架）
 - [React 核心原理与源码解析](./01-技术资料/01-前端/01-React核心原理.md): Fiber 架构、双缓冲树、协调算法、并发渲染 Lane 模型、Hooks 链表实现、虚拟 DOM 渲染流水线、React Compiler
 - [02-后端](./01-技术资料/02-后端/README.md): 后端技术文档目录（Java/Go/Python/Node.js）
+- [Java 核心与 JVM](./01-技术资料/02-后端/01-Java核心与JVM.md): JVM 内存模型/GC算法(CMS/G1/ZGC)/类加载双亲委派/synchronized 锁升级/AQS框架/volatile/JMM 内存屏障（OpenJDK HotSpot 源码）
+- [Go 核心与并发模型](./01-技术资料/02-后端/02-Go核心与并发模型.md): GMP 调度模型(runtime2.go/proc.go)/Channel(hchan/sudog)/三级内存分配器(mcache/mcentral/mheap)/三色GC与混合写屏障/iface/eface 接口实现
+- [网络协议与 HTTP](./01-技术资料/02-后端/03-网络协议与HTTP.md): TCP三次握手/四次挥手/拥塞控制/滑动窗口/HTTP/1.1/2/3演进/QUIC协议/TLS 1.2/1.3握手与密钥派生/WebSocket帧格式
 - [03-数据库](./01-技术资料/03-数据库/README.md): 数据库技术文档目录（MySQL/Redis/MongoDB）
 - [向量数据库](./01-技术资料/03-数据库/01-向量数据库.md): 向量嵌入 / HNSW 算法 / ANN 搜索 / 距离度量（Chroma、Milvus、Qdrant）
 - [Redis 核心技术](./01-技术资料/03-数据库/02-Redis核心技术.md): 数据结构底层实现(SDS/dict/skiplist) / 持久化(RDB/AOF/混合) / 内存管理(jemalloc/LRU/LFU) / ae事件库 / 多线程IO / 集群(Sentinel/Cluster) / 事务与Lua
+- [PostgreSQL 核心技术](./01-技术资料/03-数据库/03-PostgreSQL核心技术.md): 多进程架构 / 堆表页面布局 / B-tree 索引(High Key/HOT) / MVCC 快照与可见性 / WAL 与流式复制 / 火山模型执行器 / VACUUM 与 XID 冻结（postgres/postgres 源码）
+- [MySQL/InnoDB 核心技术](./01-技术资料/03-数据库/04-MySQL-InnoDB核心技术.md): Buffer Pool LRU 分区 / B+树聚簇索引 / MVCC(Read View/Undo 版本链) / Next-Key Lock / Redo Log / Doublewrite Buffer / Change Buffer（MariaDB/server storage/innobase/ 源码）
 - [04-算法与数据结构](./01-技术资料/04-算法与数据结构/README.md): 算法与数据结构文档目录
 - [05-系统设计](./01-技术资料/05-系统设计/README.md): 系统设计文档目录（分布式/高并发/架构）
 - [llama.cpp 项目综述与技术原理](./01-技术资料/05-系统设计/03-llama.cpp/00-项目综述与技术原理.md): llama.cpp 整体介绍、GGML、GGUF、量化方法、后端支持
@@ -43,9 +48,14 @@
 - [01-前端面试](./02-面试指南/01-前端面试/README.md): 前端面试题目与解析
 - [React 核心面试题](./02-面试指南/01-前端面试/01-React面试题.md): Fiber/Hooks/并发渲染/虚拟 DOM/Compiler 35 道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景）
 - [02-后端面试](./02-面试指南/02-后端面试/README.md): 后端面试题目与解析
+- [Java 核心面试题](./02-面试指南/02-后端面试/01-Java核心面试题.md): JVM内存区域/GC算法与收集器(G1/ZGC)/类加载/synchronized锁升级/AQS/volatile/JMM/OOM排查 20道分层面试题
+- [Go 核心面试题](./02-面试指南/02-后端面试/02-Go核心面试题.md): GMP调度/Goroutine泄漏/Channel底层实现/工作窃取/内存分配器/混合写屏障/接口实现/pprof优化 18道分层面试题
+- [网络协议面试题](./02-面试指南/02-后端面试/03-网络协议面试题.md): TCP三次握手/四次挥手/拥塞控制/HTTP/1.1/2/3/QUIC/TLS握手/CORS/DNS/WebSocket/Nagle算法 20道分层面试题
 - [03-数据库面试](./02-面试指南/03-数据库面试/README.md): 数据库面试题目与解析
 - [向量数据库面试题](./02-面试指南/03-数据库面试/01-向量数据库面试题.md): 向量嵌入/ANN搜索/HNSW/IVF/Chroma/Milvus架构/混合搜索 22道分层面试题
 - [Redis 面试题](./02-面试指南/03-数据库面试/02-Redis面试题.md): Redis数据结构/持久化/内存管理/网络模型/集群/事务 22道分层面试题
+- [PostgreSQL 面试题](./02-面试指南/03-数据库面试/03-PostgreSQL面试题.md): 进程架构/MVCC可见性/HOT更新/WAL/Checkpoint/B-tree High Key/SSI/VACUUM/XID Wraparound 22道分层面试题
+- [MySQL/InnoDB 面试题](./02-面试指南/03-数据库面试/04-MySQL-InnoDB面试题.md): Buffer Pool/B+树聚簇索引/MVCC Read View/Next-Key Lock/Change Buffer/Doublewrite/崩溃恢复 22道分层面试题
 - [04-算法与数据结构面试](./02-面试指南/04-算法与数据结构面试/README.md): 算法面试题目与解析
 - [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md): 系统设计面试题目与解析
 - [DeepSpeed 面试题](./02-面试指南/05-系统设计面试/04-DeepSpeed面试题.md): ZeRO 原理/通信原语/工程实践/性能调优 25 道分层面试题
