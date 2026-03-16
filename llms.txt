@@ -81,6 +81,10 @@
 - [01-LLM原理面试题](./02-面试指南/07-AI-Agent全栈开发面试/01-LLM原理面试题.md): Transformer/Self-Attention/KV Cache/RoPE/Flash Attention/投机解码/PagedAttention 25道分层面试题
 - [02-Prompt工程面试题](./02-面试指南/07-AI-Agent全栈开发面试/02-Prompt工程面试题.md): CoT/ReAct/ToT/Self-Consistency/Reflexion/LangChain源码/Prompt Injection防护 25道分层面试题
 - [03-工具调用面试题](./02-面试指南/07-AI-Agent全栈开发面试/03-工具调用面试题.md): Function Calling协议/LangChain BaseTool/MCP/LangGraph工具节点/Tool RAG 25道分层面试题
+- [04-记忆系统面试题](./02-面试指南/07-AI-Agent全栈开发面试/04-记忆系统面试题.md): RAG全链路/向量数据库/语义分块/混合检索/RAGAS评估/Graph RAG 25道分层面试题
+- [05-Agent框架面试题](./02-面试指南/07-AI-Agent全栈开发面试/05-Agent框架面试题.md): ReAct/LangGraph/AutoGen/Dify/多Agent编排模式/生产工程化 25道分层面试题
+- [06-后端服务面试题](./02-面试指南/07-AI-Agent全栈开发面试/06-后端服务面试题.md): 流式API/LLM网关/会话管理/Langfuse可观测性/生产部署 25道分层面试题
+- [07-前端渲染面试题](./02-面试指南/07-AI-Agent全栈开发面试/07-前端渲染面试题.md): SSE/WebSocket流式传输/React并发渲染/Vercel AI SDK/Markdown实时渲染/Chat UI 25道分层面试题
 - [08-LLM微调技术面试题](./02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md): LoRA/QLoRA/RLHF/DPO/GRPO 25道分层面试题
 - [09-多Agent系统面试题](./02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md): AutoGen/GroupChat/多Agent架构/任务调度 28道分层面试题
 - [10-AI-CLI与代码Agent面试题](./02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md): CLI Agent架构/沙箱选型/Prompt Injection/代码执行反馈/浏览器Agent稳定性 28道分层面试题
