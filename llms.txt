@@ -42,6 +42,13 @@
 - [Kubernetes 核心技术](./01-技术资料/06-DevOps与云计算/02-Kubernetes核心技术.md): K8s 架构(kube-apiserver/etcd/kube-scheduler/controller-manager/kubelet) / Pod生命周期与设计模式 / Deployment/StatefulSet/DaemonSet/Job/CronJob / Service(ClusterIP/NodePort/LoadBalancer) / Ingress / 调度(Affinity/Taints/QoS) / 存储(PV/PVC/StorageClass/CSI) / 网络(CNI/NetworkPolicy) / 生产运维(RBAC/HPA/Helm/蓝绿/金丝雀)
 - [CI/CD 与 GitOps](./01-技术资料/06-DevOps与云计算/03-CICD与GitOps.md): CI/CD核心概念(持续集成/持续交付/持续部署) / Pipeline设计原则 / 代码质量门禁 / GitHub Actions(Workflow/Job/Step/矩阵策略/复合Action/OIDC) / GitOps原则 / ArgoCD(Application/AppProject/ApplicationSet/同步策略) / Flux CD / 多架构镜像(buildx/QEMU) / 镜像签名(cosign/Sigstore)
 - [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md): AI Agent全栈开发文档目录（LLM原理→前端渲染全链路）
+- [01-LLM原理](./01-技术资料/07-AI-Agent全栈开发/01-LLM原理.md): Transformer架构深度解析/Self-Attention数学推导/位置编码演进(RoPE/ALiBi)/预训练范式(CLM/MLM/Seq2Seq)/BPE/Scaling Laws/解码策略
+- [02-Prompt工程](./01-技术资料/07-AI-Agent全栈开发/02-Prompt工程.md): PromptTemplate/ChatPromptTemplate源码/CoT/ReAct/ToT/Self-Consistency/Reflexion/结构化输出/Pydantic OutputParser/Prompt Injection攻防
+- [03-工具调用与Function-Calling](./01-技术资料/07-AI-Agent全栈开发/03-工具调用与Function-Calling.md): OpenAI/Anthropic/Google三大Function Calling协议对比/LangChain BaseTool源码/StructuredTool/@tool装饰器/MCP协议JSON-RPC传输层/LangGraph工具编排/AgentExecutor执行循环
+- [04-记忆系统与RAG](./01-技术资料/07-AI-Agent全栈开发/04-记忆系统与RAG.md): RAG全链路/向量数据库/HNSW/语义分块/HyDE/Self-RAG/RAGAS评估/Graph RAG
+- [05-Agent框架与编排](./01-技术资料/07-AI-Agent全栈开发/05-Agent框架与编排.md): ReAct/LangGraph StateGraph/AutoGen ConversableAgent/Dify工作流/Plan-and-Solve/Supervisor模式
+- [06-后端服务与API设计](./01-技术资料/07-AI-Agent全栈开发/06-后端服务与API设计.md): SSE流式API/LiteLLM网关/Redis会话管理/Langfuse可观测性/tiktoken成本控制/Circuit Breaker/K8s部署
+- [07-前端渲染与流式UI](./01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md): Fetch Streaming/React 18并发渲染/Next.js App Router/Vercel AI SDK/rAF批量Markdown渲染/Chat状态机/Zustand
 - [08-LLM微调技术](./01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md): LoRA/QLoRA/RLHF/DPO/GRPO 微调全链路技术资料
 - [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作技术资料
 - [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/browser-use 架构解析、沙箱安全机制与 Prompt Injection 防护
@@ -71,6 +78,9 @@
 - [Kubernetes 面试题](./02-面试指南/06-DevOps与云计算面试/02-Kubernetes面试题.md): K8s架构/调度/存储/网络/RBAC/HPA/部署策略 25道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
 - [CI/CD 面试题](./02-面试指南/06-DevOps与云计算面试/03-CICD面试题.md): CI/CD核心概念/GitHub Actions/GitOps/ArgoCD/Flux/多架构镜像/cosign镜像签名 分层面试题
 - [07-AI-Agent全栈开发面试](./02-面试指南/07-AI-Agent全栈开发面试/README.md): AI Agent全栈开发高频面试题
+- [01-LLM原理面试题](./02-面试指南/07-AI-Agent全栈开发面试/01-LLM原理面试题.md): Transformer/Self-Attention/KV Cache/RoPE/Flash Attention/投机解码/PagedAttention 25道分层面试题
+- [02-Prompt工程面试题](./02-面试指南/07-AI-Agent全栈开发面试/02-Prompt工程面试题.md): CoT/ReAct/ToT/Self-Consistency/Reflexion/LangChain源码/Prompt Injection防护 25道分层面试题
+- [03-工具调用面试题](./02-面试指南/07-AI-Agent全栈开发面试/03-工具调用面试题.md): Function Calling协议/LangChain BaseTool/MCP/LangGraph工具节点/Tool RAG 25道分层面试题
 - [08-LLM微调技术面试题](./02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md): LoRA/QLoRA/RLHF/DPO/GRPO 25道分层面试题
 - [09-多Agent系统面试题](./02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md): AutoGen/GroupChat/多Agent架构/任务调度 28道分层面试题
 - [10-AI-CLI与代码Agent面试题](./02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md): CLI Agent架构/沙箱选型/Prompt Injection/代码执行反馈/浏览器Agent稳定性 28道分层面试题
