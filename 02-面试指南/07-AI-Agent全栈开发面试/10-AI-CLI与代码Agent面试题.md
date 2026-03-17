@@ -19,18 +19,18 @@
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|--------|
-| 1 | 代码生成流程 | 需求理解→规划→代码生成→测试→迭代修复 | ★★★★★ |
-| 2 | 上下文收集 | LSP/AST解析/文件搜索/grep，精准定位相关代码 | ★★★★★ |
-| 3 | 工具设计 | file_read/file_write/terminal_run/search，最小权限原则 | ★★★★☆ |
-| 4 | 沙箱安全 | Docker隔离/文件系统限制/命令白名单/网络隔离 | ★★★★★ |
-| 5 | 迭代修复 (Fix Loop) | 编译错误→读取错误→修改→重试，最大轮次限制 | ★★★★☆ |
-| 6 | Diff 生成与应用 | unified diff/search-replace/全文重写，各有适用场景 | ★★★☆☆ |
-| 7 | Agentic Coding 架构 | Claude Code/Cursor/Copilot-Agent，Plan→Execute→Verify | ★★★★☆ |
-| 8 | 上下文窗口管理 | 大项目=海量文件，摘要/树结构/按需加载 | ★★★★☆ |
-| 9 | 测试驱动修复 | 先跑测试定位失败→修改代码→重跑验证 | ★★★☆☆ |
-| 10 | MCP 集成 | 通过MCP连接外部工具(Git/DB/API)，扩展Agent能力 | ★★★☆☆ |
+| #   | 考点                | 核心要点（一句话）                                     | 出题概率 |
+| --- | ------------------- | ------------------------------------------------------ | -------- |
+| 1   | 代码生成流程        | 需求理解→规划→代码生成→测试→迭代修复                   | ★★★★★    |
+| 2   | 上下文收集          | LSP/AST解析/文件搜索/grep，精准定位相关代码            | ★★★★★    |
+| 3   | 工具设计            | file_read/file_write/terminal_run/search，最小权限原则 | ★★★★☆    |
+| 4   | 沙箱安全            | Docker隔离/文件系统限制/命令白名单/网络隔离            | ★★★★★    |
+| 5   | 迭代修复 (Fix Loop) | 编译错误→读取错误→修改→重试，最大轮次限制              | ★★★★☆    |
+| 6   | Diff 生成与应用     | unified diff/search-replace/全文重写，各有适用场景     | ★★★☆☆    |
+| 7   | Agentic Coding 架构 | Claude Code/Cursor/Copilot-Agent，Plan→Execute→Verify  | ★★★★☆    |
+| 8   | 上下文窗口管理      | 大项目=海量文件，摘要/树结构/按需加载                  | ★★★★☆    |
+| 9   | 测试驱动修复        | 先跑测试定位失败→修改代码→重跑验证                     | ★★★☆☆    |
+| 10  | MCP 集成            | 通过MCP连接外部工具(Git/DB/API)，扩展Agent能力         | ★★★☆☆    |
 
 ---
 
@@ -59,12 +59,12 @@
 <details>
 <summary>参考答案</summary>
 
-| 组件 | 职责 |
-|------|------|
-| **CLI Layer（交互层）** | 解析用户输入、渲染输出（Markdown/流式）、管理 REPL 会话 |
-| **LLM Core（决策核心）** | 调用 LLM API、维护对话历史、处理流式响应、解析 tool_use 请求 |
+| 组件                            | 职责                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------- |
+| **CLI Layer（交互层）**         | 解析用户输入、渲染输出（Markdown/流式）、管理 REPL 会话                    |
+| **LLM Core（决策核心）**        | 调用 LLM API、维护对话历史、处理流式响应、解析 tool_use 请求               |
 | **Tool Registry（工具注册表）** | 注册并管理可用工具（含 JSON Schema 定义），将 LLM 的工具调用路由到对应实现 |
-| **Sandbox（执行沙箱）** | 隔离代码执行环境，防止恶意代码影响宿主系统，提供资源限制（CPU/内存/网络） |
+| **Sandbox（执行沙箱）**         | 隔离代码执行环境，防止恶意代码影响宿主系统，提供资源限制（CPU/内存/网络）  |
 
 </details>
 
@@ -94,12 +94,14 @@ Function Calling 是 LLM 与外部工具交互的标准协议，流程分为四�
 <summary>参考答案</summary>
 
 Gemini CLI 主要特性：
+
 - **超长上下文**：100 万 token，可以将整个代码库放入 context
 - **免费额度**：个人用户每分钟 60 次请求免费
 - **沙箱支持**：Docker 和 gVisor 双选项
 - **流式输出**：基于 SSE 的实时 Markdown 渲染
 
 与 Codex CLI 最大差异：
+
 - **上下文窗口**：Gemini（1M token）远大于 Codex CLI（128K token）
 - **审批模式**：Codex CLI 有更细粒度的 `suggest/auto-edit/full-auto` 三档审批
 - **沙箱机制**：Codex CLI 原生支持 macOS Seatbelt（Apple 系统级沙箱），Gemini CLI 主要依赖 Docker/gVisor
@@ -117,12 +119,12 @@ Gemini CLI 主要特性：
 
 传统 Selenium/Playwright 痛点及 browser-use 解决方式：
 
-| 痛点 | 传统方案 | browser-use 解决方式 |
-|------|----------|---------------------|
-| **需要提前写脚本** | 必须人工编写 XPath/CSS 选择器 | LLM 根据自然语言指令自动决策操作步骤 |
-| **页面变动脆弱** | 一旦 ID/class 变化，脚本立即失效 | 基于文本内容和语义定位，抵抗 DOM 变化 |
-| **无法理解语义** | 脚本只知道"点击这个 ID"，不理解意图 | LLM 理解"登录 → 搜索 → 导出"的业务逻辑 |
-| **视觉内容盲区** | 无法处理验证码、图表中的信息 | 结合截图的视觉模态，LLM 可理解图像 |
+| 痛点               | 传统方案                            | browser-use 解决方式                   |
+| ------------------ | ----------------------------------- | -------------------------------------- |
+| **需要提前写脚本** | 必须人工编写 XPath/CSS 选择器       | LLM 根据自然语言指令自动决策操作步骤   |
+| **页面变动脆弱**   | 一旦 ID/class 变化，脚本立即失效    | 基于文本内容和语义定位，抵抗 DOM 变化  |
+| **无法理解语义**   | 脚本只知道"点击这个 ID"，不理解意图 | LLM 理解"登录 → 搜索 → 导出"的业务逻辑 |
+| **视觉内容盲区**   | 无法处理验证码、图表中的信息        | 结合截图的视觉模态，LLM 可理解图像     |
 
 </details>
 
@@ -140,6 +142,7 @@ ReAct 是将**推理（Reasoning）**和**行动（Acting）**交织执行的 Ag
 3. **Observation**：观察操作后的新状态（截图 + DOM）
 
 在 browser-use 中体现：
+
 - **OBSERVE**：截图 + DOM 提取 → 构建当前页面状态表示
 - **REASON**：LLM 分析"当前在登录页，需填写用户名密码"
 - **ACT**：调用 `click(element_id=2)`、`type(element_id=3, text="password")`
@@ -178,13 +181,13 @@ Agent 在读取网页内容时，会将这段攻击指令误认为是合法的�
 <details>
 <summary>参考答案</summary>
 
-| 对比项 | Docker 沙箱 | 无沙箱 |
-|--------|------------|--------|
-| **隔离性** | 容器级（独立文件系统、进程、网络） | 完全无隔离，直接在宿主进程运行 |
-| **安全性** | 恶意代码被限制在容器内 | 恶意代码可操作宿主所有资源 |
-| **启动开销** | ~5-50ms | 0ms |
-| **资源限制** | 可限制 CPU/内存/网络 | 无限制 |
-| **适用场景** | 执行不可信代码、生产环境 | 仅限完全受控的本地开发环境 |
+| 对比项       | Docker 沙箱                        | 无沙箱                         |
+| ------------ | ---------------------------------- | ------------------------------ |
+| **隔离性**   | 容器级（独立文件系统、进程、网络） | 完全无隔离，直接在宿主进程运行 |
+| **安全性**   | 恶意代码被限制在容器内             | 恶意代码可操作宿主所有资源     |
+| **启动开销** | ~5-50ms                            | 0ms                            |
+| **资源限制** | 可限制 CPU/内存/网络               | 无限制                         |
+| **适用场景** | 执行不可信代码、生产环境           | 仅限完全受控的本地开发环境     |
 
 </details>
 
@@ -205,18 +208,19 @@ Agent 在读取网页内容时，会将这段攻击指令误认为是合法的�
 
 **详细对比：**
 
-| 维度 | Docker | gVisor | WebAssembly |
-|------|--------|--------|-------------|
-| **隔离原理** | Linux namespace + cgroup（共享宿主内核） | 用户态 Sentry 内核拦截所有 syscall | 编译时静态沙箱，能力白名单模型（WASI） |
-| **内核漏洞风险** | 有（共享内核，内核漏洞可逃逸） | 极低（syscall 过 Sentry 审查） | 无（不调用原生 syscall） |
-| **启动延迟** | 5-50ms | 50-200ms | <1ms（函数级启动） |
-| **内存开销** | ~10-50MB/容器 | ~20-100MB/容器 | <1MB/实例 |
-| **语言支持** | 任意（任何可容器化的语言） | 任意（Linux 程序） | 需编译到 WASM（Rust/C/AssemblyScript 成熟） |
-| **文件系统访问** | 挂载 Volume | 挂载 Volume | WASI 虚拟文件系统 |
-| **网络访问** | 可配置完全隔离 | 可配置完全隔离 | 无原生网络（需 host 桥接） |
-| **适用场景** | 通用代码执行，开发环境 | 不可信代码，金融/安全场景 | 插件系统，边缘计算，浏览器内执行 |
+| 维度             | Docker                                   | gVisor                             | WebAssembly                                 |
+| ---------------- | ---------------------------------------- | ---------------------------------- | ------------------------------------------- |
+| **隔离原理**     | Linux namespace + cgroup（共享宿主内核） | 用户态 Sentry 内核拦截所有 syscall | 编译时静态沙箱，能力白名单模型（WASI）      |
+| **内核漏洞风险** | 有（共享内核，内核漏洞可逃逸）           | 极低（syscall 过 Sentry 审查）     | 无（不调用原生 syscall）                    |
+| **启动延迟**     | 5-50ms                                   | 50-200ms                           | <1ms（函数级启动）                          |
+| **内存开销**     | ~10-50MB/容器                            | ~20-100MB/容器                     | <1MB/实例                                   |
+| **语言支持**     | 任意（任何可容器化的语言）               | 任意（Linux 程序）                 | 需编译到 WASM（Rust/C/AssemblyScript 成熟） |
+| **文件系统访问** | 挂载 Volume                              | 挂载 Volume                        | WASI 虚拟文件系统                           |
+| **网络访问**     | 可配置完全隔离                           | 可配置完全隔离                     | 无原生网络（需 host 桥接）                  |
+| **适用场景**     | 通用代码执行，开发环境                   | 不可信代码，金融/安全场景          | 插件系统，边缘计算，浏览器内执行            |
 
 **选型建议**：
+
 - 开发环境 + 受信用户 → Docker
 - 用户上传任意代码（OJ 系统、Serverless）→ gVisor
 - 浏览器内执行 / 插件系统 → WebAssembly
@@ -233,6 +237,7 @@ Agent 在读取网页内容时，会将这段攻击指令误认为是合法的�
 **基础反馈方式**：将工具执行结果以 `{"role": "tool", "tool_call_id": "...", "content": "..."}` 格式插入对话历史，LLM 在下一轮推理时会读取这些结果。
 
 **关键信息应包含**：
+
 - `stdout`：标准输出
 - `stderr`：错误信息（对调试至关重要）
 - `exit_code`：退出码（0 = 成功，非 0 = 失败）
@@ -256,11 +261,13 @@ Agent 在读取网页内容时，会将这段攻击指令误认为是合法的�
 <summary>参考答案</summary>
 
 **DOM 感知优势**：
+
 - 精确的元素定位（元素 ID、属性）
 - 低 token 消耗（结构化文本远小于图片 token）
 - 表单填写、链接导航等操作天然精准
 
 **视觉感知优势**：
+
 - 能理解图表、图形验证码、PDF 渲染内容
 - 能感知页面整体布局和视觉层级（理解哪个按钮是主操作）
 - 处理动态 Canvas / WebGL 等 DOM 无法表达的内容
@@ -281,11 +288,11 @@ Agent 在读取网页内容时，会将这段攻击指令误认为是合法的�
 <details>
 <summary>参考答案</summary>
 
-| 模式 | 行为 | 适用场景 | 风险 |
-|------|------|----------|------|
-| **suggest** | 只提出修改建议，所有操作需人工一一确认 | 代码审查、学习新技术、生产环境修改 | 最低 |
-| **auto-edit** | 自动批准文件读写，Shell 命令需确认 | 日常开发、重构任务 | 中等（文件会被自动修改） |
-| **full-auto** | 所有操作全部自动执行，无需确认 | CI/CD 流水线、完全受控的临时环境 | 最高（危险命令会自动执行） |
+| 模式          | 行为                                   | 适用场景                           | 风险                       |
+| ------------- | -------------------------------------- | ---------------------------------- | -------------------------- |
+| **suggest**   | 只提出修改建议，所有操作需人工一一确认 | 代码审查、学习新技术、生产环境修改 | 最低                       |
+| **auto-edit** | 自动批准文件读写，Shell 命令需确认     | 日常开发、重构任务                 | 中等（文件会被自动修改）   |
+| **full-auto** | 所有操作全部自动执行，无需确认         | CI/CD 流水线、完全受控的临时环境   | 最高（危险命令会自动执行） |
 
 **最佳实践**：日常开发使用 `auto-edit`；生产环境操作使用 `suggest`；`full-auto` 必须配合沙箱使用，且工作目录应为临时容器内的隔离目录。
 
@@ -317,6 +324,7 @@ Agent 在读取网页内容时，会将这段攻击指令误认为是合法的�
 ```
 
 **安全提升**：
+
 1. **攻击面缩减**：Sentry 只向宿主内核暴露 ~20 个 syscall，而非 Linux 的 ~350 个
 2. **隔离层增加**：即使 Sentry 自身有漏洞，逃逸也只能到达受限的 Gofer 进程，而非直接到宿主
 3. **内存安全**：Sentry 用 Go 编写，天然免疫缓冲区溢出类内核漏洞
@@ -342,17 +350,17 @@ def safe_read_file(user_provided_path: str, workspace: str) -> str:
     full_path = os.path.realpath(
         os.path.join(workspace, user_provided_path)
     )
-    
+
     # 2. 校验路径在允许的工作目录内
     workspace_real = os.path.realpath(workspace)
     if not full_path.startswith(workspace_real + os.sep):
         raise SecurityError(f"路径越界：{user_provided_path}")
-    
+
     # 3. 检查文件扩展名白名单
     ALLOWED_EXTENSIONS = {'.py', '.txt', '.json', '.md', '.yaml'}
     if os.path.splitext(full_path)[1] not in ALLOWED_EXTENSIONS:
         raise SecurityError(f"不允许的文件类型")
-    
+
     with open(full_path) as f:
         return f.read()
 ```
@@ -369,6 +377,7 @@ def safe_read_file(user_provided_path: str, workspace: str) -> str:
 <summary>参考答案</summary>
 
 **不设置的后果**：
+
 - **无限循环**：Agent 遇到无法解决的任务时会反复尝试，消耗大量 API token（成本问题）
 - **API 费用失控**：每次 LLM 调用都产生费用，无限循环可产生数百美元账单
 - **资源耗尽**：长时间运行的沙箱容器占用系统资源
@@ -380,13 +389,13 @@ class AgentLoop:
     def __init__(self, max_iterations: int = 20):
         self.max_iterations = max_iterations
         self.iteration_count = 0
-    
+
     def should_continue(self) -> bool:
         self.iteration_count += 1
         if self.iteration_count > self.max_iterations:
             return False
         return True
-    
+
     # 高级：检测重复动作模式
     def detect_loop(self, recent_actions: list) -> bool:
         if len(recent_actions) >= 4:
@@ -409,7 +418,7 @@ class AgentLoop:
 
 OpenAI API 使用 `content` 数组支持多模态输入：
 
-```python
+````python
 messages = [
     {
         "role": "user",
@@ -435,7 +444,7 @@ messages = [
         ]
     }
 ]
-```
+````
 
 **注意**：`detail: "high"` 会对大图进行分块处理（每块 512x512），每块约 170 token，高分辨率图片可能消耗 1000+ token。
 
@@ -517,6 +526,7 @@ Agent 抓取网页时，网页中含有不可见的白色文字或隐藏元素�
 ```
 
 **高可用架构要点**：
+
 - Agent 无状态化，状态全部外化到 Redis
 - 任务队列（Celery/BullMQ）解耦请求与执行
 - 健康检查 + 自动重启（K8s liveness probe）
@@ -571,17 +581,18 @@ result = await page.evaluate("""
 <summary>参考答案</summary>
 
 **必要性**：Agent 每执行一步，就往 `messages` 列表追加一条对话记录（包含工具调用和结果）。对于复杂任务（30+ 步），context 可能轻易超过 128K token，导致：
+
 - API 请求报错（超出 max tokens）
 - Attention 稀释（LLM 对早期关键信息"遗忘"）
 - 推理成本线性上升
 
 **三种压缩策略：**
 
-| 策略 | 原理 | 优势 | 劣势 |
-|------|------|------|------|
-| **滑动窗口** | 只保留最近 N 条消息 | 实现简单，延迟低 | 丢失早期重要信息（如初始任务描述） |
-| **摘要压缩** | 每 K 步调用 LLM 将历史对话摘要为 1-2 段文字 | 保留语义信息，压缩率高 | 额外 LLM 调用开销；摘要可能丢失细节 |
-| **分层保留** | 系统指令永久保留；用户意图保留；工具调用结果按相关性保留 | 最智能，关键信息不丢失 | 实现复杂，需要相关性评分模型 |
+| 策略         | 原理                                                     | 优势                   | 劣势                                |
+| ------------ | -------------------------------------------------------- | ---------------------- | ----------------------------------- |
+| **滑动窗口** | 只保留最近 N 条消息                                      | 实现简单，延迟低       | 丢失早期重要信息（如初始任务描述）  |
+| **摘要压缩** | 每 K 步调用 LLM 将历史对话摘要为 1-2 段文字              | 保留语义信息，压缩率高 | 额外 LLM 调用开销；摘要可能丢失细节 |
+| **分层保留** | 系统指令永久保留；用户意图保留；工具调用结果按相关性保留 | 最智能，关键信息不丢失 | 实现复杂，需要相关性评分模型        |
 
 **推荐**：结合"滑动窗口 + 摘要"：当 context 超过阈值时，将最旧的 K 条对话摘要为一段，替换原始记录，实现平滑压缩。
 
@@ -631,6 +642,7 @@ Layer 6: 审计与监控层
 <summary>参考答案</summary>
 
 **安全威胁分析**：学生代码是完全不可信的，可能包含：
+
 - 无限循环（DoS 攻击）
 - Fork 炸弹（`import os; os.fork()` 无限复制进程）
 - 网络外联（窃取其他学生答案或服务器信息）
@@ -699,6 +711,7 @@ docker run \
 **排查步骤**：
 
 **Step 1：确定卡住的具体位置**
+
 ```python
 # 开启截图模式，记录每步状态
 agent = Agent(
@@ -707,11 +720,13 @@ agent = Agent(
     verbose=True
 )
 ```
+
 查看截图确定是：登录页？商品列表页？购物车？
 
 **Step 2：分析"加载中"原因**
 
 常见原因树：
+
 ```
 加载中卡住
 ├── 网络原因
@@ -761,6 +776,7 @@ await asyncio.sleep(random.uniform(1.0, 3.0))
 **核心改造点：**
 
 **① 无状态化 Agent**
+
 ```
 原来：Agent 实例在内存中保存对话历史
 改造：对话历史序列化到 Redis（key = session_id）
@@ -768,6 +784,7 @@ await asyncio.sleep(random.uniform(1.0, 3.0))
 ```
 
 **② 任务队列化**
+
 ```
 原来：HTTP 请求直接触发 Agent 执行（同步，超时风险）
 改造：请求 → 任务队列（Celery + Redis）→ Worker 异步执行
@@ -775,6 +792,7 @@ await asyncio.sleep(random.uniform(1.0, 3.0))
 ```
 
 **③ 沙箱容器池**
+
 ```
 原来：每次请求创建新容器（启动慢）
 改造：预热容器池（预创建 N 个 idle 容器）
@@ -782,6 +800,7 @@ await asyncio.sleep(random.uniform(1.0, 3.0))
 ```
 
 **④ 多租户隔离**
+
 ```
 - 每个用户独立的 workspace 目录（UUID 命名）
 - 容器使用独立网络命名空间
@@ -789,6 +808,7 @@ await asyncio.sleep(random.uniform(1.0, 3.0))
 ```
 
 **⑤ 可观测性**
+
 ```
 - 每个 Agent 执行链路注入 trace_id（OpenTelemetry）
 - Prometheus 监控：活跃容器数、任务队列深度、P99 延迟
@@ -863,23 +883,23 @@ def smart_truncate_tool_result(
 ) -> str:
     """
     智能截断工具执行结果，优先保留最有价值的部分。
-    
+
     策略：
     - run_code: 优先保留 stderr（错误信息），截断 stdout
     - read_file: 保留文件头和尾（通常是类定义和主逻辑）
     - 其他: 直接截断
     """
-    
+
     # run_code 特殊处理
     if tool_name == "run_code" and isinstance(result, dict):
         stderr = result.get("stderr", "")
         stdout = result.get("stdout", "")
         exit_code = result.get("exit_code", 0)
-        
+
         # 优先保留完整 stderr（调试关键信息）
         stderr_budget = min(len(stderr), max_chars // 2)
         stdout_budget = max_chars - stderr_budget - 100  # 100 for metadata
-        
+
         parts = [f"exit_code: {exit_code}"]
         if stderr:
             parts.append(f"stderr:\n{stderr[:stderr_budget]}")
@@ -889,9 +909,9 @@ def smart_truncate_tool_result(
             parts.append(f"stdout:\n{stdout[:stdout_budget]}")
             if len(stdout) > stdout_budget:
                 parts.append(f"[stdout 已截断，共 {len(stdout)} 字符]")
-        
+
         return "\n".join(parts)
-    
+
     # read_file 特殊处理：保留文件头部和尾部
     if tool_name == "read_file" and isinstance(result, str):
         if len(result) <= max_chars:
@@ -904,7 +924,7 @@ def smart_truncate_tool_result(
             + f"\n\n... [省略 {omitted} 字符] ...\n\n"
             + result[-tail_size:]
         )
-    
+
     # 通用截断
     text = str(result)
     if len(text) <= max_chars:
@@ -931,12 +951,12 @@ def smart_truncate_tool_result(
 
 **基于风险的动态权衡策略**：
 
-| 操作风险 | 自主性设置 | 示例 |
-|----------|-----------|------|
-| **只读操作** | 完全自动 | 读文件、搜索代码、运行测试 |
-| **可逆写操作** | 自动 + 审计 | 写文件（可 git 回滚） |
-| **不可逆操作** | 需人工确认 | 删除文件、外部 API 调用 |
-| **高影响操作** | 必须人工确认 | 生产环境部署、发送邮件 |
+| 操作风险       | 自主性设置   | 示例                       |
+| -------------- | ------------ | -------------------------- |
+| **只读操作**   | 完全自动     | 读文件、搜索代码、运行测试 |
+| **可逆写操作** | 自动 + 审计  | 写文件（可 git 回滚）      |
+| **不可逆操作** | 需人工确认   | 删除文件、外部 API 调用    |
+| **高影响操作** | 必须人工确认 | 生产环境部署、发送邮件     |
 
 **工程实现**：
 
@@ -952,16 +972,16 @@ RISK_LEVELS = {
 
 async def execute_with_approval(tool_name, args, approval_mode):
     risk = RISK_LEVELS.get(tool_name, "high")
-    
+
     if approval_mode == "full-auto" or risk == "low":
         return await execute_tool(tool_name, args)
-    
+
     if risk in ("high", "critical") or approval_mode == "suggest":
         # 暂停，展示操作描述，等待用户确认
         confirmed = await ask_user_confirmation(tool_name, args)
         if not confirmed:
             return "用户拒绝执行此操作"
-    
+
     return await execute_tool(tool_name, args)
 ```
 

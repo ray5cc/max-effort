@@ -3,9 +3,11 @@
 > MongoDB 是最有代表性的文档数据库之一。理解它，不只是记住 BSON、Replica Set、Sharding 这些名词，而是要真正看懂：为什么文档模型会在某些场景比关系模型更顺手，MongoDB 如何用 WiredTiger、oplog、chunk、查询规划器和事务能力，把“灵活”变成一套可落地的工程系统。
 
 ## 相关链接
+
 - 对应面试题：[MongoDB 面试题](../../../02-面试指南/03-数据库面试/05-MongoDB面试题.md)
 
 ## 目录
+
 1. [为什么需要文档数据库](#1-为什么需要文档数据库)
 2. [文档模型与 BSON](#2-文档模型与-bson)
 3. [集合、索引与查询入口](#3-集合索引与查询入口)
@@ -79,14 +81,14 @@ MongoDB 不是“关系数据库的完全替代品”。
 
 ### 1.4 一个极简对比
 
-| 维度 | MongoDB | PostgreSQL |
-|------|---------|------------|
-| 数据模型 | 文档 | 关系模型 |
-| Schema | 可选、可渐进演进 | 强结构、强约束 |
-| Join | 支持 `$lookup`，但不是核心优势 | 强项 |
-| 水平扩展 | 原生分片 | 可做，但复杂度更高 |
-| OLTP 事务 | 支持，但有成本 | 成熟强项 |
-| 半结构化数据 | 很强 | 通过 JSONB 也很强 |
+| 维度         | MongoDB                        | PostgreSQL         |
+| ------------ | ------------------------------ | ------------------ |
+| 数据模型     | 文档                           | 关系模型           |
+| Schema       | 可选、可渐进演进               | 强结构、强约束     |
+| Join         | 支持 `$lookup`，但不是核心优势 | 强项               |
+| 水平扩展     | 原生分片                       | 可做，但复杂度更高 |
+| OLTP 事务    | 支持，但有成本                 | 成熟强项           |
+| 半结构化数据 | 很强                           | 通过 JSONB 也很强  |
 
 工程上更准确的理解是：
 
@@ -141,14 +143,14 @@ MongoDB 的基本单位不是“行”，而是“文档”。文档通常以类
 
 BSON 是 Binary JSON，不是单纯把 JSON 文本压缩一下，而是二进制编码格式，支持更多数据类型。
 
-| 能力 | JSON | BSON |
-|------|------|------|
-| 字符串 | 支持 | 支持 |
-| 数字 | 不区分 int/long/double | 明确区分 |
-| 日期 | 无原生日期类型 | 有原生 Date |
-| 二进制 | 不友好 | 有 Binary |
-| ObjectId | 无 | 原生支持 |
-| Decimal128 | 无 | 支持 |
+| 能力       | JSON                   | BSON        |
+| ---------- | ---------------------- | ----------- |
+| 字符串     | 支持                   | 支持        |
+| 数字       | 不区分 int/long/double | 明确区分    |
+| 日期       | 无原生日期类型         | 有原生 Date |
+| 二进制     | 不友好                 | 有 Binary   |
+| ObjectId   | 无                     | 原生支持    |
+| Decimal128 | 无                     | 支持        |
 
 类比一下：
 
@@ -261,18 +263,18 @@ db.products.insertMany([
     category: "phone",
     specs: {
       storage: "256GB",
-      color: "black"
-    }
+      color: "black",
+    },
   },
   {
     name: "Running Shoes",
     category: "shoes",
     specs: {
       sizeRange: [40, 41, 42, 43],
-      material: "mesh"
-    }
-  }
-])
+      material: "mesh",
+    },
+  },
+]);
 ```
 
 这类模型对商品中心非常自然。
@@ -298,18 +300,18 @@ db.createCollection("users", {
       properties: {
         email: {
           bsonType: "string",
-          pattern: "^.+@.+$"
+          pattern: "^.+@.+$",
         },
         status: {
-          enum: ["ACTIVE", "LOCKED", "DELETED"]
+          enum: ["ACTIVE", "LOCKED", "DELETED"],
         },
         createdAt: {
-          bsonType: "date"
-        }
-      }
-    }
-  }
-})
+          bsonType: "date",
+        },
+      },
+    },
+  },
+});
 ```
 
 ### 3.3 索引是 MongoDB 性能的分水岭
@@ -338,7 +340,7 @@ MongoDB 常见索引包括：
 ### 3.5 单字段索引
 
 ```javascript
-db.orders.createIndex({ userId: 1 })
+db.orders.createIndex({ userId: 1 });
 ```
 
 适合：
@@ -349,7 +351,7 @@ db.orders.createIndex({ userId: 1 })
 ### 3.6 复合索引与前缀原则
 
 ```javascript
-db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 })
+db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 });
 ```
 
 这个索引可以很好支持：
@@ -370,7 +372,7 @@ db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 })
 当被索引字段是数组时，MongoDB 会自动把它变成 multikey 索引。
 
 ```javascript
-db.articles.createIndex({ tags: 1 })
+db.articles.createIndex({ tags: 1 });
 ```
 
 文档：
@@ -392,7 +394,7 @@ db.articles.createIndex({ tags: 1 })
 ### 3.8 Text Index
 
 ```javascript
-db.articles.createIndex({ title: "text", content: "text" })
+db.articles.createIndex({ title: "text", content: "text" });
 ```
 
 它适合站内轻量全文检索，但不适合替代 Elasticsearch 做复杂搜索。
@@ -400,7 +402,7 @@ db.articles.createIndex({ title: "text", content: "text" })
 ### 3.9 TTL 索引
 
 ```javascript
-db.sessions.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 })
+db.sessions.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 });
 ```
 
 典型用途：
@@ -418,12 +420,12 @@ db.sessions.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 })
 示例：
 
 ```javascript
-db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 })
+db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 });
 
 db.orders.find(
   { userId: 1001, status: "PAID" },
-  { _id: 0, userId: 1, status: 1, createdAt: 1 }
-)
+  { _id: 0, userId: 1, status: 1, createdAt: 1 },
+);
 ```
 
 如果规划器能完全从索引返回结果，这就是 covered query。
@@ -548,8 +550,8 @@ db.orders.insertOne({
   orderNo: "ORD-1",
   userId: 1001,
   status: "NEW",
-  createdAt: new Date()
-})
+  createdAt: new Date(),
+});
 ```
 
 高层流程可以理解为：
@@ -564,7 +566,10 @@ db.orders.insertOne({
 ### 5.2 查询流程概览
 
 ```javascript
-db.orders.find({ userId: 1001, status: "PAID" }).sort({ createdAt: -1 }).limit(20)
+db.orders
+  .find({ userId: 1001, status: "PAID" })
+  .sort({ createdAt: -1 })
+  .limit(20);
 ```
 
 典型步骤：
@@ -587,9 +592,10 @@ MongoDB 查询规划器会考虑：
 你可以通过 `explain()` 查看：
 
 ```javascript
-db.orders.find({ userId: 1001, status: "PAID" })
+db.orders
+  .find({ userId: 1001, status: "PAID" })
   .sort({ createdAt: -1 })
-  .explain("executionStats")
+  .explain("executionStats");
 ```
 
 重点看：
@@ -614,15 +620,16 @@ db.orders.find({ userId: 1001, status: "PAID" })
 示例查询：
 
 ```javascript
-db.orders.find({ userId: 1001, status: "PAID" })
+db.orders
+  .find({ userId: 1001, status: "PAID" })
   .sort({ createdAt: -1 })
-  .limit(20)
+  .limit(20);
 ```
 
 理想索引往往是：
 
 ```javascript
-db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 })
+db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 });
 ```
 
 原因：
@@ -660,8 +667,8 @@ MongoDB 绝大多数高性能业务查询，最终都落在少量精心设计的
 ```javascript
 db.users.createIndex(
   { email: 1 },
-  { unique: true, partialFilterExpression: { deleted: { $ne: true } } }
-)
+  { unique: true, partialFilterExpression: { deleted: { $ne: true } } },
+);
 ```
 
 这比简单 unique 更适合软删除模型。
@@ -679,7 +686,7 @@ MongoDB 6.x 之后逐步强化 Slot-Based Execution（SBE）引擎，到了 7/8 
 ### 5.8 一个慢查询示例
 
 ```javascript
-db.orders.find({ status: "PAID" }).sort({ createdAt: -1 }).limit(20)
+db.orders.find({ status: "PAID" }).sort({ createdAt: -1 }).limit(20);
 ```
 
 如果集合有几亿数据，而 `status = PAID` 占比 80%，那么：
@@ -726,8 +733,8 @@ Secondary 通过持续拉取并应用 oplog，实现复制。
 ```javascript
 db.orders.insertOne(
   { orderNo: "ORD-2", status: "PAID" },
-  { writeConcern: { w: "majority" } }
-)
+  { writeConcern: { w: "majority" } },
+);
 ```
 
 `w: majority` 表示多数节点确认后才算成功，这比 `w:1` 更安全，但延迟更高。
@@ -873,7 +880,9 @@ Balancer 是必要的，但它不是免费的：
 用时间递增字段作为 range shard key，例如：
 
 ```javascript
-{ createdAt: 1 }
+{
+  createdAt: 1;
+}
 ```
 
 结果：
@@ -938,12 +947,12 @@ MongoDB 不是“完全不要事务”，而是事务能力的使用方式与关
 db.payments.insertOne(
   {
     paymentNo: "P-001",
-    amount: NumberDecimal("99.99")
+    amount: NumberDecimal("99.99"),
   },
   {
-    writeConcern: { w: "majority", j: true }
-  }
-)
+    writeConcern: { w: "majority", j: true },
+  },
+);
 ```
 
 ### 8.3 Read Concern 与 Write Concern 的组合
@@ -967,22 +976,22 @@ MongoDB 支持多文档事务，也支持分片集群上的分布式事务。
 示例：
 
 ```javascript
-const session = db.getMongo().startSession()
-session.startTransaction()
+const session = db.getMongo().startSession();
+session.startTransaction();
 
 try {
-  const orders = session.getDatabase("shop").orders
-  const inventory = session.getDatabase("shop").inventory
+  const orders = session.getDatabase("shop").orders;
+  const inventory = session.getDatabase("shop").inventory;
 
-  orders.insertOne({ orderNo: "ORD-3", sku: "sku-1", qty: 1 })
-  inventory.updateOne({ sku: "sku-1" }, { $inc: { stock: -1 } })
+  orders.insertOne({ orderNo: "ORD-3", sku: "sku-1", qty: 1 });
+  inventory.updateOne({ sku: "sku-1" }, { $inc: { stock: -1 } });
 
-  session.commitTransaction()
+  session.commitTransaction();
 } catch (e) {
-  session.abortTransaction()
-  throw e
+  session.abortTransaction();
+  throw e;
 } finally {
-  session.endSession()
+  session.endSession();
 }
 ```
 
@@ -1011,8 +1020,8 @@ MongoDB 的一个重要优势是：
 ```javascript
 db.accounts.updateOne(
   { _id: 1001, balance: { $gte: 100 } },
-  { $inc: { balance: -100 } }
-)
+  { $inc: { balance: -100 } },
+);
 ```
 
 这类“读条件 + 原地更新”在单文档里非常有价值。
@@ -1160,21 +1169,21 @@ db.orders.aggregate([
       status: "PAID",
       createdAt: {
         $gte: ISODate("2026-03-01T00:00:00Z"),
-        $lt: ISODate("2026-04-01T00:00:00Z")
-      }
-    }
+        $lt: ISODate("2026-04-01T00:00:00Z"),
+      },
+    },
   },
   { $unwind: "$items" },
   {
     $group: {
       _id: "$items.sku",
       totalQty: { $sum: "$items.qty" },
-      totalAmount: { $sum: { $multiply: ["$items.qty", "$items.price"] } }
-    }
+      totalAmount: { $sum: { $multiply: ["$items.qty", "$items.price"] } },
+    },
   },
   { $sort: { totalAmount: -1 } },
-  { $limit: 10 }
-])
+  { $limit: 10 },
+]);
 ```
 
 ### 10.4 `$lookup` 是 join，但别把它当成关系库 join 的平替
@@ -1316,10 +1325,21 @@ MongoDB 调优，核心不是背参数，而是先判断瓶颈在哪一层。
 ### 12.4 深分页问题
 
 ```javascript
-db.orders.find({ userId: 1001 }).sort({ createdAt: -1 }).skip(100000).limit(20)
+db.orders.find({ userId: 1001 }).sort({ createdAt: -1 }).skip(100000).limit(20);
 ```
 
 这是典型坏味道。
+
+更好的方式：
+
+```javascript
+db.orders
+  .find({
+    userId: 1001,
+    createdAt: { $lt: ISODate("2026-03-17T09:00:00Z") },
+  })
+  .sort({ createdAt: -1 })
+  .limit(20);
 
 更好的方式：
 

@@ -3,24 +3,25 @@
 > 基于 OpenJDK HotSpot 源码的分层面试题，涵盖 JVM 内存模型、垃圾收集器、类加载机制、并发编程底层原理与 Java 内存模型（JMM）。
 
 ## 相关链接
+
 - 对应技术资料：[Java 核心与 JVM](../../01-技术资料/02-后端/01-Java核心与JVM.md)
 
 ## 🔥 高频考点速记
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|----------|
-| 1 | JVM 内存模型 | 堆(Young/Old分区) + 方法区(Metaspace) + 栈 + PC | ★★★★★ |
-| 2 | GC 算法与收集器 | G1(Region化+暂停目标) 是默认，ZGC(<1ms) 是未来 | ★★★★★ |
-| 3 | synchronized 锁升级 | 无锁→偏向锁→轻量级锁(CAS)→重量级锁(Monitor) | ★★★★★ |
-| 4 | volatile 与 JMM | 可见性+有序性(内存屏障)，不保证原子性 | ★★★★☆ |
-| 5 | HashMap 原理 | 数组+链表+红黑树，扩容 rehash，线程不安全 | ★★★★★ |
-| 6 | 类加载机制 | 双亲委派：Bootstrap→Extension→App，确保类唯一性 | ★★★★☆ |
-| 7 | AQS 框架 | state + CLH 队列，ReentrantLock/Semaphore 的基石 | ★★★☆☆ |
-| 8 | 线程池 | 核心线程→队列→最大线程→拒绝策略，生产禁用 Executors | ★★★★☆ |
-| 9 | ConcurrentHashMap | JDK 8: CAS+synchronized 分段锁，JDK 7: Segment 锁 | ★★★★☆ |
-| 10 | OOM 排查 | jmap dump → MAT/VisualVM 分析 → 大对象/泄漏定位 | ★★★★☆ |
+| #   | 考点                | 核心要点（一句话）                                  | 出题概率 |
+| --- | ------------------- | --------------------------------------------------- | -------- |
+| 1   | JVM 内存模型        | 堆(Young/Old分区) + 方法区(Metaspace) + 栈 + PC     | ★★★★★    |
+| 2   | GC 算法与收集器     | G1(Region化+暂停目标) 是默认，ZGC(<1ms) 是未来      | ★★★★★    |
+| 3   | synchronized 锁升级 | 无锁→偏向锁→轻量级锁(CAS)→重量级锁(Monitor)         | ★★★★★    |
+| 4   | volatile 与 JMM     | 可见性+有序性(内存屏障)，不保证原子性               | ★★★★☆    |
+| 5   | HashMap 原理        | 数组+链表+红黑树，扩容 rehash，线程不安全           | ★★★★★    |
+| 6   | 类加载机制          | 双亲委派：Bootstrap→Extension→App，确保类唯一性     | ★★★★☆    |
+| 7   | AQS 框架            | state + CLH 队列，ReentrantLock/Semaphore 的基石    | ★★★☆☆    |
+| 8   | 线程池              | 核心线程→队列→最大线程→拒绝策略，生产禁用 Executors | ★★★★☆    |
+| 9   | ConcurrentHashMap   | JDK 8: CAS+synchronized 分段锁，JDK 7: Segment 锁   | ★★★★☆    |
+| 10  | OOM 排查            | jmap dump → MAT/VisualVM 分析 → 大对象/泄漏定位     | ★★★★☆    |
 
 ---
 
@@ -35,10 +36,12 @@
 **参考答案：**
 
 **线程共享（进程级别）：**
+
 - **堆（Heap）**：存储所有对象实例和数组，GC 的主要工作区域
 - **方法区（Method Area）/ Metaspace（JDK 8+）**：存储类信息、运行时常量池、静态变量、JIT 编译代码
 
 **线程私有（每线程独立）：**
+
 - **虚拟机栈（VM Stack）**：每个方法调用创建一个栈帧（局部变量表、操作数栈、动态链接、返回地址）
 - **本地方法栈（Native Method Stack）**：执行 native 方法使用
 - **程序计数器（Program Counter）**：当前执行的字节码行号，唯一不会 OOM 的区域（native 方法为 undefined）
@@ -69,14 +72,15 @@
 
 **参考答案：**
 
-| | Minor GC | Full GC |
-|--|----------|---------|
-| 回收区域 | Young Generation（Eden + Survivor）| 整个堆 + Metaspace |
-| 触发条件 | Eden 区空间不足 | 多种情况（见下）|
-| STW 时间 | 短（Young Gen 通常较小）| 长 |
-| 频率 | 频繁 | 少 |
+|          | Minor GC                            | Full GC            |
+| -------- | ----------------------------------- | ------------------ |
+| 回收区域 | Young Generation（Eden + Survivor） | 整个堆 + Metaspace |
+| 触发条件 | Eden 区空间不足                     | 多种情况（见下）   |
+| STW 时间 | 短（Young Gen 通常较小）            | 长                 |
+| 频率     | 频繁                                | 少                 |
 
 **触发 Full GC 的常见原因：**
+
 1. 老年代空间不足（对象晋升失败 / 大对象分配失败）
 2. Minor GC 后晋升到老年代的对象大于老年代剩余空间（空间担保失败）
 3. 显式调用 `System.gc()`（建议 `-XX:+DisableExplicitGC`）
@@ -92,6 +96,7 @@
 GC Roots 是**可达性分析**的起始点——从 GC Roots 出发，能被引用到的对象都是存活对象，不可达的对象是垃圾。
 
 **常见 GC Roots：**
+
 1. 虚拟机栈中的局部变量（各线程的栈帧中正在使用的对象引用）
 2. 方法区中的静态变量引用的对象
 3. 方法区中常量引用的对象（如字符串常量池中的引用）
@@ -121,6 +126,7 @@ GC Roots 是**可达性分析**的起始点——从 GC Roots 出发，能被引
   ```
 
 **适用场景：**
+
 - 状态标志（`volatile boolean stopped = false`）
 - DCL（双重检查锁）中的 `volatile instance`
 - 轻量级的读多写少场景（写操作本身已是原子的，如 volatile long 赋值）
@@ -131,17 +137,18 @@ GC Roots 是**可达性分析**的起始点——从 GC Roots 出发，能被引
 
 **参考答案：**
 
-| 特性 | synchronized | ReentrantLock |
-|------|-------------|---------------|
-| 实现层次 | JVM 字节码（monitorenter/monitorexit）| Java API（AQS）|
-| 锁释放 | 自动（代码块结束/异常时）| 必须手动 `unlock()`（finally 块）|
-| 可中断 | 不支持 | `lockInterruptibly()` 支持 |
-| 超时尝试 | 不支持 | `tryLock(time, unit)` 支持 |
-| 公平性 | 非公平（性能更好）| 可选公平/非公平 |
-| 多 Condition | `wait()/notify()`（一个等待队列）| `newCondition()` 可创建多个等待队列 |
-| 性能（JDK 8+）| 相当（锁升级优化）| 相当 |
+| 特性           | synchronized                           | ReentrantLock                       |
+| -------------- | -------------------------------------- | ----------------------------------- |
+| 实现层次       | JVM 字节码（monitorenter/monitorexit） | Java API（AQS）                     |
+| 锁释放         | 自动（代码块结束/异常时）              | 必须手动 `unlock()`（finally 块）   |
+| 可中断         | 不支持                                 | `lockInterruptibly()` 支持          |
+| 超时尝试       | 不支持                                 | `tryLock(time, unit)` 支持          |
+| 公平性         | 非公平（性能更好）                     | 可选公平/非公平                     |
+| 多 Condition   | `wait()/notify()`（一个等待队列）      | `newCondition()` 可创建多个等待队列 |
+| 性能（JDK 8+） | 相当（锁升级优化）                     | 相当                                |
 
 **选择建议：**
+
 - 简单场景：优先 `synchronized`（代码简洁，不会忘记 unlock）
 - 需要超时、可中断、公平锁、多个 Condition：选 `ReentrantLock`
 
@@ -249,6 +256,7 @@ if (c == null) {
 ```
 
 **设计目的：**
+
 1. **防止核心类被替换**：`java.lang.Object` 始终由 Bootstrap ClassLoader 加载，自定义的同名类无法替代
 2. **类的唯一性**：同一路径的类只被加载一次（同一类加载器），避免重复加载
 
@@ -325,6 +333,7 @@ instance = new Singleton();
 G1 使用写屏障维护 RSet，每次写操作都有额外开销。ZGC 只使用读屏障（`load barrier`），每次读取对象引用时 JIT 插入一个轻量检查，代价更小，且能实现"自愈"（读到过期指针时自动更新）。
 
 **3. 完全并发的 Mark 和 Relocate：**
+
 - G1 的 Remark 和对象复制（Evacuation）需要 STW
 - ZGC 几乎所有阶段都是并发的，只有 3 个极短暂的 STW 阶段（各 < 1ms）：初始标记、再标记、初始重定位
 
@@ -353,6 +362,7 @@ public class Counter {
 **并发问题分析：**
 
 `count++` 不是原子操作，字节码层面分三步：
+
 1. `getfield`（读取 count 当前值到操作数栈）
 2. `iconst_1` + `iadd`（加 1）
 3. `putfield`（写回）
@@ -392,6 +402,7 @@ public int get() { return count; } // volatile 保证可见性
 **Concurrent Mode Failure 触发条件：**
 
 CMS 并发清除阶段（不 STW，与应用线程并行）期间，应用线程仍在运行，可能：
+
 1. 将新对象晋升到老年代（Young GC 触发）
 2. 大对象直接在老年代分配
 
@@ -426,7 +437,7 @@ CMS 并发清除阶段（不 STW，与应用线程并行）期间，应用线程
 
 ```
 无锁:   [hashCode(31)|0|分代年龄(4)|偏向位(0)|01]
-偏向锁: [线程ID(54)|Epoch(2)|年龄(4)|偏向位(1)|01]  
+偏向锁: [线程ID(54)|Epoch(2)|年龄(4)|偏向位(1)|01]
 轻量级: [Lock Record 指针(62)                   |00]
 重量级: [Monitor 指针(62)                        |10]
 ```
@@ -434,20 +445,24 @@ CMS 并发清除阶段（不 STW，与应用线程并行）期间，应用线程
 **升级过程：**
 
 **无锁 → 偏向锁：**
+
 - JVM 启动 4 秒后（`BiasedLockingStartupDelay`）开始偏向
 - 第一个线程获取锁时，CAS 将线程 ID 写入 Mark Word（获得偏向）
 - 该线程再次进入：只需比较 Mark Word 中的线程 ID，无 CAS（最快路径）
 
 **偏向锁 → 轻量级锁（撤销偏向）：**
+
 - 另一个线程尝试获取同一偏向锁 → 需要 STW（安全点）撤销偏向
 - 撤销时：原持有线程仍在使用 → 升级为轻量级锁；否则设为无锁
 
 **轻量级锁：**
+
 - 线程在栈帧创建 Lock Record，CAS 将 Mark Word 中的内容替换为 Lock Record 指针
 - 成功 → 获得轻量级锁；失败（竞争）→ 自旋等待
 - 自旋若干次（自适应自旋，默认 10 次）仍失败 → 膨胀为重量级锁
 
 **重量级锁：**
+
 - 在堆中创建 Monitor 对象（内含 OS 互斥量 mutex）
 - 未获得锁的线程进入 EntryList（阻塞，不消耗 CPU）
 - 释放时唤醒 EntryList 中的线程
@@ -547,6 +562,7 @@ jcmd <pid> VM.heap_dump /tmp/heapdump.hprof
 ```
 
 **常见内存泄漏模式：**
+
 - 静态 `Map/List` 持续增长，未设大小限制
 - `ThreadLocal` 未 remove
 - 监听器/回调未注销（Observer 模式）
@@ -564,6 +580,7 @@ jcmd <pid> VM.heap_dump /tmp/heapdump.hprof
 **热点探测：**
 
 HotSpot JVM 通过两种计数器确定热点代码：
+
 1. **方法调用计数器**（`invocation_counter`）：方法被调用的次数
 2. **循环回边计数器**（`backedge_counter`）：方法体内循环被执行的次数（用于 OSR，On-Stack Replacement）
 
@@ -571,15 +588,16 @@ HotSpot JVM 通过两种计数器确定热点代码：
 
 **编译层次（Tiered Compilation，JDK 7+ 默认）：**
 
-| 层次 | 说明 |
-|------|------|
-| Level 0 | 解释执行 |
-| Level 1 | C1 简单编译（无 profiling）|
-| Level 2 | C1 编译（有限 profiling）|
-| Level 3 | C1 完整编译（完整 profiling）|
-| Level 4 | C2 优化编译（激进优化）|
+| 层次    | 说明                          |
+| ------- | ----------------------------- |
+| Level 0 | 解释执行                      |
+| Level 1 | C1 简单编译（无 profiling）   |
+| Level 2 | C1 编译（有限 profiling）     |
+| Level 3 | C1 完整编译（完整 profiling） |
+| Level 4 | C2 优化编译（激进优化）       |
 
 **JIT 的关键优化：**
+
 - 内联（Inlining）：将小方法直接嵌入调用处（消除方法调用开销）
 - 逃逸分析（Escape Analysis）：未逃逸的对象分配在栈上（无 GC 压力）
 - 锁消除（Lock Elimination）：未逃逸的同步块消除锁操作
@@ -621,13 +639,13 @@ jstack -l <pid> > /tmp/thread_dump.txt
 
 **常见 CPU 高场景：**
 
-| 栈顶帧 | 可能原因 |
-|--------|---------|
-| `java.util.HashMap.put` | 死循环（多线程并发修改 HashMap，JDK 7 resize 死循环）|
-| GC 线程 CPU 高 | 内存不足、GC 频繁 |
-| `sun.nio.ch.EPoll*` | epoll 空轮询 Bug（旧版 Netty/JDK 问题）|
-| 业务逻辑循环 | 死循环 Bug 或正常高计算 |
-| `String.intern()` | 大量字符串 intern 导致常量池竞争 |
+| 栈顶帧                  | 可能原因                                              |
+| ----------------------- | ----------------------------------------------------- |
+| `java.util.HashMap.put` | 死循环（多线程并发修改 HashMap，JDK 7 resize 死循环） |
+| GC 线程 CPU 高          | 内存不足、GC 频繁                                     |
+| `sun.nio.ch.EPoll*`     | epoll 空轮询 Bug（旧版 Netty/JDK 问题）               |
+| 业务逻辑循环            | 死循环 Bug 或正常高计算                               |
+| `String.intern()`       | 大量字符串 intern 导致常量池竞争                      |
 
 **步骤 5：使用 async-profiler 采样分析**
 
@@ -646,6 +664,7 @@ jstack -l <pid> > /tmp/thread_dump.txt
 **逃逸分析（Escape Analysis）：** JIT 编译器分析一个对象是否"逃逸"出其创建的方法或线程范围。
 
 **三种逃逸状态：**
+
 1. **无逃逸（No Escape）：** 对象只在方法内部使用，方法返回后对象不可达
 2. **方法逃逸（Method Escape）：** 对象被作为返回值或参数传递到其他方法
 3. **线程逃逸（Thread Escape）：** 对象被赋值给全局变量或可被其他线程访问的字段

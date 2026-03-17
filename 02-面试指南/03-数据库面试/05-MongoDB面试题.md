@@ -3,6 +3,7 @@
 > 面向 MongoDB 7/8 时代的分层面试题，覆盖文档模型、BSON、索引、复制集、分片、事务、聚合、性能优化与数据库选型。
 
 ## 相关链接
+
 - 对应技术资料：[MongoDB 核心技术](../../01-技术资料/03-数据库/05-MongoDB核心技术.md)
 
 ## 题目列表
@@ -13,18 +14,18 @@
 
 > 这一部分是高频面试压缩版，建议先背骨架，再展开细节。
 
-| # | 考点 | 一句话速记 | 高频原因 |
-|---|------|------------|----------|
-| 1 | BSON vs JSON | BSON 是二进制编码，支持更多类型与更高机器处理效率 | MongoDB 入门必问 |
-| 2 | Embedding vs Referencing | 是否一起读写、数量是否受控，是建模核心判断标准 | 设计题必问 |
-| 3 | 复合索引 | 顺序由过滤、排序、选择性共同决定，遵守前缀原则 | 性能题高频 |
-| 4 | Covered Query | 查询字段都在索引里，可避免回表 | explain 高频 |
-| 5 | Replica Set | Primary 写、Secondary 复制，依赖多数派选主 | 高可用核心 |
-| 6 | Read/Write Concern | 一致性与延迟的核心调节器 | 实战必问 |
-| 7 | 事务限制 | 支持多文档事务，但应短小，跨分片更贵 | 常见误区 |
-| 8 | Shard Key | 决定分布是否均匀、查询是否精准路由 | 分片设计核心 |
-| 9 | Aggregation Pipeline | 尽早 `$match`/`$project`，减少输入规模 | 分析题高频 |
-| 10 | 慢查询排查 | 先看 explain、索引、热点、工作集，再谈参数 | 运维面高频 |
+| #   | 考点                     | 一句话速记                                        | 高频原因         |
+| --- | ------------------------ | ------------------------------------------------- | ---------------- |
+| 1   | BSON vs JSON             | BSON 是二进制编码，支持更多类型与更高机器处理效率 | MongoDB 入门必问 |
+| 2   | Embedding vs Referencing | 是否一起读写、数量是否受控，是建模核心判断标准    | 设计题必问       |
+| 3   | 复合索引                 | 顺序由过滤、排序、选择性共同决定，遵守前缀原则    | 性能题高频       |
+| 4   | Covered Query            | 查询字段都在索引里，可避免回表                    | explain 高频     |
+| 5   | Replica Set              | Primary 写、Secondary 复制，依赖多数派选主        | 高可用核心       |
+| 6   | Read/Write Concern       | 一致性与延迟的核心调节器                          | 实战必问         |
+| 7   | 事务限制                 | 支持多文档事务，但应短小，跨分片更贵              | 常见误区         |
+| 8   | Shard Key                | 决定分布是否均匀、查询是否精准路由                | 分片设计核心     |
+| 9   | Aggregation Pipeline     | 尽早 `$match`/`$project`，减少输入规模            | 分析题高频       |
+| 10  | 慢查询排查               | 先看 explain、索引、热点、工作集，再谈参数        | 运维面高频       |
 
 ---
 
@@ -215,8 +216,8 @@ MongoDB 的单文档更新具有原子性。这意味着一个文档内的多个
 ```javascript
 db.inventory.updateOne(
   { sku: "sku-1", stock: { $gte: 1 } },
-  { $inc: { stock: -1 } }
-)
+  { $inc: { stock: -1 } },
+);
 ```
 
 这个操作把“条件检查”和“更新”合并到一个原子动作里。
@@ -269,7 +270,7 @@ TTL 索引最常用于：
 示例：
 
 ```javascript
-db.sessions.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 })
+db.sessions.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 });
 ```
 
 注意事项：
@@ -300,9 +301,10 @@ db.sessions.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 })
 例如查询：
 
 ```javascript
-db.orders.find({ userId: 1001, status: "PAID" })
+db.orders
+  .find({ userId: 1001, status: "PAID" })
   .sort({ createdAt: -1 })
-  .limit(20)
+  .limit(20);
 ```
 
 常见合理索引是：
@@ -337,7 +339,7 @@ Covered Query 指查询所需字段都可以直接从索引中得到，因此不
 例如已有索引：
 
 ```javascript
-db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 })
+db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 });
 ```
 
 查询：
@@ -345,8 +347,8 @@ db.orders.createIndex({ userId: 1, status: 1, createdAt: -1 })
 ```javascript
 db.orders.find(
   { userId: 1001, status: "PAID" },
-  { _id: 0, userId: 1, status: 1, createdAt: 1 }
-)
+  { _id: 0, userId: 1, status: 1, createdAt: 1 },
+);
 ```
 
 如果这些字段都在索引中，MongoDB 可直接返回结果。
@@ -374,7 +376,7 @@ db.orders.find(
 例如：
 
 ```javascript
-db.articles.createIndex({ tags: 1 })
+db.articles.createIndex({ tags: 1 });
 ```
 
 文档中 `tags: ["mongodb", "database", "nosql"]` 会生成多个索引项。
@@ -694,7 +696,7 @@ Scatter-Gather 指 `mongos` 无法根据查询条件精准定位 shard，只能�
 例如：
 
 ```javascript
-db.orders.find({ userId: 1001 }).sort({ createdAt: -1 }).skip(100000).limit(20)
+db.orders.find({ userId: 1001 }).sort({ createdAt: -1 }).skip(100000).limit(20);
 ```
 
 这会让数据库做大量无意义遍历。
@@ -702,10 +704,13 @@ db.orders.find({ userId: 1001 }).sort({ createdAt: -1 }).skip(100000).limit(20)
 替代方案通常是 seek pagination，也叫基于游标的分页：
 
 ```javascript
-db.orders.find({
-  userId: 1001,
-  createdAt: { $lt: lastSeenCreatedAt }
-}).sort({ createdAt: -1 }).limit(20)
+db.orders
+  .find({
+    userId: 1001,
+    createdAt: { $lt: lastSeenCreatedAt },
+  })
+  .sort({ createdAt: -1 })
+  .limit(20);
 ```
 
 如果排序字段可能重复，通常再加 `_id` 作为稳定游标。

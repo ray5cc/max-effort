@@ -3,9 +3,11 @@
 > Java 的核心竞争力在于 JVM——理解它的内存模型、垃圾收集机制、类加载系统和并发原语，是写出高性能、高并发 Java 程序的基础。本文从 JVM 源码（OpenJDK HotSpot）出发，深度剖析这些核心机制的底层实现。
 
 ## 相关链接
+
 - 对应面试题：[Java 核心面试题](../../../02-面试指南/02-后端面试/01-Java核心面试题.md)
 
 ## 目录
+
 1. [JVM 内存模型](#1-jvm-内存模型)
    - 1.1 [运行时数据区](#11-运行时数据区)
    - 1.2 [堆内存分区](#12-堆内存分区)
@@ -121,14 +123,15 @@ new Object() 分配流程:
 
 JDK 8 将**永久代（PermGen）改为 Metaspace（元空间）**，主要区别：
 
-| | PermGen（JDK 7-）| Metaspace（JDK 8+）|
-|--|-----------------|-------------------|
-| 存储位置 | JVM 堆内（受 -Xmx 限制）| 本地内存（Native Memory）|
-| 默认大小限制 | 有上限（-XX:MaxPermSize=256m）| 无（受系统内存限制）|
-| GC 策略 | Full GC 时回收 | Full GC 时回收 |
-| OOM 原因 | 加载类太多 | 加载类太多（但更难触发）|
+|              | PermGen（JDK 7-）              | Metaspace（JDK 8+）       |
+| ------------ | ------------------------------ | ------------------------- |
+| 存储位置     | JVM 堆内（受 -Xmx 限制）       | 本地内存（Native Memory） |
+| 默认大小限制 | 有上限（-XX:MaxPermSize=256m） | 无（受系统内存限制）      |
+| GC 策略      | Full GC 时回收                 | Full GC 时回收            |
+| OOM 原因     | 加载类太多                     | 加载类太多（但更难触发）  |
 
 **Metaspace 存储内容：**
+
 - 类的结构信息（字段、方法签名）
 - 运行时常量池（Runtime Constant Pool）
 - 方法字节码（字节码由 Code Cache 管理）
@@ -141,21 +144,25 @@ JDK 8 将**永久代（PermGen）改为 Metaspace（元空间）**，主要区�
 ### 2.1 GC 基础算法
 
 **标记-清除（Mark-Sweep）：**
+
 - 标记所有可达对象 → 清除未标记对象
 - 缺点：产生内存碎片
 
 **标记-复制（Mark-Copy）：**
+
 - 将存活对象复制到新区域，清空原区域
 - 优点：无碎片；缺点：需要双倍内存
 - 应用：Young Gen（Eden + Survivor）
 
 **标记-整理（Mark-Compact）：**
+
 - 标记存活对象 → 向一端移动 → 清除边界外内存
 - 优点：无碎片；缺点：移动对象代价高
 - 应用：CMS Full GC、G1 Old Region
 
 **三色标记（Tri-color Marking）：**
 用于并发 GC，解决标记过程中对象引用变化的问题：
+
 - **白色**：未访问（GC 结束时为白色 → 需回收）
 - **灰色**：已标记但其引用未全部处理
 - **黑色**：自身及所有引用都已处理
@@ -246,6 +253,7 @@ ZGC（Z Garbage Collector，JDK 15+ 生产就绪）目标：在任意大小堆�
 **ZGC 核心技术：**
 
 **1. 染色指针（Colored Pointers）：**
+
 ```
 64位指针（低42位为实际地址，高位用于元数据）：
 
@@ -258,6 +266,7 @@ Bit 41-0:  实际对象地址（4TB 地址空间）
 ```
 
 **2. 读屏障（Load Barrier）：** 每次读取对象引用时，JIT 插入检查代码：
+
 ```java
 // 伪代码：ZGC 读屏障
 Object ref = *(address);  // 读取引用
@@ -270,6 +279,7 @@ if (ref 的颜色位 != 当前期望颜色) {
 **3. 并发重定位：** 对象被移动时，不需要立即更新所有引用，而是通过读屏障懒惰修复。
 
 **ZGC GC 阶段：**
+
 ```
 Pause Mark Start    (STW, ~1ms) — 标记 GC Roots
 Concurrent Mark     (并发)      — 遍历对象图，标记存活对象
@@ -280,14 +290,14 @@ Concurrent Relocate (并发)      — 将存活对象复制到新 Region
 
 ### 2.5 收集器对比
 
-| 收集器 | 目标 | Young GC 算法 | Old GC 算法 | 最大停顿 | JDK 版本 |
-|--------|------|--------------|-------------|---------|---------|
-| Serial | 单线程简单 | 复制 | 标记-整理 | 高 | 全版本 |
-| Parallel Scavenge | 高吞吐 | 复制（多线程）| 标记-整理（多线程）| 中 | JDK 1.4+ |
-| CMS | 低延迟（Old）| 复制 | 标记-清除 | 低（但有碎片）| JDK 1.5-9 |
-| G1 | 可预测停顿 | 复制 | 标记-复制 | 可配置（默认 200ms）| JDK 9+默认 |
-| ZGC | 超低延迟 | 复制 | 并发复制 | < 10ms | JDK 15+生产 |
-| Shenandoah | 超低延迟 | 复制 | 并发复制 | < 10ms | JDK 12+ |
+| 收集器            | 目标          | Young GC 算法  | Old GC 算法         | 最大停顿             | JDK 版本    |
+| ----------------- | ------------- | -------------- | ------------------- | -------------------- | ----------- |
+| Serial            | 单线程简单    | 复制           | 标记-整理           | 高                   | 全版本      |
+| Parallel Scavenge | 高吞吐        | 复制（多线程） | 标记-整理（多线程） | 中                   | JDK 1.4+    |
+| CMS               | 低延迟（Old） | 复制           | 标记-清除           | 低（但有碎片）       | JDK 1.5-9   |
+| G1                | 可预测停顿    | 复制           | 标记-复制           | 可配置（默认 200ms） | JDK 9+默认  |
+| ZGC               | 超低延迟      | 复制           | 并发复制            | < 10ms               | JDK 15+生产 |
+| Shenandoah        | 超低延迟      | 复制           | 并发复制            | < 10ms               | JDK 12+     |
 
 ---
 
@@ -321,6 +331,7 @@ Concurrent Relocate (并发)      — 将存活对象复制到新 Region
 ```
 
 **类的主动引用（触发初始化的 6 种情况）：**
+
 1. `new` 实例化对象
 2. 读/写类的静态字段（非常量）
 3. 调用类的静态方法
@@ -381,10 +392,12 @@ protected Class<?> loadClass(String name, boolean resolve)
 ```
 
 **双亲委派的意义：**
+
 - 防止核心类被替换（`java.lang.Object` 永远由 Bootstrap 加载）
 - 相同类路径的类只加载一次（类的唯一性）
 
 **打破双亲委派的场景：**
+
 - SPI 机制（`java.util.ServiceLoader`）：需要 Bootstrap 加载的接口，由 AppClassLoader 加载实现
 - OSGi / Tomcat：每个模块/WebApp 有独立类加载器，实现类隔离
 - 热部署：丢弃旧类加载器，创建新的加载更新后的类
@@ -476,6 +489,7 @@ MONITOREXIT   // → 释放 Monitor
 ### 4.2 volatile 内存语义
 
 `volatile` 保证：
+
 1. **可见性**：写操作立即刷新到主内存，读操作从主内存读取
 2. **有序性**：禁止特定类型的指令重排序（通过内存屏障实现）
 
@@ -595,16 +609,16 @@ tryAcquire(1)  —— 子类实现（ReentrantLock: CAS state 0→1）
 
 ### 4.5 ReentrantLock vs synchronized
 
-| 特性 | synchronized | ReentrantLock |
-|------|-------------|---------------|
-| 实现层次 | JVM 内置，字节码层面 | Java API（AQS）|
-| 锁释放 | 自动（出作用域）| 必须手动 unlock()（finally 块）|
-| 可中断等待 | 不支持 | `lockInterruptibly()` 支持 |
-| 超时尝试 | 不支持 | `tryLock(timeout, unit)` 支持 |
-| 公平锁 | 非公平 | 可选（`new ReentrantLock(true)`）|
-| Condition | `Object.wait/notify`（一个）| 多个 Condition（`newCondition()`）|
-| 读写分离 | 不支持 | `ReentrantReadWriteLock` |
-| 性能（JDK 8+）| 相当 | 相当（JVM 对 synchronized 做了大量优化）|
+| 特性           | synchronized                 | ReentrantLock                            |
+| -------------- | ---------------------------- | ---------------------------------------- |
+| 实现层次       | JVM 内置，字节码层面         | Java API（AQS）                          |
+| 锁释放         | 自动（出作用域）             | 必须手动 unlock()（finally 块）          |
+| 可中断等待     | 不支持                       | `lockInterruptibly()` 支持               |
+| 超时尝试       | 不支持                       | `tryLock(timeout, unit)` 支持            |
+| 公平锁         | 非公平                       | 可选（`new ReentrantLock(true)`）        |
+| Condition      | `Object.wait/notify`（一个） | 多个 Condition（`newCondition()`）       |
+| 读写分离       | 不支持                       | `ReentrantReadWriteLock`                 |
+| 性能（JDK 8+） | 相当                         | 相当（JVM 对 synchronized 做了大量优化） |
 
 ---
 
@@ -651,12 +665,12 @@ happens-before 是 JMM 保证有序性的核心规则——如果操作 A happen
 
 JMM 在底层通过**内存屏障（Memory Barrier）**实现 happens-before 语义：
 
-| 屏障类型 | 作用 | 场景 |
-|---------|------|------|
-| LoadLoad | Load1; **LoadLoad**; Load2 — 确保 Load1 在 Load2 前完成 | volatile 读后 |
-| StoreStore | Store1; **StoreStore**; Store2 — 确保 Store1 在 Store2 前对外可见 | volatile 写前 |
-| LoadStore | Load1; **LoadStore**; Store2 — 确保 Load1 在 Store2 前完成 | volatile 读后 |
-| StoreLoad | Store1; **StoreLoad**; Load2 — 确保 Store1 对所有处理器可见后，再执行 Load2 | volatile 写后（最昂贵）|
+| 屏障类型   | 作用                                                                        | 场景                    |
+| ---------- | --------------------------------------------------------------------------- | ----------------------- |
+| LoadLoad   | Load1; **LoadLoad**; Load2 — 确保 Load1 在 Load2 前完成                     | volatile 读后           |
+| StoreStore | Store1; **StoreStore**; Store2 — 确保 Store1 在 Store2 前对外可见           | volatile 写前           |
+| LoadStore  | Load1; **LoadStore**; Store2 — 确保 Load1 在 Store2 前完成                  | volatile 读后           |
+| StoreLoad  | Store1; **StoreLoad**; Load2 — 确保 Store1 对所有处理器可见后，再执行 Load2 | volatile 写后（最昂贵） |
 
 **volatile 写-读的屏障插入（JIT 编译后）：**
 
@@ -741,11 +755,11 @@ spring:
 
 **⚠️ 不适用场景：**
 
-| 场景 | 原因 |
-|------|------|
-| CPU 密集型计算 | 虚拟线程优势在于 I/O 等待时释放载体线程，CPU 密集任务无等待可释放 |
-| `synchronized` 代码块 | 虚拟线程进入 `synchronized` 时会**"钉住"（pin）**载体线程，无法卸载。应改用 `ReentrantLock` |
-| 大量线程局部变量（ThreadLocal） | 百万虚拟线程 × 每线程 ThreadLocal 数据 = 巨大内存开销。应改用 Scoped Values（Preview） |
+| 场景                            | 原因                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------- |
+| CPU 密集型计算                  | 虚拟线程优势在于 I/O 等待时释放载体线程，CPU 密集任务无等待可释放                           |
+| `synchronized` 代码块           | 虚拟线程进入 `synchronized` 时会**"钉住"（pin）**载体线程，无法卸载。应改用 `ReentrantLock` |
+| 大量线程局部变量（ThreadLocal） | 百万虚拟线程 × 每线程 ThreadLocal 数据 = 巨大内存开销。应改用 Scoped Values（Preview）      |
 
 **完整示例：虚拟线程 HTTP 服务器处理 10 万并发连接**
 
@@ -772,13 +786,13 @@ public class VirtualThreadHttpServer {
 
 **性能对比：Virtual Threads vs Platform Threads**
 
-| 指标 | Platform Threads（200 线程池） | Virtual Threads |
-|------|-------------------------------|----------------|
-| 最大并发连接 | ~200（受线程池限制） | 100,000+（受内存限制） |
-| 每连接内存开销 | ~1MB（线程栈） | ~几 KB |
-| 100ms I/O 的吞吐 | ~2,000 req/s | ~100,000+ req/s |
-| 上下文切换 | 内核态，~1-10μs | 用户态，~100ns 级 |
-| 适用场景 | CPU 密集 / 遗留代码 | I/O 密集（HTTP、DB、RPC） |
+| 指标             | Platform Threads（200 线程池） | Virtual Threads           |
+| ---------------- | ------------------------------ | ------------------------- |
+| 最大并发连接     | ~200（受线程池限制）           | 100,000+（受内存限制）    |
+| 每连接内存开销   | ~1MB（线程栈）                 | ~几 KB                    |
+| 100ms I/O 的吞吐 | ~2,000 req/s                   | ~100,000+ req/s           |
+| 上下文切换       | 内核态，~1-10μs                | 用户态，~100ns 级         |
+| 适用场景         | CPU 密集 / 遗留代码            | I/O 密集（HTTP、DB、RPC） |
 
 ### 6.2 Pattern Matching 增强
 
