@@ -5,6 +5,25 @@
 ## 相关链接
 - 对应技术资料：[Java 核心与 JVM](../../01-技术资料/02-后端/01-Java核心与JVM.md)
 
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|----------|
+| 1 | JVM 内存模型 | 堆(Young/Old分区) + 方法区(Metaspace) + 栈 + PC | ★★★★★ |
+| 2 | GC 算法与收集器 | G1(Region化+暂停目标) 是默认，ZGC(<1ms) 是未来 | ★★★★★ |
+| 3 | synchronized 锁升级 | 无锁→偏向锁→轻量级锁(CAS)→重量级锁(Monitor) | ★★★★★ |
+| 4 | volatile 与 JMM | 可见性+有序性(内存屏障)，不保证原子性 | ★★★★☆ |
+| 5 | HashMap 原理 | 数组+链表+红黑树，扩容 rehash，线程不安全 | ★★★★★ |
+| 6 | 类加载机制 | 双亲委派：Bootstrap→Extension→App，确保类唯一性 | ★★★★☆ |
+| 7 | AQS 框架 | state + CLH 队列，ReentrantLock/Semaphore 的基石 | ★★★☆☆ |
+| 8 | 线程池 | 核心线程→队列→最大线程→拒绝策略，生产禁用 Executors | ★★★★☆ |
+| 9 | ConcurrentHashMap | JDK 8: CAS+synchronized 分段锁，JDK 7: Segment 锁 | ★★★★☆ |
+| 10 | OOM 排查 | jmap dump → MAT/VisualVM 分析 → 大对象/泄漏定位 | ★★★★☆ |
+
+---
+
 ## 题目列表
 
 ### ⭐ 基础题

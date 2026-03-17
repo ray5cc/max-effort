@@ -7,6 +7,27 @@
 
 ## 题目列表
 
+---
+
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|----------|
+| 1 | B+树索引 | 聚簇(主键)=数据+索引，辅助索引→回表 | ★★★★★ |
+| 2 | MVCC (Read View) | 版本链 + ReadView(m_ids/min/max) 可见性判断 | ★★★★★ |
+| 3 | 事务隔离级别 | RC(每次SELECT新ReadView) vs RR(首次SELECT固定ReadView) | ★★★★★ |
+| 4 | Next-Key Lock | Record Lock + Gap Lock 解决幻读 | ★★★★★ |
+| 5 | Buffer Pool | LRU 分区(Young/Old)，预读优化，脏页刷盘 | ★★★★☆ |
+| 6 | Redo/Undo Log | Redo保证持久性(WAL)，Undo保证原子性(回滚+MVCC) | ★★★★☆ |
+| 7 | 索引优化 | 最左前缀，覆盖索引，ICP索引下推 | ★★★★★ |
+| 8 | 慢查询优化 | EXPLAIN(type/key/Extra)，索引失效场景 | ★★★★★ |
+| 9 | 主从复制 | binlog(ROW/STATEMENT/MIXED) + relay log | ★★★☆☆ |
+| 10 | 死锁检测 | Wait-For Graph，innodb_deadlock_detect | ★★★☆☆ |
+
+---
+
 ### ⭐ 基础题
 
 ---

@@ -8,6 +8,25 @@
 
 ---
 
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|--------|
+| 1 | Self-Attention | Q×K^T/√d_k→Softmax→V，捕获全局依赖 | ★★★★★ |
+| 2 | Multi-Head Attention | 多个注意力头并行，不同子空间捕获不同模式 | ★★★★★ |
+| 3 | 位置编码 | 正弦(原始)/RoPE(旋转，主流)/ALiBi(线性偏置) | ★★★★☆ |
+| 4 | Layer Normalization | Pre-LN(训练稳定，GPT-2+)/Post-LN(原始Transformer) | ★★★★☆ |
+| 5 | KV Cache | 推理时缓存历史K/V避免重复计算，内存换速度 | ★★★★★ |
+| 6 | GPT vs BERT | GPT=Decoder-Only(生成)/BERT=Encoder-Only(理解)，现在GPT架构主导 | ★★★★★ |
+| 7 | Flash Attention | 分块计算+在线Softmax，IO感知减少HBM访问 | ★★★★☆ |
+| 8 | GQA/MQA | Grouped Query(LLaMA2)/Multi-Query，减少KV Cache大小 | ★★★★☆ |
+| 9 | FFN/SwiGLU | 两层线性+激活，SwiGLU(LLaMA)替代ReLU效果更好 | ★★★☆☆ |
+| 10 | Scaling Laws | C≈6ND(计算≈6×参数×数据)，指导模型规模决策 | ★★★☆☆ |
+
+---
+
 ## 基础题（⭐）
 
 ### 1. RMSNorm 和 LayerNorm 有什么区别？LLaMA 为什么选择 RMSNorm？

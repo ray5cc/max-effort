@@ -38,6 +38,25 @@
 
 ---
 
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|----------|
+| 1 | ReAct 循环 | Think→Act→Observe反复迭代至任务完成 | ★★★★★ |
+| 2 | LangChain vs LlamaIndex | LC=通用编排(链/Agent)/LI=RAG优化(索引) | ★★★★★ |
+| 3 | Agent 架构模式 | 单Agent(简单)/主从(委派)/协作(多Agent对话) | ★★★★☆ |
+| 4 | Memory 集成 | ConversationBufferMemory/Summary/VectorStore/Entity | ★★★★☆ |
+| 5 | 工具注册与发现 | 描述+Schema→运行时注册→LLM选择→执行→结果格式化 | ★★★★☆ |
+| 6 | Structured Output | Pydantic/Zod Schema约束LLM输出，保证可解析 | ★★★★☆ |
+| 7 | Plan-and-Execute | 先生成计划步骤→逐步执行→动态调整 | ★★★☆☆ |
+| 8 | 状态管理 (LangGraph) | 图结构工作流+条件边+检查点+human-in-the-loop | ★★★★☆ |
+| 9 | 错误恢复策略 | 重试/回滚/降级/人工介入 | ★★★☆☆ |
+| 10 | 评估与测试 | Trajectory评估/端到端测试/LLM-as-Judge | ★★★☆☆ |
+
+---
+
 ## ⭐ 基础题
 
 ### Q01 ReAct 框架的核心循环是什么？

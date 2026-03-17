@@ -19,6 +19,25 @@
 
 ---
 
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|--------|
+| 1 | RLHF 流程 | SFT→训练奖励模型(RM)→PPO优化策略模型 | ★★★★★ |
+| 2 | DPO | Direct Preference Optimization，跳过RM直接用偏好对训练 | ★★★★★ |
+| 3 | PPO vs DPO | PPO(复杂但灵活)/DPO(简单但受参考模型约束) | ★★★★★ |
+| 4 | 奖励模型 | 人类偏好对→Bradley-Terry模型→pair-wise loss训练 | ★★★★☆ |
+| 5 | KL 散度约束 | 防止策略模型偏离参考模型太远(reward hacking) | ★★★★☆ |
+| 6 | SFTTrainer | TRL的SFT入口，支持packing/chat_template/PEFT集成 | ★★★★☆ |
+| 7 | 偏好数据构建 | chosen/rejected对，标注一致性(Inter-annotator agreement) | ★★★★☆ |
+| 8 | ORPO/SimPO | 新一代对齐算法，无需参考模型，更简单 | ★★★☆☆ |
+| 9 | Reward Hacking | 模型学会骗过RM而非真正对齐，KL约束+RM ensemble | ★★★★☆ |
+| 10 | 在线 vs 离线对齐 | PPO=在线(采样+评估)/DPO=离线(静态数据集) | ★★★☆☆ |
+
+---
+
 ## RLHF 基础流程
 
 ### Q1：RLHF 的完整流水线包含哪些步骤？每个步骤的目标是什么？

@@ -40,6 +40,7 @@
    - 5.4 [高级类型](#54-高级类型)
    - 5.5 [内置工具类型实现原理](#55-内置工具类型实现原理)
    - 5.6 [Declaration Merging 与 Module Augmentation](#56-declaration-merging-与-module-augmentation)
+6. [ECMAScript 最新提案与运行时演进 (2025-2026)](#6-ecmascript-最新提案与运行时演进-2025-2026)
 
 ---
 
@@ -1743,6 +1744,212 @@ declare global {
 window.__APP_CONFIG__.apiUrl; // 有类型提示
 [1, 2, 3].groupBy(n => n % 2 === 0 ? 'even' : 'odd');
 ```
+
+---
+
+## 6. ECMAScript 最新提案与运行时演进 (2025-2026)
+
+### 为什么关注这个
+
+JavaScript 的演进速度在 2024-2026 年明显加快：TC39 积累多年的重要提案（Temporal、Decorators、Iterator Helpers）终于进入 Stage 3/4，同时 Bun/Deno 对 Node.js 的挑战重塑了服务端运行时格局。掌握这些变化不仅是面试加分项，更是日常开发中**替换笨重第三方库、编写更优雅代码**的关键。
+
+> **类比**：如果说 ES6 是 JavaScript 从"方言"升级为"普通话"，那 2025-2026 的这波提案就是给普通话加上了"专业术语词典"——不用再借助外部翻译工具（第三方库）来表达复杂概念了。
+
+### 6.1 Temporal API——告别 `Date` 的混乱时代
+
+JavaScript 的 `Date` 对象自 1995 年诞生以来问题重重：月份从 0 开始、时区处理混乱、没有 Duration 概念。开发者不得不依赖 moment.js（已废弃）或 day.js。**Temporal** 是 TC39 Stage 3 提案，旨在成为语言内置的日期时间解决方案。
+
+```javascript
+// ════ 获取当前时间 ════
+const now = Temporal.Now.plainDateTimeISO();
+console.log(now.toString()); // "2026-03-17T14:30:00"
+
+// ════ 创建特定日期 ════
+const birthday = Temporal.PlainDate.from('2000-06-15');
+const meeting = Temporal.PlainDateTime.from({
+  year: 2026, month: 4, day: 1, hour: 10, minute: 30,
+});
+
+// ════ 时区感知 ════
+const tokyoTime = Temporal.ZonedDateTime.from({
+  timeZone: 'Asia/Tokyo',
+  year: 2026, month: 3, day: 17, hour: 10, minute: 0,
+});
+const nyTime = tokyoTime.withTimeZone('America/New_York');
+console.log(nyTime.toString()); // 自动转换时区
+
+// ════ Duration 与日期运算 ════
+const duration = Temporal.Duration.from({ hours: 2, minutes: 30 });
+const later = now.add(duration);
+
+// 两个日期之间的差值
+const diff = birthday.until(Temporal.Now.plainDateISO());
+console.log(`${diff.years} 年 ${diff.months} 月 ${diff.days} 天`);
+```
+
+**Temporal vs Date 对比**：
+
+| 维度 | Date | Temporal |
+|------|------|----------|
+| 月份表示 | 0-11（反直觉） | 1-12（符合人类习惯） |
+| 不可变性 | 可变（setMonth 修改原对象） | 不可变（所有操作返回新对象） |
+| 时区支持 | 仅 UTC 和本地时区 | 完整 IANA 时区数据库 |
+| Duration | 无原生支持 | `Temporal.Duration` 内置 |
+| 日期比较 | 需转 timestamp 手动比较 | `.equals()` / `Temporal.PlainDate.compare()` |
+| 解析安全性 | `new Date('2026-03-17')` 结果因时区而异 | 所有解析结果确定 |
+
+### 6.2 Decorators（Stage 3）——方法增强的标准化
+
+Decorators 允许以声明式方式修改类和类方法的行为，类似 Python 的 `@decorator` 或 Java 的注解。经历多次提案重写后，2024年终于进入 Stage 3。
+
+```javascript
+// ════ @logged 装饰器：在方法执行前后打印日志 ════
+function logged(originalMethod, context) {
+  const methodName = context.name;
+  function replacementMethod(...args) {
+    console.log(`[LOG] 进入 ${methodName}，参数:`, args);
+    const result = originalMethod.call(this, ...args);
+    console.log(`[LOG] 离开 ${methodName}，返回:`, result);
+    return result;
+  }
+  return replacementMethod;
+}
+
+// ════ @bound 装饰器：自动绑定 this ════
+function bound(originalMethod, context) {
+  const methodName = context.name;
+  context.addInitializer(function () {
+    this[methodName] = this[methodName].bind(this);
+  });
+}
+
+class OrderService {
+  @logged
+  @bound
+  calculateTotal(items) {
+    return items.reduce((sum, item) => sum + item.price * item.qty, 0);
+  }
+}
+
+const service = new OrderService();
+const calc = service.calculateTotal; // @bound 确保 this 正确
+calc([{ price: 10, qty: 2 }, { price: 5, qty: 3 }]);
+// [LOG] 进入 calculateTotal，参数: [[...]]
+// [LOG] 离开 calculateTotal，返回: 35
+```
+
+> **注意**：Stage 3 的 Decorators 与 TypeScript 实验性 Decorators（`experimentalDecorators`）语法不同。新标准在 2026 年已被 V8 和各构建工具原生支持。
+
+### 6.3 Iterator Helpers——迭代器也能链式调用了
+
+以前对迭代器（Generator、Map.keys() 等）做 map/filter 必须先 `Array.from()` 转数组，浪费内存。Iterator Helpers 让迭代器直接支持惰性链式操作。
+
+```javascript
+// ════ 惰性处理：只在需要时计算 ════
+function* naturalNumbers() {
+  let n = 1;
+  while (true) yield n++;
+}
+
+// 取前 10 个偶数的平方——惰性求值，不会无限循环
+const result = naturalNumbers()
+  .filter(n => n % 2 === 0)   // 惰性：只在 .next() 时过滤
+  .map(n => n * n)             // 惰性：只在 .next() 时映射
+  .take(10)                    // 只取前 10 个
+  .toArray();                  // 最终求值
+
+console.log(result); // [4, 16, 36, 64, 100, 144, 196, 256, 324, 400]
+
+// ════ 实际场景：处理大文件的行迭代器 ════
+// 假设 readLines() 返回一个行迭代器
+const errorLines = readLines('server.log')
+  .filter(line => line.includes('ERROR'))
+  .map(line => line.trim())
+  .take(100)  // 只取前 100 条错误
+  .toArray();
+```
+
+**可用方法一览**：`.map()` / `.filter()` / `.take()` / `.drop()` / `.flatMap()` / `.reduce()` / `.toArray()` / `.forEach()` / `.some()` / `.every()` / `.find()`
+
+### 6.4 `using` 声明——显式资源管理
+
+类似 Python 的 `with` 或 C# 的 `using`，JavaScript 的 `using` 关键字（Explicit Resource Management，Stage 3）让你声明一个资源，在作用域结束时自动释放。资源需实现 `Symbol.dispose` 或 `Symbol.asyncDispose`。
+
+```javascript
+// ════ 定义可释放资源 ════
+class DatabaseConnection {
+  #connection;
+
+  constructor(url) {
+    this.#connection = connectToDb(url);
+    console.log('数据库连接已建立');
+  }
+
+  query(sql) {
+    return this.#connection.execute(sql);
+  }
+
+  // 实现 Symbol.dispose，using 结束时自动调用
+  [Symbol.dispose]() {
+    this.#connection.close();
+    console.log('数据库连接已释放');
+  }
+}
+
+// ════ 使用 using 声明 ════
+function getUserData(userId) {
+  using db = new DatabaseConnection('postgres://localhost/app');
+  // db 在这个块结束时自动 dispose，无论正常返回还是抛异常
+  const user = db.query(`SELECT * FROM users WHERE id = $1`, [userId]);
+  return user;
+} // ← 这里自动调用 db[Symbol.dispose]()
+
+// ════ 异步版本：await using ════
+async function processFile(path) {
+  await using file = await openFile(path);
+  const content = await file.read();
+  return content;
+} // ← 自动调用 file[Symbol.asyncDispose]()
+```
+
+> **类比**：`using` 就像酒店退房机制——你入住（声明资源）后不需要记住退房流程，离开房间（作用域结束）时系统自动帮你退房（释放资源）。
+
+### 6.5 Record & Tuple（简介）
+
+Record（`#{}`）和 Tuple（`#[]`）是深度不可变的值类型，可以用 `===` 直接比较。
+
+```javascript
+// 提案语法（尚未正式进入引擎）
+const point1 = #{ x: 1, y: 2 };
+const point2 = #{ x: 1, y: 2 };
+point1 === point2; // true（值比较，不是引用比较）
+
+const coords = #[1, 2, 3];
+coords.push(4); // TypeError: 不可变
+```
+
+> **状态**：2026 年仍处于 Stage 2，但 Record & Tuple 对 React 性能优化（memo 的浅比较）有重大意义，值得持续关注。
+
+### 6.6 运行时竞争：Bun vs Deno vs Node.js（2026）
+
+| 维度 | Node.js 22+ | Deno 2.x | Bun 1.x |
+|------|-------------|----------|---------|
+| **语言** | C++ | Rust | Zig + C++ |
+| **JS 引擎** | V8 | V8 | JavaScriptCore (WebKit) |
+| **包管理** | npm / pnpm / yarn | deno add (npm 兼容) | bun install（比 npm 快 25x） |
+| **TypeScript** | 需 tsc / ts-node | 原生支持（零配置） | 原生支持（零配置） |
+| **启动速度** | ~40ms | ~25ms | ~5ms |
+| **HTTP 性能** | 中等 | 高 | 极高（RPS 领先 2-3x） |
+| **npm 兼容性** | 100%（原生） | 95%+（v2 大幅改善） | 98%+（极少数不兼容） |
+| **Web API** | 部分支持（fetch、WebSocket） | 完全对齐（fetch、WebSocket、Worker） | 完全对齐 |
+| **生态成熟度** | 最成熟（百万包） | 快速增长 | 快速增长 |
+| **适合场景** | 企业级、遗留项目 | 安全敏感、全栈一体 | 高性能微服务、工具链 |
+
+**选择建议**（2026）：
+- **企业级项目 / 大型 monorepo**：Node.js——生态最完善，LTS 支持最稳定
+- **新项目且追求开发体验**：Deno——权限模型安全、内置 formatter/linter/test
+- **性能敏感的微服务 / 全栈应用**：Bun——启动与请求性能遥遥领先
+- **跑构建工具（esbuild/Vite）**：Bun 作为 package manager 速度优势明显
 
 ---
 

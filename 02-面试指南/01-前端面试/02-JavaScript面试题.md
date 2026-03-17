@@ -17,6 +17,25 @@
 
 ---
 
+## 🔥 高频考点速记
+
+> 面试中最常被问到的 JavaScript 核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|----------|
+| 1 | 闭包 | 函数 + 词法环境，内层函数引用外层变量，即使外层已执行完毕 | ★★★★★ |
+| 2 | 原型链 | `__proto__` 链式查找，prototype 是构造函数模板，Object.prototype 为终点 | ★★★★★ |
+| 3 | Event Loop | 宏任务 → 清空所有微任务 → 渲染 → 下一宏任务；Promise 微任务优先 | ★★★★★ |
+| 4 | Promise / async-await | 三态不可逆，链式调用，async 是 Generator+Promise 语法糖 | ★★★★★ |
+| 5 | this 绑定 | new > call/apply/bind > obj.fn > 默认；箭头函数继承外层 this | ★★★★★ |
+| 6 | 作用域与变量提升 | var 函数作用域 + 提升；let/const 块级作用域 + TDZ 暂时性死区 | ★★★★☆ |
+| 7 | 深拷贝与浅拷贝 | structuredClone > JSON.parse > 递归；注意循环引用与特殊类型 | ★★★★☆ |
+| 8 | ES6+ 核心特性 | 解构/展开/Symbol/Iterator/Proxy/Reflect/WeakMap/ESM | ★★★★☆ |
+| 9 | 防抖与节流 | debounce 延迟执行（搜索框），throttle 固定频率（滚动） | ★★★☆☆ |
+| 10 | TypeScript 类型系统 | 结构化类型、泛型约束、条件类型、infer 推断、工具类型 | ★★★☆☆ |
+
+---
+
 ## 基础题
 
 ### 1. ⭐ `var`、`let`、`const` 有什么区别？
