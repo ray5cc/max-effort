@@ -3,9 +3,11 @@
 > 涵盖 Redis 高频面试考点：数据结构底层实现、持久化机制、内存管理、网络模型、集群与高可用、事务与 Lua 脚本。按难度分层，适合从初级到高级工程师备战。
 
 ## 相关链接
+
 - 对应技术资料：[Redis 核心技术深度解析](../../01-技术资料/03-数据库/02-Redis核心技术.md)
 
 ## 目录
+
 1. [⭐ 基础题（熟悉概念）](#1-基础题)
 2. [⭐⭐ 进阶题（理解原理）](#2-进阶题)
 3. [⭐⭐⭐ 高级题（深度原理 / 源码级）](#3-高级题)
@@ -17,18 +19,18 @@
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|----------|
-| 1 | Redis 数据结构与编码 | 5种类型底层7种编码，SDS/ziplist/skiplist | ★★★★★ |
-| 2 | Redis 为什么这么快 | 纯内存+单线程避免锁+IO多路复用+高效数据结构 | ★★★★★ |
-| 3 | 缓存穿透/击穿/雪崩 | 穿透(不存在key)用布隆过滤器，击穿(热key过期)用互斥锁，雪崩(大量key同时过期)设随机过期 | ★★★★★ |
-| 4 | 持久化 RDB vs AOF | RDB快照(fork子进程全量)，AOF日志(append追写)，混合模式 | ★★★★☆ |
-| 5 | 分布式锁 | SET NX EX + Lua原子释放 + Redlock争议 | ★★★★★ |
-| 6 | 过期删除与淘汰策略 | 惰性删除+定期采样，8种淘汰(LRU/LFU/TTL/随机) | ★★★★☆ |
-| 7 | 主从复制 | PSYNC增量同步(repl_backlog)，全量(RDB传输) | ★★★☆☆ |
-| 8 | Cluster 集群 | 16384 hash slot + gossip + MOVED/ASK 重定向 | ★★★★☆ |
-| 9 | Redis 6.0 多线程 IO | 主线程+IO线程分工，命令执行仍单线程 | ★★★☆☆ |
-| 10 | 大Key/热Key 问题 | SCAN扫描+拆分+本地缓存 | ★★★★☆ |
+| #   | 考点                 | 核心要点（一句话）                                                                    | 出题概率 |
+| --- | -------------------- | ------------------------------------------------------------------------------------- | -------- |
+| 1   | Redis 数据结构与编码 | 5种类型底层7种编码，SDS/ziplist/skiplist                                              | ★★★★★    |
+| 2   | Redis 为什么这么快   | 纯内存+单线程避免锁+IO多路复用+高效数据结构                                           | ★★★★★    |
+| 3   | 缓存穿透/击穿/雪崩   | 穿透(不存在key)用布隆过滤器，击穿(热key过期)用互斥锁，雪崩(大量key同时过期)设随机过期 | ★★★★★    |
+| 4   | 持久化 RDB vs AOF    | RDB快照(fork子进程全量)，AOF日志(append追写)，混合模式                                | ★★★★☆    |
+| 5   | 分布式锁             | SET NX EX + Lua原子释放 + Redlock争议                                                 | ★★★★★    |
+| 6   | 过期删除与淘汰策略   | 惰性删除+定期采样，8种淘汰(LRU/LFU/TTL/随机)                                          | ★★★★☆    |
+| 7   | 主从复制             | PSYNC增量同步(repl_backlog)，全量(RDB传输)                                            | ★★★☆☆    |
+| 8   | Cluster 集群         | 16384 hash slot + gossip + MOVED/ASK 重定向                                           | ★★★★☆    |
+| 9   | Redis 6.0 多线程 IO  | 主线程+IO线程分工，命令执行仍单线程                                                   | ★★★☆☆    |
+| 10  | 大Key/热Key 问题     | SCAN扫描+拆分+本地缓存                                                                | ★★★★☆    |
 
 ---
 
@@ -38,13 +40,13 @@
 
 **答：**
 
-| 数据类型 | 小数据编码 | 大数据编码 |
-|----------|-----------|-----------|
-| String | int / embstr (≤44B) | raw (SDS) |
-| List | listpack | quicklist |
-| Hash | listpack | hashtable (dict) |
-| Set | intset（纯整数）| hashtable (dict) |
-| ZSet (Sorted Set) | listpack | skiplist + hashtable |
+| 数据类型          | 小数据编码          | 大数据编码           |
+| ----------------- | ------------------- | -------------------- |
+| String            | int / embstr (≤44B) | raw (SDS)            |
+| List              | listpack            | quicklist            |
+| Hash              | listpack            | hashtable (dict)     |
+| Set               | intset（纯整数）    | hashtable (dict)     |
+| ZSet (Sorted Set) | listpack            | skiplist + hashtable |
 
 关键点：Redis 会根据元素数量和大小动态切换编码。例如 Hash 在字段数 ≤ 128 且值长度 ≤ 64B 时使用 listpack，超过任一阈值自动升级为 hashtable。
 
@@ -53,6 +55,7 @@
 ### Q2：Redis 为什么快？
 
 **答：**
+
 1. **纯内存操作**：所有数据存在 RAM，读写无磁盘 IO 瓶颈
 2. **单线程命令执行**：无锁竞争、无上下文切换开销（命令执行阶段）
 3. **IO 多路复用**：单线程用 epoll 管理成千上万并发连接
@@ -65,13 +68,13 @@
 
 **答：**
 
-| 对比项 | RDB | AOF |
-|--------|-----|-----|
-| 数据格式 | 二进制快照 | 写命令文本（RESP 格式） |
-| 数据安全 | 可能丢失最后一次快照后的数据 | `everysec` 最多丢 1 秒 |
-| 文件大小 | 小（压缩二进制） | 大（尤其写命令频繁时） |
-| 恢复速度 | 快（直接加载二进制） | 慢（需逐条回放命令） |
-| 适用场景 | 定期备份、允许丢分钟级数据 | 对数据安全要求高 |
+| 对比项   | RDB                          | AOF                     |
+| -------- | ---------------------------- | ----------------------- |
+| 数据格式 | 二进制快照                   | 写命令文本（RESP 格式） |
+| 数据安全 | 可能丢失最后一次快照后的数据 | `everysec` 最多丢 1 秒  |
+| 文件大小 | 小（压缩二进制）             | 大（尤其写命令频繁时）  |
+| 恢复速度 | 快（直接加载二进制）         | 慢（需逐条回放命令）    |
+| 适用场景 | 定期备份、允许丢分钟级数据   | 对数据安全要求高        |
 
 **推荐**：生产环境开启混合持久化（`aof-use-rdb-preamble yes`），兼顾安全性和恢复速度。
 
@@ -80,6 +83,7 @@
 ### Q4：Redis 支持哪些过期键删除策略？
 
 **答：**
+
 1. **惰性删除（Lazy Expiry）**：访问 key 时调用 `expireIfNeeded()` 检查是否过期，已过期则删除。节省 CPU，但可能造成内存泄漏（从不访问的 key 不会被删除）。
 2. **定期主动删除（Active Expiry）**：`serverCron` 调用 `activeExpireCycle()`，定期随机采样带有 expire 的 key，批量删除已过期的 key，防止内存无限增长。
 
@@ -103,6 +107,7 @@
 ### Q6：Redis 的主从复制是如何工作的？
 
 **答：**
+
 1. Slave 连接 Master，发送 `PSYNC <replid> <offset>`
 2. 若 offset 在 Master 的复制积压缓冲区（repl_backlog）范围内 → **部分重同步（Partial Resync）**，发送增量数据
 3. 否则 → **全量重同步（Full Resync）**：Master fork 子进程生成 RDB，发给 Slave；期间新命令缓存在 `repl_backlog` 中，RDB 传输完后补发
@@ -117,10 +122,12 @@
 **答：**
 
 Redis 的 dict 包含两个 hashtable（`ht[0]` 和 `ht[1]`）。Rehash 触发条件：
+
 - 扩容：`load factor > 1`（BGSAVE/BGREWRITEAOF 时放宽到 `> 5`）
 - 缩容：`load factor < 0.1`
 
 渐进式流程：
+
 1. 分配新的 `ht[1]`（容量为 2 的幂，≥ `ht[0].used * 2`）
 2. 设置 `rehashidx = 0`，标志 rehash 开始
 3. **每次 CRUD 操作**时，迁移 `ht[0].table[rehashidx]` 整个链表到 `ht[1]`，`rehashidx++`
@@ -136,6 +143,7 @@ Redis 的 dict 包含两个 hashtable（`ht[0]` 和 `ht[1]`）。Rehash 触发�
 **答：**
 
 SDS 优势：
+
 - O(1) 获取长度（`len` 字段，无需 `strlen`）
 - 自动扩容 + 空间预分配（`alloc` 字段），避免频繁 realloc
 - 二进制安全（以 `len` 计长度，不被 `\0` 截断）
@@ -162,6 +170,7 @@ SDS 优势：
 **精确 LRU** 需要维护一个全局 LRU 链表，每次访问需要将 key 移到链表头部，每次淘汰从链表尾部取出。对于 Redis 这种海量 key 场景，维护双向链表的内存开销巨大（每个 key 需要额外 16B 指针），且每次操作需要修改指针（写密集型，CPU cache 不友好）。
 
 **Redis 近似 LRU**（`eviction.c: evictionPoolPopulate`）：
+
 - 每个 robj 有 24 位 `lru` 字段存储最后访问的秒级时间戳
 - 淘汰时随机采样 `maxmemory-samples`（默认 5）个 key，插入 16 个元素的候选池
 - 从候选池中选 idle time 最长的淘汰
@@ -177,6 +186,7 @@ SDS 优势：
 AOF 重写（`BGREWRITEAOF`）目的：压缩 AOF 文件，去除冗余命令（如多次 SET 只保留最后一条）。
 
 流程：
+
 1. 主进程 `fork()` 子进程
 2. 子进程遍历内存中所有 db 的 key-value，为每个 key 生成最简命令写入新 AOF 文件
 3. **重写期间**，主进程新的写命令同时追加到两个缓冲区：
@@ -232,10 +242,12 @@ Redis 选 `p=0.25` 是内存效率优先的权衡（Redis 文档注释：`ZSKIPL
 **答：**
 
 Redis 6.0 的多线程 IO 架构：
+
 - **主线程**：`epoll_wait` 检测可读 fd → 将 client 分配给 IO 线程 → 等待 IO 线程完成 → **单线程执行所有命令** → 将需回复的 client 分配给 IO 线程写回
 - **IO 线程**：仅负责 `read()/parse()`（读取并解析请求）和 `write()`（写回响应），不执行任何命令
 
 命令执行保持单线程的原因：
+
 1. Redis 的高性能主要瓶颈在网络 IO，不在命令执行（绝大多数命令 O(1) 或 O(log N)）
 2. 单线程执行无需任何数据结构加锁，代码复杂度极低
 3. 避免并发命令带来的原子性问题（MULTI/EXEC、Lua 脚本的隔离性依赖单线程）
@@ -253,6 +265,7 @@ Redis 6.0 的多线程 IO 架构：
 **ODOWN（客观下线）**：发现 SDOWN 的 Sentinel 向其他 Sentinel 发送 `SENTINEL is-master-down-by-addr` 请求，若收到 `≥ quorum` 个 Sentinel 认同（回复 is_down=1），升级为 ODOWN，触发故障转移流程。
 
 **Leader 选举（类 Raft）**：
+
 1. 检测到 ODOWN 的 Sentinel 在新 `epoch` 中请求其他 Sentinel 投票给自己（发送含自身 `runid` 的 `is-master-down-by-addr`）
 2. 每个 Sentinel 在每个 epoch 只投一票（先到先得）
 3. 获得 `> N/2 + 1` 票的 Sentinel 成为 Leader，执行 failover：选最优 Slave → `REPLICAOF NO ONE` → 广播新主节点给其他 Slave
@@ -283,19 +296,20 @@ if (rand() < p) counter++;
 **答：**
 
 **Redis 实现原理**：
+
 - `WATCH key` → 在 `db->watched_keys[key]` 中记录当前 client
 - 任何修改 key 的操作（`dbAdd/dbOverwrite/dbDelete`）→ 调用 `touchWatchedKey()` → 为所有监听该 key 的 client 设置 `CLIENT_DIRTY_CAS` flag
 - `EXEC` 执行时检查 `CLIENT_DIRTY_CAS` → 若已设置则返回 nil，事务取消
 
 **与数据库乐观锁对比**：
 
-| 维度 | Redis WATCH | 数据库乐观锁（CAS/version） |
-|------|-------------|---------------------------|
-| 冲突检测粒度 | key 级别 | 行/字段级别 |
-| 版本号 | 隐式（脏标记） | 显式 version 字段 |
-| 冲突后 | 直接取消事务，客户端重试 | 更新失败，客户端重试 |
-| 适用场景 | 低并发冲突场景 | 低并发冲突场景 |
-| ABA 问题 | 存在（key 改回原值仍触发冲突） | 用版本号可解决 |
+| 维度         | Redis WATCH                    | 数据库乐观锁（CAS/version） |
+| ------------ | ------------------------------ | --------------------------- |
+| 冲突检测粒度 | key 级别                       | 行/字段级别                 |
+| 版本号       | 隐式（脏标记）                 | 显式 version 字段           |
+| 冲突后       | 直接取消事务，客户端重试       | 更新失败，客户端重试        |
+| 适用场景     | 低并发冲突场景                 | 低并发冲突场景              |
+| ABA 问题     | 存在（key 改回原值仍触发冲突） | 用版本号可解决              |
 
 ---
 
@@ -303,12 +317,13 @@ if (rand() < p) counter++;
 
 **答：**
 
-| 重定向 | 触发场景 | 客户端处理 | 是否更新路由表 |
-|--------|---------|-----------|--------------|
-| `MOVED slot ip:port` | slot 永久在目标节点 | 直接向目标发请求 | **是**，更新本地 slot 路由 |
-| `ASK slot ip:port` | slot 正在迁移中（源节点的这个 key 已迁走） | 先发 ASKING，再发请求 | **否**，临时一次性重定向 |
+| 重定向               | 触发场景                                   | 客户端处理            | 是否更新路由表             |
+| -------------------- | ------------------------------------------ | --------------------- | -------------------------- |
+| `MOVED slot ip:port` | slot 永久在目标节点                        | 直接向目标发请求      | **是**，更新本地 slot 路由 |
+| `ASK slot ip:port`   | slot 正在迁移中（源节点的这个 key 已迁走） | 先发 ASKING，再发请求 | **否**，临时一次性重定向   |
 
 **ASK 场景细节**：
+
 - 迁移中，源节点标记为 `MIGRATING`，目标节点标记为 `IMPORTING`
 - 对已迁移的 key，源节点返回 `-ASK`
 - 目标节点的 IMPORTING 状态会拦截正常请求（返回 MOVED 回源节点），但 `ASKING` 命令可解除拦截
@@ -343,6 +358,7 @@ end
 ```
 
 **主要坑**：
+
 1. **过期时间设置**：业务执行时间 > 锁过期时间 → 锁提前释放 → 并发问题。需加看门狗（watchdog）续期
 2. **主从切换**：Master 设置锁后崩溃，Slave 升级为 Master 前锁未同步 → 另一客户端可以加锁（重复加锁）。RedLock 算法（向 N 个独立 Redis 节点加锁，多数成功才算获得锁）可缓解，但有争议
 3. **网络分区**：Cluster 模式下需注意 MOVED 重定向对锁可见性的影响
@@ -353,14 +369,15 @@ end
 
 **答：**
 
-| 方案 | 优点 | 缺点 | 适用场景 |
-|------|------|------|---------|
-| List（LPUSH/BRPOP） | 简单，BRPOP 阻塞等待 | 消费后消息丢失，不支持多消费者组 | 简单任务队列 |
-| Pub/Sub | 支持广播，多订阅者 | 无持久化，消费者离线丢消息 | 实时通知 |
-| Sorted Set（延迟队列） | 支持定时任务，按 score(时间戳)排序 | 需轮询，不支持 blocking | 延迟任务 |
-| Stream（Redis 5.0+） | 持久化、消费组、ACK 确认、历史回溯 | 相对复杂 | 生产级消息队列 |
+| 方案                   | 优点                               | 缺点                             | 适用场景       |
+| ---------------------- | ---------------------------------- | -------------------------------- | -------------- |
+| List（LPUSH/BRPOP）    | 简单，BRPOP 阻塞等待               | 消费后消息丢失，不支持多消费者组 | 简单任务队列   |
+| Pub/Sub                | 支持广播，多订阅者                 | 无持久化，消费者离线丢消息       | 实时通知       |
+| Sorted Set（延迟队列） | 支持定时任务，按 score(时间戳)排序 | 需轮询，不支持 blocking          | 延迟任务       |
+| Stream（Redis 5.0+）   | 持久化、消费组、ACK 确认、历史回溯 | 相对复杂                         | 生产级消息队列 |
 
 **Redis Stream 关键特性**：
+
 - `XADD` 写入消息（自动生成 `timestamp-seq` 格式 ID）
 - `XGROUP CREATE` 创建消费组
 - `XREADGROUP` 读取消息，消费后需 `XACK` 确认
@@ -379,8 +396,9 @@ end
 5. **`DEBUG SLEEP`** + `MEMORY DOCTOR`：Redis 4.0+ 内置内存分析
 
 **处理方案**：
+
 - **短期**：`maxmemory` + 合适的淘汰策略（`allkeys-lru` 或 `volatile-lru`）
-- **中期**：清理大 key（SCAN + DEL，避免 KEYS * 阻塞），为无 expire 的 key 设置 TTL
+- **中期**：清理大 key（SCAN + DEL，避免 KEYS \* 阻塞），为无 expire 的 key 设置 TTL
 - **长期**：数据分片（Cluster）、冷热数据分层（Redis + 持久化存储），合理使用 Hash/Set 代替大量小 key
 
 ---
@@ -389,13 +407,13 @@ end
 
 **答（高危命令及替代方案）：**
 
-| 危险命令 | 时间复杂度 | 替代方案 |
-|---------|-----------|---------|
-| `KEYS pattern` | O(N) 全量扫描 | `SCAN cursor MATCH pattern COUNT 100`（渐进式） |
-| `FLUSHDB / FLUSHALL` | O(N) | `FLUSHDB ASYNC`（后台线程异步删除，Redis 4.0+） |
-| `DEL` 大 key | O(N)（集合类型） | `UNLINK`（异步删除，非阻塞，Redis 4.0+） |
-| `LRANGE 0 -1` 超大 list | O(N) | 分页读取，或使用 Stream |
-| `SORT` 大集合 | O(N log N) | 提前在应用层排序 |
-| `SMEMBERS` 大 set | O(N) | `SSCAN` 渐进式遍历 |
-| AOF `fsync always` | 每写一次 fsync | 改为 `everysec`（最多丢 1 秒）|
-| fork（BGSAVE/BGREWRITEAOF） | 内存越大，fork COW 开销越大 | 控制单实例内存 ≤ 10GB，避免在写高峰触发 |
+| 危险命令                    | 时间复杂度                  | 替代方案                                        |
+| --------------------------- | --------------------------- | ----------------------------------------------- |
+| `KEYS pattern`              | O(N) 全量扫描               | `SCAN cursor MATCH pattern COUNT 100`（渐进式） |
+| `FLUSHDB / FLUSHALL`        | O(N)                        | `FLUSHDB ASYNC`（后台线程异步删除，Redis 4.0+） |
+| `DEL` 大 key                | O(N)（集合类型）            | `UNLINK`（异步删除，非阻塞，Redis 4.0+）        |
+| `LRANGE 0 -1` 超大 list     | O(N)                        | 分页读取，或使用 Stream                         |
+| `SORT` 大集合               | O(N log N)                  | 提前在应用层排序                                |
+| `SMEMBERS` 大 set           | O(N)                        | `SSCAN` 渐进式遍历                              |
+| AOF `fsync always`          | 每写一次 fsync              | 改为 `everysec`（最多丢 1 秒）                  |
+| fork（BGSAVE/BGREWRITEAOF） | 内存越大，fork COW 开销越大 | 控制单实例内存 ≤ 10GB，避免在写高峰触发         |

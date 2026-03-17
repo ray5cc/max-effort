@@ -12,18 +12,18 @@
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|--------|
-| 1 | 多Agent协作模式 | 主从(委派)/对等(协商)/层级(管理链)/竞争(辩论) | ★★★★★ |
-| 2 | 通信机制 | 共享黑板(状态)/消息传递(异步)/事件总线(解耦) | ★★★★☆ |
-| 3 | 任务分解与分配 | 规划Agent拆解→调度分配→工作Agent执行→汇总 | ★★★★★ |
-| 4 | CrewAI / AutoGen | CrewAI(角色驱动)/AutoGen(对话驱动)，框架对比 | ★★★★☆ |
-| 5 | 状态管理与同步 | 全局状态store+版本控制+冲突解决 | ★★★☆☆ |
-| 6 | 错误传播与恢复 | 子Agent失败不应阻塞全局，重试/替代/降级 | ★★★★☆ |
-| 7 | Agent 间信任与验证 | 输出验证+交叉检查+投票机制 | ★★★☆☆ |
-| 8 | 人类介入 (HITL) | 关键决策点暂停请求人类确认/修正 | ★★★★☆ |
-| 9 | 成本控制 | 多Agent Token消耗大，预算分配+缓存+模型分级 | ★★★★☆ |
-| 10 | 评估指标 | 任务完成率+协作效率(轮次)+Token成本+质量 | ★★★☆☆ |
+| #   | 考点               | 核心要点（一句话）                            | 出题概率 |
+| --- | ------------------ | --------------------------------------------- | -------- |
+| 1   | 多Agent协作模式    | 主从(委派)/对等(协商)/层级(管理链)/竞争(辩论) | ★★★★★    |
+| 2   | 通信机制           | 共享黑板(状态)/消息传递(异步)/事件总线(解耦)  | ★★★★☆    |
+| 3   | 任务分解与分配     | 规划Agent拆解→调度分配→工作Agent执行→汇总     | ★★★★★    |
+| 4   | CrewAI / AutoGen   | CrewAI(角色驱动)/AutoGen(对话驱动)，框架对比  | ★★★★☆    |
+| 5   | 状态管理与同步     | 全局状态store+版本控制+冲突解决               | ★★★☆☆    |
+| 6   | 错误传播与恢复     | 子Agent失败不应阻塞全局，重试/替代/降级       | ★★★★☆    |
+| 7   | Agent 间信任与验证 | 输出验证+交叉检查+投票机制                    | ★★★☆☆    |
+| 8   | 人类介入 (HITL)    | 关键决策点暂停请求人类确认/修正               | ★★★★☆    |
+| 9   | 成本控制           | 多Agent Token消耗大，预算分配+缓存+模型分级   | ★★★★☆    |
+| 10  | 评估指标           | 任务完成率+协作效率(轮次)+Token成本+质量      | ★★★☆☆    |
 
 ---
 
@@ -37,13 +37,13 @@
 
 单 Agent 的核心痛点及解法：
 
-| 痛点 | 多 Agent 解法 |
-|------|-------------|
+| 痛点               | 多 Agent 解法                               |
+| ------------------ | ------------------------------------------- |
 | **上下文窗口有限** | 多 Agent 接力，每个处理子任务，不超出单窗口 |
-| **能力单一** | 角色专业化，每个 Agent 专注特定领域 |
-| **无法并行** | 多 Agent 同时处理独立子任务，降低总延迟 |
-| **缺乏自我验证** | 引入 Critic/Reviewer Agent 做质量把控 |
-| **单点故障** | 某个 Agent 失败可被替换或重试，不影响全局 |
+| **能力单一**       | 角色专业化，每个 Agent 专注特定领域         |
+| **无法并行**       | 多 Agent 同时处理独立子任务，降低总延迟     |
+| **缺乏自我验证**   | 引入 Critic/Reviewer Agent 做质量把控       |
+| **单点故障**       | 某个 Agent 失败可被替换或重试，不影响全局   |
 
 ---
 
@@ -51,13 +51,13 @@
 
 **参考答案**：
 
-| 特性 | AssistantAgent | UserProxyAgent |
-|------|---------------|---------------|
-| **默认角色** | AI 助手，调用 LLM 生成回复 | 代理人类用户 |
-| **代码执行** | 默认不执行代码 | 默认可执行代码 |
-| **human_input_mode** | `"NEVER"` | `"TERMINATE"` |
-| **典型用途** | 任务执行、推理、工具调用 | 触发对话、执行代码、工具实际运行 |
-| **LLM 调用** | 每次都调用 LLM | 可配置为无 LLM（只执行） |
+| 特性                 | AssistantAgent             | UserProxyAgent                   |
+| -------------------- | -------------------------- | -------------------------------- |
+| **默认角色**         | AI 助手，调用 LLM 生成回复 | 代理人类用户                     |
+| **代码执行**         | 默认不执行代码             | 默认可执行代码                   |
+| **human_input_mode** | `"NEVER"`                  | `"TERMINATE"`                    |
+| **典型用途**         | 任务执行、推理、工具调用   | 触发对话、执行代码、工具实际运行 |
+| **LLM 调用**         | 每次都调用 LLM             | 可配置为无 LLM（只执行）         |
 
 核心区分点：**工具函数的注册**在 `AssistantAgent`（告诉 LLM 有哪些工具），**工具函数的执行**在 `UserProxyAgent`（实际运行 Python 函数）。
 
@@ -81,13 +81,13 @@ Orchestrator（编排者）是多 Agent 系统的"项目经理"，主要职责�
 
 **参考答案**：
 
-| 方法 | 原理 | 适用场景 |
-|------|------|---------|
-| `"auto"` | LLM 根据对话内容决定下一个发言者 | 通用协作，步骤不固定 |
-| `"round_robin"` | 按 agents 列表顺序轮询 | 流水线：步骤固定且顺序明确 |
-| `"random"` | 随机选择 | 探索性讨论，防止固化 |
-| `"manual"` | 人工在终端输入选择 | 调试、演示 |
-| **自定义 Callable** | 返回下一个 Agent 的函数 | 业务规则复杂的场景 |
+| 方法                | 原理                             | 适用场景                   |
+| ------------------- | -------------------------------- | -------------------------- |
+| `"auto"`            | LLM 根据对话内容决定下一个发言者 | 通用协作，步骤不固定       |
+| `"round_robin"`     | 按 agents 列表顺序轮询           | 流水线：步骤固定且顺序明确 |
+| `"random"`          | 随机选择                         | 探索性讨论，防止固化       |
+| `"manual"`          | 人工在终端输入选择               | 调试、演示                 |
+| **自定义 Callable** | 返回下一个 Agent 的函数          | 业务规则复杂的场景         |
 
 工程建议：生产环境优先用 `"auto"` 或自定义函数；`"round_robin"` 适合评审流水线（写作→审查→修改）。
 
@@ -131,6 +131,7 @@ Coder Agent（生成 Python 函数）
 三道防线：
 
 1. **终止消息检测**：
+
 ```python
 UserProxyAgent(
     is_termination_msg=lambda msg: "TASK_COMPLETE" in msg.get("content", "")
@@ -138,11 +139,13 @@ UserProxyAgent(
 ```
 
 2. **最大轮次限制**：
+
 ```python
 GroupChat(max_round=20)  # 超过20轮强制终止
 ```
 
 3. **连续自动回复上限**：
+
 ```python
 ConversableAgent(max_consecutive_auto_reply=5)  # 连续5次自动回复后等待人工
 ```
@@ -155,13 +158,13 @@ ConversableAgent(max_consecutive_auto_reply=5)  # 连续5次自动回复后等�
 
 **参考答案**：
 
-| 特性 | Workflow | Chatflow |
-|------|---------|---------|
-| **执行模式** | 单次触发，执行完即结束 | 持续对话，保留上下文 |
-| **状态** | 无状态（每次独立执行） | 有状态（维护对话历史） |
-| **适用场景** | 批处理、自动化报告生成、数据处理 | 客服机器人、问答助手 |
-| **节点类型** | 包含 Start/End 节点 | 包含对话相关节点 |
-| **调试方式** | 单步调试每个节点输出 | 对话式测试 |
+| 特性         | Workflow                         | Chatflow               |
+| ------------ | -------------------------------- | ---------------------- |
+| **执行模式** | 单次触发，执行完即结束           | 持续对话，保留上下文   |
+| **状态**     | 无状态（每次独立执行）           | 有状态（维护对话历史） |
+| **适用场景** | 批处理、自动化报告生成、数据处理 | 客服机器人、问答助手   |
+| **节点类型** | 包含 Start/End 节点              | 包含对话相关节点       |
+| **调试方式** | 单步调试每个节点输出             | 对话式测试             |
 
 ---
 
@@ -176,6 +179,7 @@ Nested Chat 允许在一次对话触发时，在幕后发起一个完整的子�
 **解决的问题**：当某个复杂子任务需要多个 Agent 协作（如"研究某个话题"需要检索→分析→摘要三个 Agent），但主流程只关心最终结果，不需要暴露子流程细节时使用。
 
 **实现方式**（AutoGen 0.2+）：
+
 ```python
 assistant.register_nested_chats(
     trigger=user_proxy,
@@ -197,6 +201,7 @@ assistant.register_nested_chats(
 **静态分配**：Orchestrator 在启动时就决定哪个 Agent 负责哪个子任务，适合流程固定的场景。
 
 **基于能力的动态分配**：维护 Agent 能力注册表，Orchestrator 根据任务需求匹配最合适的 Agent：
+
 ```python
 AGENT_REGISTRY = {
     "security_review": SecurityAgent,
@@ -220,14 +225,17 @@ def assign_task(task_type: str):
 **参考答案**：
 
 **共享状态（Shared State）**：
+
 - 优点：读写方便，数据一致性强，实时可见
 - 缺点：并发写入需要锁机制，可能产生竞争条件，耦合度高
 
 **消息传递（Message Passing）**：
+
 - 优点：松耦合，易扩展，自然支持异步
 - 缺点：消息可能丢失（需要持久化），顺序难以保证，调试复杂
 
 **选择原则**：
+
 - 简单任务进度、少量状态 → 共享状态（Redis）
 - Agent 间协调、事件通知 → 消息传递（消息队列）
 - 大型系统 → **混合方案**：任务状态用共享存储，Agent 通信用消息队列
@@ -245,7 +253,8 @@ def assign_task(task_type: str):
 1. **Prompt 工程**：明确要求"只输出 JSON，不要包含代码块标记，不要添加解释"
 2. **输出解析器**：使用 LangChain OutputParser 或 Pydantic 模型验证
 3. **容错解析**：先尝试直接 JSON 解析，失败则用正则提取 JSON 块：
-```python
+
+````python
 import re, json
 
 def safe_parse_json(text: str) -> dict:
@@ -263,7 +272,8 @@ def safe_parse_json(text: str) -> dict:
     if match:
         return json.loads(match.group(0))
     raise ValueError(f"无法解析 JSON：{text[:200]}")
-```
+````
+
 4. **重试机制**：解析失败时重新请求 LLM，并在 Prompt 中附上上次的错误信息
 
 ---
@@ -288,6 +298,7 @@ def add(a: int, b: int) -> int:
 ```
 
 **核心原理**：
+
 - `register_for_llm`：将函数签名转为 OpenAI Function Calling 格式，注入 AssistantAgent 的 `llm_config["tools"]`
 - `register_for_execution`：UserProxyAgent 收到 LLM 的函数调用请求后，实际执行该 Python 函数并返回结果
 
@@ -302,6 +313,7 @@ def add(a: int, b: int) -> int:
 **四层测试策略**：
 
 1. **单元测试（Mock LLM）**：对每个 Agent 的工具函数、输出解析逻辑做单元测试，Mock 掉 LLM 调用：
+
 ```python
 def test_security_agent_detects_sql_injection():
     mock_llm = MockLLM(response=json.dumps({"issues": [{"severity": "critical", ...}], ...}))
@@ -326,13 +338,13 @@ def test_security_agent_detects_sql_injection():
 
 **Plan-and-Execute**：先由 Planner 生成完整计划（任务列表），再由 Executor 逐步执行每个步骤。
 
-| 维度 | ReAct | Plan-and-Execute |
-|------|-------|-----------------|
-| **全局视角** | 弱（每步只看当前状态） | 强（先有全局计划） |
-| **适应动态变化** | 强（可随时调整策略） | 弱（计划出错难纠偏） |
-| **Token 消耗** | 较高（每步都重新推理） | 较低（计划阶段一次性） |
-| **长任务稳定性** | 容易"迷失方向" | 更稳定（有路线图） |
-| **适用场景** | 探索性、步骤不确定 | 结构化、步骤可预见 |
+| 维度             | ReAct                  | Plan-and-Execute       |
+| ---------------- | ---------------------- | ---------------------- |
+| **全局视角**     | 弱（每步只看当前状态） | 强（先有全局计划）     |
+| **适应动态变化** | 强（可随时调整策略）   | 弱（计划出错难纠偏）   |
+| **Token 消耗**   | 较高（每步都重新推理） | 较低（计划阶段一次性） |
+| **长任务稳定性** | 容易"迷失方向"         | 更稳定（有路线图）     |
+| **适用场景**     | 探索性、步骤不确定     | 结构化、步骤可预见     |
 
 **工程选择**：任务步骤超过 10 步时优先 Plan-and-Execute；任务高度动态时用 ReAct；复杂场景可以两者结合（先规划，执行中允许重新规划）。
 
@@ -342,13 +354,13 @@ def test_security_agent_detects_sql_injection():
 
 **参考答案**：
 
-| 维度 | ReAct 模式 | Function Calling 模式 |
-|------|-----------|---------------------|
-| **工具调用方式** | 在文本中输出特殊格式触发工具 | 通过 OpenAI API 的结构化函数调用 |
-| **模型要求** | 任何 LLM 均可（不依赖 API 特性） | 需要模型支持 Function Calling |
-| **可靠性** | 较低（文本解析可能失败） | 较高（结构化调用，格式稳定） |
-| **并行工具调用** | 不支持 | 部分模型支持（GPT-4o） |
-| **适用模型** | Claude、开源模型、不支持 FC 的模型 | GPT-4、GPT-4o、Claude 3+ |
+| 维度             | ReAct 模式                         | Function Calling 模式            |
+| ---------------- | ---------------------------------- | -------------------------------- |
+| **工具调用方式** | 在文本中输出特殊格式触发工具       | 通过 OpenAI API 的结构化函数调用 |
+| **模型要求**     | 任何 LLM 均可（不依赖 API 特性）   | 需要模型支持 Function Calling    |
+| **可靠性**       | 较低（文本解析可能失败）           | 较高（结构化调用，格式稳定）     |
+| **并行工具调用** | 不支持                             | 部分模型支持（GPT-4o）           |
+| **适用模型**     | Claude、开源模型、不支持 FC 的模型 | GPT-4、GPT-4o、Claude 3+         |
 
 ---
 
@@ -363,12 +375,13 @@ def test_security_agent_detects_sql_injection():
 **防范策略**：
 
 1. **引入对立角色**：增加 "Devil's Advocate Agent"，职责是专门反驳已有观点，强制引入异见：
+
 ```python
 devil_advocate = AssistantAgent(
     name="DevilsAdvocate",
     system_message="""你是批判性思考者。你的职责是：
     1. 对任何结论提出反驳
-    2. 寻找反例和例外情况  
+    2. 寻找反例和例外情况
     3. 不要为了反对而反对，但要确保观点经过充分论证"""
 )
 ```
@@ -387,16 +400,17 @@ devil_advocate = AssistantAgent(
 
 **关键故障场景及应对**：
 
-| 故障场景 | 检测方式 | 应对策略 |
-|---------|---------|---------|
-| **单 Agent 超时** | 超时计时器 | 取消任务，触发备用 Agent |
-| **LLM API 限流** | 响应码 429 | 指数退避重试，切换备用 API Key |
-| **LLM 服务宕机** | 连接错误 | 自动切换到备用模型（如 GPT-4o → Claude） |
-| **Agent 死循环** | max_round 超过阈值 | 强制截断，记录告警 |
-| **消息队列积压** | 队列深度监控 | 水平扩展 Worker Agent |
-| **状态数据库宕机** | 心跳检测 | 切换到备用实例，任务从最后检查点恢复 |
+| 故障场景           | 检测方式           | 应对策略                                 |
+| ------------------ | ------------------ | ---------------------------------------- |
+| **单 Agent 超时**  | 超时计时器         | 取消任务，触发备用 Agent                 |
+| **LLM API 限流**   | 响应码 429         | 指数退避重试，切换备用 API Key           |
+| **LLM 服务宕机**   | 连接错误           | 自动切换到备用模型（如 GPT-4o → Claude） |
+| **Agent 死循环**   | max_round 超过阈值 | 强制截断，记录告警                       |
+| **消息队列积压**   | 队列深度监控       | 水平扩展 Worker Agent                    |
+| **状态数据库宕机** | 心跳检测           | 切换到备用实例，任务从最后检查点恢复     |
 
 **检查点机制**（关键）：
+
 ```python
 async def execute_with_checkpoint(task_id: str, steps: list):
     completed = load_checkpoint(task_id)  # 从 Redis 加载已完成步骤
@@ -464,6 +478,7 @@ def sanitize_user_input(user_input: str) -> str:
    - 错误恢复时间
 
 **监控工具推荐**：
+
 - **LangSmith**：LangChain 生态，全链路追踪
 - **Phoenix（Arize）**：LLM Observability，支持 OpenTelemetry
 - **Langfuse**：开源替代，支持自部署
@@ -475,15 +490,15 @@ def sanitize_user_input(user_input: str) -> str:
 
 **参考答案**：
 
-| 维度 | LangGraph | AutoGen |
-|------|-----------|---------|
-| **核心抽象** | 有向图（Graph）：节点是处理步骤，边是数据流 | 对话（Conversation）：Agent 之间交换消息 |
-| **状态管理** | 显式 StateGraph，状态结构清晰定义 | 隐式（存在对话历史中） |
-| **控制流** | 条件边、循环节点，精确控制执行路径 | 通过 is_termination_msg 和 speaker 选择控制 |
-| **调试** | 可视化图结构，Step-through 调试 | 查看对话日志 |
-| **学习曲线** | 较高（需理解图的概念） | 较低（对话直觉） |
-| **适合场景** | 结构化工作流、状态转换复杂 | 自由探索协作、对话式任务 |
-| **生产成熟度** | LangGraph Cloud 提供生产级部署 | AutoGen Studio 提供 UI |
+| 维度           | LangGraph                                   | AutoGen                                     |
+| -------------- | ------------------------------------------- | ------------------------------------------- |
+| **核心抽象**   | 有向图（Graph）：节点是处理步骤，边是数据流 | 对话（Conversation）：Agent 之间交换消息    |
+| **状态管理**   | 显式 StateGraph，状态结构清晰定义           | 隐式（存在对话历史中）                      |
+| **控制流**     | 条件边、循环节点，精确控制执行路径          | 通过 is_termination_msg 和 speaker 选择控制 |
+| **调试**       | 可视化图结构，Step-through 调试             | 查看对话日志                                |
+| **学习曲线**   | 较高（需理解图的概念）                      | 较低（对话直觉）                            |
+| **适合场景**   | 结构化工作流、状态转换复杂                  | 自由探索协作、对话式任务                    |
+| **生产成熟度** | LangGraph Cloud 提供生产级部署              | AutoGen Studio 提供 UI                      |
 
 ---
 
@@ -494,6 +509,7 @@ def sanitize_user_input(user_input: str) -> str:
 当多个 Agent 对同一问题给出不同答案时，需要仲裁。三种主要策略：
 
 **投票机制（适合事实判断类）**：
+
 ```python
 from collections import Counter
 
@@ -502,6 +518,7 @@ def majority_vote(opinions: list[str]) -> str:
 ```
 
 **置信度加权（适合能力差异明显的场景）**：
+
 ```python
 def weighted_vote(opinions: list[dict]) -> str:
     # opinions = [{"answer": "A", "confidence": 0.9, "weight": 0.4}, ...]
@@ -634,13 +651,13 @@ from asyncio import Queue
 
 class AgentWorkerPool:
     """Agent 工作池，支持并发任务执行"""
-    
+
     def __init__(self, num_workers: int = 10, max_concurrent_llm: int = 5):
         self.task_queue = Queue()
         self.num_workers = num_workers
         # LLM API 调用限流（防止超出 TPM 配额）
         self.llm_semaphore = asyncio.Semaphore(max_concurrent_llm)
-    
+
     async def worker(self, worker_id: int):
         while True:
             task = await self.task_queue.get()
@@ -652,7 +669,7 @@ class AgentWorkerPool:
                     await self._handle_failure(task, e)
                 finally:
                     self.task_queue.task_done()
-    
+
     async def start(self):
         workers = [self.worker(i) for i in range(self.num_workers)]
         await asyncio.gather(*workers)
@@ -673,6 +690,7 @@ class AgentWorkerPool:
 3. **事后审核（Post-hoc）**：Agent 自动完成，结果供人工审核，允许回滚
 
 **实现方式（AutoGen）**：
+
 ```python
 # 条件介入示例：低置信度时请求人工确认
 user_proxy = UserProxyAgent(
@@ -685,6 +703,7 @@ user_proxy = UserProxyAgent(
 ```
 
 **介入时机最佳实践**：
+
 - 操作不可逆（删除数据、发送通知）→ 强制前置审批
 - 涉及金额超过阈值 → 条件介入
 - 多轮对话质量下降（重复输出、乱码）→ 自动触发人工
@@ -703,6 +722,7 @@ user_proxy = UserProxyAgent(
 3. **上下文太长**：对话轮次多后，早期的角色定义被稀释
 
 **调试步骤**：
+
 ```python
 # 步骤1：开启详细日志
 import logging
@@ -734,12 +754,14 @@ GroupChat(speaker_selection_method=custom_speaker_selection, ...)
 **成本优化五板斧**：
 
 1. **模型分级**：复杂推理用旗舰模型（GPT-4o），简单执行用小模型（GPT-4o-mini）
+
 ```python
 orchestrator_config = {"model": "gpt-4o"}      # 高质量规划
 worker_config = {"model": "gpt-4o-mini"}        # 低成本执行
 ```
 
 2. **压缩对话历史**：超过 N 轮后，用小模型生成对话摘要替代原始历史
+
 ```python
 def compress_history(messages: list, keep_last: int = 5) -> list:
     if len(messages) <= keep_last + 2:

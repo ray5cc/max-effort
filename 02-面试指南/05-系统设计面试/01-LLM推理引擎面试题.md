@@ -12,18 +12,18 @@
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|----------|
-| 1 | KV Cache | 缓存历史K/V避免重复计算，生成阶段内存主要消耗 | ★★★★★ |
-| 2 | PagedAttention | 操作系统分页思想管理KV Cache，解决内存碎片 | ★★★★★ |
-| 3 | Continuous Batching | 动态插入/移除请求，GPU利用率提升2-3x | ★★★★☆ |
-| 4 | 量化 (INT8/INT4) | 精度换速度+内存，GPTQ(权重)/AWQ(激活感知) | ★★★★★ |
-| 5 | Prefill vs Decode | Prefill=计算密集(并行)，Decode=内存密集(逐token) | ★★★★☆ |
-| 6 | vLLM 架构 | PagedAttention+Continuous Batching+Tensor Parallel | ★★★★☆ |
-| 7 | 推测解码 (Speculative) | 小模型草稿+大模型验证，保证分布一致 | ★★★☆☆ |
-| 8 | FlashAttention | IO感知算法，分块计算减少HBM访问，O(N)→O(N/M) | ★★★★☆ |
-| 9 | TensorRT-LLM | NVIDIA优化: kernel fusion+FP8+inflight batching | ★★★☆☆ |
-| 10 | llama.cpp 量化 | GGUF格式，Q4_K_M性价比最佳，CPU推理方案 | ★★★★☆ |
+| #   | 考点                   | 核心要点（一句话）                                 | 出题概率 |
+| --- | ---------------------- | -------------------------------------------------- | -------- |
+| 1   | KV Cache               | 缓存历史K/V避免重复计算，生成阶段内存主要消耗      | ★★★★★    |
+| 2   | PagedAttention         | 操作系统分页思想管理KV Cache，解决内存碎片         | ★★★★★    |
+| 3   | Continuous Batching    | 动态插入/移除请求，GPU利用率提升2-3x               | ★★★★☆    |
+| 4   | 量化 (INT8/INT4)       | 精度换速度+内存，GPTQ(权重)/AWQ(激活感知)          | ★★★★★    |
+| 5   | Prefill vs Decode      | Prefill=计算密集(并行)，Decode=内存密集(逐token)   | ★★★★☆    |
+| 6   | vLLM 架构              | PagedAttention+Continuous Batching+Tensor Parallel | ★★★★☆    |
+| 7   | 推测解码 (Speculative) | 小模型草稿+大模型验证，保证分布一致                | ★★★☆☆    |
+| 8   | FlashAttention         | IO感知算法，分块计算减少HBM访问，O(N)→O(N/M)       | ★★★★☆    |
+| 9   | TensorRT-LLM           | NVIDIA优化: kernel fusion+FP8+inflight batching    | ★★★☆☆    |
+| 10  | llama.cpp 量化         | GGUF格式，Q4_K_M性价比最佳，CPU推理方案            | ★★★★☆    |
 
 ---
 
@@ -38,6 +38,7 @@ vLLM（由 UC Berkeley 开发，SOSP 2023）是一个高吞吐量、低延迟的
 **核心问题**：传统 LLM 推理框架在 KV Cache 管理上存在严重的内存浪费——预分配最大序列长度导致利用率仅 20-40%，同时内存碎片使得实际可用并发数极低。
 
 **解决方案**：
+
 1. **PagedAttention**：借鉴 OS 虚拟内存分页思想，将 KV Cache 按固定大小（16 tokens/块）动态分配，消除碎片，利用率提升至 >90%
 2. **Continuous Batching**：动态调整批次，任何时刻完成的请求立即被新请求替换，GPU 始终满负荷
 
@@ -52,6 +53,7 @@ vLLM（由 UC Berkeley 开发，SOSP 2023）是一个高吞吐量、低延迟的
 PagedAttention 将 KV Cache 组织成固定大小的**物理块（Physical Block）**，每块存储固定数量（默认 16 个）token 的 Key 和 Value 向量。
 
 **关键概念**：
+
 - **逻辑块（Logical Block）**：从请求视角看到的连续 KV Cache
 - **物理块（Physical Block）**：实际在 GPU 内存中分配的块，可以不连续
 - **块表（Block Table）**：维护每个序列的逻辑块到物理块的映射
@@ -68,6 +70,7 @@ Block 2 → Physical 1
 ```
 
 **关键改进**：
+
 - 无外部碎片（块大小固定）
 - 内部碎片仅在最后一个块（< block_size tokens）
 - 支持跨请求共享前缀（引用计数机制）
@@ -81,6 +84,7 @@ Block 2 → Physical 1
 Beam Search 需要维护多个候选序列（beam），它们共享相同的前缀。PagedAttention 使用 **Copy-on-Write（CoW）** 机制：
 
 **初始状态**：所有 beam 共享相同物理块，引用计数增加
+
 ```
 Prompt: "The weather is" (共享块 P0, P1)
 Beam 1: [P0, P1, P_A(独占)]  ref(P0)=3, ref(P1)=3
@@ -89,6 +93,7 @@ Beam 3: [P0, P1, P_C(独占)]
 ```
 
 **写入时 CoW**：若某个 beam 需要修改共享块：
+
 1. 分配新物理块
 2. 复制原块内容到新块
 3. 原块引用计数减 1
@@ -102,16 +107,17 @@ Beam 3: [P0, P1, P_C(独占)]
 
 **答：**
 
-| 维度 | Static Batching | Continuous Batching |
-|------|----------------|---------------------|
-| 调度时机 | 请求到达时组批 | 每个 iteration 动态调整 |
-| 批次变化 | 固定，直到最长序列完成 | 每步可加入/退出 |
-| GPU 利用率 | 随时间递减（短序列完成后空闲）| 始终高利用率 |
-| 延迟 | 长请求拖累整批 | 短请求及时完成 |
+| 维度       | Static Batching                | Continuous Batching     |
+| ---------- | ------------------------------ | ----------------------- |
+| 调度时机   | 请求到达时组批                 | 每个 iteration 动态调整 |
+| 批次变化   | 固定，直到最长序列完成         | 每步可加入/退出         |
+| GPU 利用率 | 随时间递减（短序列完成后空闲） | 始终高利用率            |
+| 延迟       | 长请求拖累整批                 | 短请求及时完成          |
 
 **Continuous Batching 核心**：
 
 每个 iteration（前向传播步骤）之后：
+
 - 已完成序列（EOS 或 max_tokens）从批次中移除
 - 等待队列中的新序列立即补充进来
 - 从不存在"GPU 空等"的情况
@@ -144,6 +150,7 @@ GPU 内存 = 模型权重(固定) + 动态块分配的 KV Cache
 ```
 
 **量化对比**（LLaMA-13B, A100-40GB）：
+
 - 传统方式：最大并发 ~10 请求
 - vLLM：最大并发 ~40-60 请求（4-6x 提升）
 
@@ -168,6 +175,7 @@ vLLM 不直接设置 KV Cache 大小，而是通过以下参数间接控制：
 ```
 
 **计算公式**：
+
 ```python
 # 可用 KV Cache 块数（近似）
 available_kv_memory = total_gpu_memory × gpu_memory_utilization - model_weights
@@ -184,17 +192,20 @@ num_blocks = available_kv_memory / bytes_per_block
 vLLM 有两种 KV Cache **抢占（Preemption）策略**：
 
 **1. Swapping（换出）**：
+
 - 将最老的运行中请求的 KV Cache 从 GPU 复制到 CPU
 - 释放 GPU 块供新请求使用
 - 当内存充裕时换回 GPU
 - 开销：PCIe 传输带宽（约 16-32 GB/s）
 
 **2. Recomputation（重计算）**：
+
 - 丢弃 KV Cache，将请求移回等待队列
 - 等内存充裕时重新进行 prefill
 - 无 CPU 内存开销，但需要重新计算
 
 **选择策略**：
+
 - 短序列 → Recomputation（重算代价小）
 - 长序列 → Swapping（重算代价太高）
 
@@ -210,6 +221,7 @@ vLLM 有两种 KV Cache **抢占（Preemption）策略**：
 **答：**
 
 **问题**：LLM 推理分为两个阶段：
+
 - **Prefill**：处理输入 prompt，计算所有 token 的 KV Cache（耗时随 prompt 长度增长）
 - **Decode**：逐个生成输出 token
 
@@ -232,6 +244,7 @@ Step 4: [Prefill: 512 tokens for Req_A] + [Decode: Req_B, C, D]
 ```
 
 **配置**：
+
 ```python
 LLM(enable_chunked_prefill=True, max_num_batched_tokens=512)
 ```
@@ -247,6 +260,7 @@ LLM(enable_chunked_prefill=True, max_num_batched_tokens=512)
 传统 Attention 需要 KV 矩阵在内存中连续存储，PagedAttention 通过自定义 CUDA kernel 实现非连续内存的 Attention 计算：
 
 **核心实现**（类似 FlashAttention，但支持分页）：
+
 ```
 传统 Attention:
 K: [k0, k1, k2, ..., kN]  ← 连续内存
@@ -263,6 +277,7 @@ CUDA Kernel 中：
 ```
 
 **关键优化**：
+
 - 使用共享内存（Shared Memory）缓存当前处理的块
 - 向量化内存访问（128-bit 对齐）
 - Warp 级别并行处理多个注意力头
@@ -274,6 +289,7 @@ CUDA Kernel 中：
 **答：**
 
 **张量并行（Tensor Parallelism）**：
+
 ```
 原理：将单个层（Attention、FFN）的权重矩阵按列/行分割
       每个 GPU 计算部分结果，通过 AllReduce 合并
@@ -292,6 +308,7 @@ FFN（两层矩阵，列-行分割）：
 ```
 
 **流水线并行（Pipeline Parallelism）**：
+
 ```
 原理：按层分割，每个 GPU 处理部分层
   GPU 0: Embedding + Layer 0-9
@@ -303,6 +320,7 @@ FFN（两层矩阵，列-行分割）：
 ```
 
 **组合使用**：
+
 ```
 4 GPU, TP=2, PP=2:
   GPU 0+1: Layer 0-15（张量并行）
@@ -321,6 +339,7 @@ vLLM 调度器按照 FCFS（先来先服务）调度，但内存不足时触发�
 当处理等待队列中的新请求（prefill）时，如果 KV Cache 块不足
 
 **抢占策略选择**：
+
 ```python
 # vLLM 源码逻辑（简化）
 def _preempt(self, seq_group, blocks_to_free):
@@ -335,6 +354,7 @@ def _preempt(self, seq_group, blocks_to_free):
 ```
 
 **抢占顺序**：
+
 - 优先抢占**最晚到达**的请求（LCFS 抢占）
 - 确保最早的请求优先完成（防止饥饿）
 
@@ -347,6 +367,7 @@ def _preempt(self, seq_group, blocks_to_free):
 **核心思想**：小模型（draft）快速生成多个候选，大模型（target）并行验证，接受/拒绝候选。
 
 **vLLM 中的实现**：
+
 ```
 1. Draft 阶段（小模型生成 γ=5 个候选 token）：
    输入: x_1...x_n
@@ -354,7 +375,7 @@ def _preempt(self, seq_group, blocks_to_free):
 
 2. Verification 阶段（大模型并行处理 n+5 个位置）：
    一次 forward pass 同时得到所有位置的 logits
-   
+
 3. Token 接受/拒绝：
    for i in range(γ):
      p = target_prob[d_i]
@@ -369,6 +390,7 @@ def _preempt(self, seq_group, blocks_to_free):
 ```
 
 **vLLM 支持的 Draft 策略**：
+
 - 小模型 Draft（需要加载额外小模型）
 - [ngram] Draft（无需额外模型，从 prompt 中查找 n-gram 匹配）
 - Medusa（多头预测）
@@ -381,14 +403,14 @@ def _preempt(self, seq_group, blocks_to_free):
 
 **相似之处**：
 
-| OS 虚拟内存 | vLLM PagedAttention |
-|------------|---------------------|
-| 虚拟页（Virtual Page）| 逻辑 KV 块 |
-| 物理页框（Frame）| 物理 KV 块 |
-| 页表（Page Table）| 块表（Block Table）|
-| 页面置换（Swapping）| KV Cache 换出到 CPU |
-| 写时复制（CoW）| Beam Search 共享块 CoW |
-| 共享内存 | 前缀共享（相同 System Prompt）|
+| OS 虚拟内存            | vLLM PagedAttention            |
+| ---------------------- | ------------------------------ |
+| 虚拟页（Virtual Page） | 逻辑 KV 块                     |
+| 物理页框（Frame）      | 物理 KV 块                     |
+| 页表（Page Table）     | 块表（Block Table）            |
+| 页面置换（Swapping）   | KV Cache 换出到 CPU            |
+| 写时复制（CoW）        | Beam Search 共享块 CoW         |
+| 共享内存               | 前缀共享（相同 System Prompt） |
 
 **不同之处**：
 
@@ -405,15 +427,16 @@ def _preempt(self, seq_group, blocks_to_free):
 
 **关键指标**：
 
-| 指标 | 定义 | 典型值 | 适用场景 |
-|------|------|--------|---------|
-| TTFT (Time to First Token) | 从请求到第一个 token 的时间 | 100-500ms | 交互式应用 |
-| TPOT (Time per Output Token) | 每个生成 token 的平均时间 | 10-50ms | 流式输出流畅度 |
-| Throughput | 每秒总生成 token 数 | 5K-50K tok/s | 批量处理 |
-| P99 Latency | 99% 请求的端到端延迟 | < 5s | SLA 保障 |
-| GPU KV Cache Utilization | KV Cache 使用率 | > 80% | 内存效率 |
+| 指标                         | 定义                        | 典型值       | 适用场景       |
+| ---------------------------- | --------------------------- | ------------ | -------------- |
+| TTFT (Time to First Token)   | 从请求到第一个 token 的时间 | 100-500ms    | 交互式应用     |
+| TPOT (Time per Output Token) | 每个生成 token 的平均时间   | 10-50ms      | 流式输出流畅度 |
+| Throughput                   | 每秒总生成 token 数         | 5K-50K tok/s | 批量处理       |
+| P99 Latency                  | 99% 请求的端到端延迟        | < 5s         | SLA 保障       |
+| GPU KV Cache Utilization     | KV Cache 使用率             | > 80%        | 内存效率       |
 
 **权衡关系**：
+
 ```
 吞吐量 ↑ ↔ 延迟 ↑（批越大，单个请求等待越长）
 max_num_seqs ↑ → 吞吐量 ↑, TTFT ↑
@@ -421,6 +444,7 @@ max_num_seqs ↓ → 延迟 ↓, 吞吐量 ↓
 ```
 
 **优化建议**：
+
 - 在线服务（聊天应用）：优先优化 TTFT 和 TPOT，限制 max_num_seqs
 - 批量处理（数据生成）：最大化吞吐量，接受更高延迟
 
@@ -433,6 +457,7 @@ max_num_seqs ↓ → 延迟 ↓, 吞吐量 ↓
 **场景**：多个请求共享相同的 System Prompt（如 RAG 场景中的上下文）
 
 **实现原理**（Automatic Prefix Caching, APC）：
+
 ```
 请求1: [System Prompt(256 tokens)] + [User Query A]
 请求2: [System Prompt(256 tokens)] + [User Query B]
@@ -448,6 +473,7 @@ max_num_seqs ↓ → 延迟 ↓, 吞吐量 ↓
 ```
 
 **实现细节**：
+
 - 以 block_size 为单位，对每个块的 token ID 序列计算哈希
 - 相同哈希的块视为可复用
 - 块被所有共享者引用计数，最后使用者释放时才回收
@@ -468,30 +494,33 @@ python -m vllm.entrypoints.openai.api_server \
 vLLM 将 FlashAttention 与 PagedAttention 结合，形成 **PagedFlashAttention**：
 
 **FlashAttention 贡献**：
+
 - IO-aware：减少 HBM 读写次数（分块计算，不存中间注意力矩阵）
 - 不需要 O(N²) 的注意力矩阵，只需 O(N) 的额外空间
 
 **PagedAttention 贡献**：
+
 - 非连续 KV Cache 的高效访问（块表索引）
 - 支持动态长度序列
 
 **结合后的 CUDA Kernel**：
+
 ```
 对于每个 Query token q：
   初始化 running_sum = 0, running_max = -inf
-  
+
   for block_idx in block_table[seq_id]:
     # 加载当前 KV 块（16 个 token）
     K_block = load_kv_block(block_idx)
     V_block = load_kv_block(block_idx)
-    
+
     # 计算该块的注意力分数
     scores = q @ K_block.T / sqrt(head_dim)
-    
+
     # 在线 softmax 更新
     running_max, running_sum = update_online_softmax(
         scores, running_max, running_sum)
-    
+
     # 累积 Value
     output += softmax(scores) @ V_block
 
@@ -541,6 +570,7 @@ vLLM 服务集群
 ```
 
 **关键设计决策**：
+
 1. **模型路由**：小模型处理简单请求，大模型处理复杂请求（成本优化）
 2. **水平扩展**：按 GPU 节点扩展，不跨节点进行 TP（网络延迟大）
 3. **故障隔离**：单个 vLLM 实例崩溃不影响其他实例
@@ -552,18 +582,19 @@ vLLM 服务集群
 
 **答：**
 
-| 维度 | vLLM | TGI (HuggingFace) |
-|------|------|-------------------|
-| 内存管理 | PagedAttention（几乎无碎片）| 连续预分配（碎片较多）|
-| 批处理 | Continuous Batching | Continuous Batching（v2+）|
-| 吞吐量 | 更高（~6x vs TGI）| 中等 |
-| 量化支持 | AWQ/GPTQ/INT8/FP8 | GPTQ/BitsAndBytes |
-| 模型支持 | 广泛 | 广泛（与 HF 生态深度集成）|
-| 部署难度 | 较简单 | 中等 |
-| 生产成熟度 | 高 | 高 |
-| 特殊功能 | Speculative Decoding, APC | LoRA 支持更完善 |
+| 维度       | vLLM                         | TGI (HuggingFace)          |
+| ---------- | ---------------------------- | -------------------------- |
+| 内存管理   | PagedAttention（几乎无碎片） | 连续预分配（碎片较多）     |
+| 批处理     | Continuous Batching          | Continuous Batching（v2+） |
+| 吞吐量     | 更高（~6x vs TGI）           | 中等                       |
+| 量化支持   | AWQ/GPTQ/INT8/FP8            | GPTQ/BitsAndBytes          |
+| 模型支持   | 广泛                         | 广泛（与 HF 生态深度集成） |
+| 部署难度   | 较简单                       | 中等                       |
+| 生产成熟度 | 高                           | 高                         |
+| 特殊功能   | Speculative Decoding, APC    | LoRA 支持更完善            |
 
 **选择建议**：
+
 - 追求最高吞吐量 → vLLM
 - 需要 LoRA 动态加载 → TGI 或 vLLM LoRA（v0.4+）
 - HuggingFace 生态深度集成 → TGI
@@ -575,10 +606,11 @@ vLLM 服务集群
 **答：**
 
 **SLA 定义示例**：
+
 ```
 P50 TTFT < 200ms
 P99 TTFT < 1s
-P99 TPOT < 50ms  
+P99 TPOT < 50ms
 可用性 > 99.9%
 ```
 
@@ -612,21 +644,25 @@ client = openai.OpenAI(
 **优化策略**：
 
 1. **Chunked Prefill**：避免长 prefill 阻塞其他请求
+
 ```bash
 --enable-chunked-prefill --max-num-batched-tokens 2048
 ```
 
 2. **前缀缓存**：同一文档的多次处理复用 KV Cache
+
 ```bash
 --enable-prefix-caching
 ```
 
 3. **增大 max_model_len**：
+
 ```bash
 --max-model-len 32768
 ```
 
 4. **选择支持长上下文的模型**：
+
 ```
 LLaMA 3.1（128K）, Qwen2（32K+）, Mistral Long（32K）
 ```
@@ -641,14 +677,14 @@ LLaMA 3.1（128K）, Qwen2（32K+）, Mistral Long（32K）
 
 **答：**
 
-| 维度 | vLLM | DeepSpeed-MII |
-|------|------|---------------|
-| 内存管理 | PagedAttention | 传统连续分配 |
-| 吞吐量 | 领先 | 较低 |
-| ZeRO 优化 | 不支持 | 支持（内存极小时有优势）|
-| 量化 | AWQ/GPTQ/INT8/FP8 | ZeroQuant, GPTQ |
-| 生态 | 独立项目 | 与 DeepSpeed 深度集成 |
-| 适用场景 | 通用 LLM 推理服务 | 超大模型（trillion 参数级）|
+| 维度      | vLLM              | DeepSpeed-MII               |
+| --------- | ----------------- | --------------------------- |
+| 内存管理  | PagedAttention    | 传统连续分配                |
+| 吞吐量    | 领先              | 较低                        |
+| ZeRO 优化 | 不支持            | 支持（内存极小时有优势）    |
+| 量化      | AWQ/GPTQ/INT8/FP8 | ZeroQuant, GPTQ             |
+| 生态      | 独立项目          | 与 DeepSpeed 深度集成       |
+| 适用场景  | 通用 LLM 推理服务 | 超大模型（trillion 参数级） |
 
 ---
 
@@ -680,13 +716,13 @@ Prefill 是矩阵-矩阵乘法（Compute-bound），可以充分利用 GPU 算�
 
 **Q26：AWQ 和 GPTQ 量化的本质区别？**
 
-| | AWQ | GPTQ |
-|--|-----|------|
-| 核心思想 | 识别重要权重（激活值大的通道）保持高精度 | 基于二阶 Hessian 信息最小化量化误差 |
-| 校准数据 | 需要少量数据确定权重重要性 | 需要校准数据计算 Hessian |
-| 精度 | 通常略优 | 接近 AWQ |
-| 速度 | 量化过程较快 | 较慢 |
-| 激活值精度 | FP16（仅权重量化 W4A16）| FP16 |
+|            | AWQ                                      | GPTQ                                |
+| ---------- | ---------------------------------------- | ----------------------------------- |
+| 核心思想   | 识别重要权重（激活值大的通道）保持高精度 | 基于二阶 Hessian 信息最小化量化误差 |
+| 校准数据   | 需要少量数据确定权重重要性               | 需要校准数据计算 Hessian            |
+| 精度       | 通常略优                                 | 接近 AWQ                            |
+| 速度       | 量化过程较快                             | 较慢                                |
+| 激活值精度 | FP16（仅权重量化 W4A16）                 | FP16                                |
 
 ---
 
@@ -787,6 +823,7 @@ outputs = llm.generate(prompts, SamplingParams(max_tokens=512))
 ```
 
 **APC 优化**：若所有请求共享相同的 System Prompt，前缀缓存可以消除重复计算，大幅降低 TTFT。
+
 # TensorRT-LLM 常见面试题库
 
 > 涵盖 TensorRT 图优化、量化、in-flight batching、多 GPU 并行等核心考点，分初级 / 中级 / 高级三个层次。
@@ -812,6 +849,7 @@ outputs = llm.generate(prompts, SamplingParams(max_tokens=512))
 ### Q2. TensorRT 的图优化流程分哪几步？
 
 **答：**
+
 1. **模型解析**：读取 ONNX / TF / PyTorch 模型，建立 TensorRT 网络定义
 2. **图优化**（Graph Optimization）：消除冗余节点、常量折叠（Constant Folding）、层合并
 3. **内核选择**（Kernel Selection）：针对目标 GPU 选择最优 CUDA kernel（包含 cuBLAS、cuDNN）
@@ -826,6 +864,7 @@ outputs = llm.generate(prompts, SamplingParams(max_tokens=512))
 将多个独立的 CUDA kernel（如 LayerNorm → GEMM → GELU → GEMM）合并为一个 kernel 执行。
 
 **好处：**
+
 - **减少内存读写**：中间结果留在寄存器/共享内存，避免写回 HBM
 - **降低 kernel launch 开销**：每次 kernel 启动有固定延迟（~μs 级）
 - **提升 GPU 利用率**：更大的计算密度
@@ -852,6 +891,7 @@ outputs = llm.generate(prompts, SamplingParams(max_tokens=512))
 
 **答：**  
 也称 **连续批处理**（Continuous Batching）。传统静态批处理需要等一批请求全部完成才能接入新请求，而 in-flight batching 在每个解码步（iteration）后动态调整批次：
+
 - 已完成的序列立即移出批次
 - 等待队列中的新请求立即加入
 - 批次大小动态变化，GPU 持续满载
@@ -864,7 +904,8 @@ outputs = llm.generate(prompts, SamplingParams(max_tokens=512))
 
 **答：**  
 **问题背景：** LLM 激活值（activation）中存在离群值（outlier），直接 INT8 量化损失大。  
-**SmoothQuant 方法：**  
+**SmoothQuant 方法：**
+
 - 将激活中的困难（大值）迁移到权重中（权重更容易量化）
 - 引入平滑因子 `s`：`Y = (X / s) × (W × s)`
 - 两边都变得更容易量化，精度损失小
@@ -901,7 +942,8 @@ activation_smoothed = activation / smooth_factor
 
 ### Q8. TensorRT-LLM 如何实现 Tensor Parallel？
 
-**答：**  
+**答：**
+
 - **列并行（Column Parallel）**：将 GEMM 的权重矩阵按列切分，每个 GPU 计算部分输出，最后 All-Reduce
 - **行并行（Row Parallel）**：权重按行切分，输入按列切分，局部 GEMM 后 All-Reduce
 - MHA 中 Q/K/V 投影用列并行，输出投影用行并行
@@ -919,6 +961,7 @@ TP=4 示意（4 GPU）:
 
 **答：**  
 TensorRT-LLM 借鉴 vLLM 的 PagedAttention 思想：
+
 - KV cache 不预分配固定大小，而是按 **page/block** 动态分配
 - 每个 page 存储固定数量（如 16 或 32）token 的 KV 值
 - BlockManager 维护 logical→physical 块映射
@@ -939,6 +982,7 @@ TensorRT-LLM 借鉴 vLLM 的 PagedAttention 思想：
 | H100，追求极致性能 | FP8 |
 
 **实践原则：**
+
 - 先尝试 INT8，对比 perplexity / 任务指标
 - INT4 一般损失 < 1% perplexity（AWQ 优于 GPTQ）
 - 注意：权重 INT4 + 激活 FP16（W4A16）比 W4A4 精度好很多
@@ -972,6 +1016,7 @@ Triton Inference Server
 GQA 将 KV head 数量减少（如从 32 个 Q head 减到 8 个 KV head），多个 Q head 共享一组 KV，减少 KV cache 大小。
 
 TRT-LLM 优化：
+
 - 专用 CUDA kernel 处理 GQA/MQA attention
 - KV cache 只存 KV head 数，而非 Q head 数
 - 减少 KV cache 内存最高达 4×（如 LLaMA-3 70B: 8 KV heads vs 64 Q heads）
@@ -1005,6 +1050,7 @@ TRT-LLM 优化：
 ```
 
 **关键配置：**
+
 - TP=4 部署 70B 模型（4×H100 80GB）
 - in-flight batching，max_batch_size=128
 - KV cache paging，内存利用率 > 80%
@@ -1016,7 +1062,8 @@ TRT-LLM 优化：
 
 ### Q14. TensorRT-LLM 的 Pipeline Parallel 如何处理 micro-batch？
 
-**答：**  
+**答：**
+
 - 模型按层切分为 PP 个阶段（Stage），每个 Stage 在不同 GPU 上
 - 使用 **1F1B（One Forward One Backward）** 调度减少 bubble
 - 推理时无 backward，简化为流水线前向
@@ -1032,12 +1079,14 @@ TRT-LLM 优化：
 AWQ 的核心观察：**权重中只有少部分（约 1%）对激活值影响大**，对这部分权重保持高精度。
 
 **算法：**
+
 1. 统计激活值分布，找出 salient（重要）通道
 2. 对 salient 通道的权重放大（scale up），量化误差分散
 3. 其余通道正常 INT4 量化
 4. 推理时通过 scale factor 恢复
 
 **与 GPTQ 对比：**
+
 - AWQ：免校准数据集（只需少量激活统计），速度更快
 - GPTQ：需要校准集，使用二阶海森矩阵信息，精度略高
 
@@ -1045,7 +1094,8 @@ AWQ 的核心观察：**权重中只有少部分（约 1%）对激活值影响�
 
 ### Q16. 如何 profile TensorRT-LLM 推理性能瓶颈？
 
-**答：**  
+**答：**
+
 ```bash
 # 1. 使用 nsys 采集 GPU timeline
 nsys profile --trace=cuda,nvtx \
@@ -1060,6 +1110,7 @@ ncu --metrics sm__throughput.avg.pct_of_peak_sustained_elapsed \
 ```
 
 **常见瓶颈：**
+
 - `prefill 阶段`：GEMM 密集，关注 SM utilization
 - `decode 阶段`：访存密集（memory-bound），关注 HBM 带宽
 - **Roofline 模型**：判断操作是 compute-bound 还是memory-bound
@@ -1081,6 +1132,7 @@ Target Model (大): 并行验证 4 个 token
 **加速比：** 理想情况 3-4× token 速率提升（acceptance rate 越高，加速越明显）。
 
 TRT-LLM 支持：
+
 - Medusa（多个 draft heads）
 - Eagle（轻量级 draft 模型）
 - Draft model 选择（需与 target 同 tokenizer）
@@ -1089,7 +1141,8 @@ TRT-LLM 支持：
 
 ### Q18. 如何减少 TRT-LLM 引擎的编译时间？
 
-**答：**  
+**答：**
+
 1. **使用预编译引擎（NIM）**：NVIDIA 提供常见模型的预编译 .engine 文件
 2. **指定精确 max_batch_size / max_seq_len**：避免过大的优化空间
 3. **禁用不需要的精度（strongly_typed=True）**：减少 kernel profile 数量
@@ -1102,6 +1155,7 @@ TRT-LLM 支持：
 
 **答：**  
 Mixture of Experts 模型（如 Mixtral 8×7B）在 TRT-LLM 中使用 **Expert Parallel（EP）**：
+
 - 将不同专家分配到不同 GPU 上
 - Token routing 后，跨 GPU 发送 token 到对应专家 GPU（All-to-All 通信）
 - 可与 TP、DP 组合使用（TP×EP×DP = 总 GPU 数）
@@ -1112,7 +1166,8 @@ Mixture of Experts 模型（如 Mixtral 8×7B）在 TRT-LLM 中使用 **Expert P
 
 ### Q20. 如何验证量化后模型的精度？
 
-**答：**  
+**答：**
+
 ```python
 # 1. 困惑度 (Perplexity) 对比
 import torch
@@ -1132,10 +1187,11 @@ python main.py --model trtllm --model_args model_dir=./engine \
 ```
 
 **经验阈值：**
+
 - PPL 增加 < 0.5：优秀
 - PPL 增加 0.5-2.0：可接受
 - PPL 增加 > 2.0：需重新调整量化参数
 
 ---
 
-*参考资料：[TensorRT-LLM GitHub](https://github.com/NVIDIA/TensorRT-LLM) | [NVIDIA TensorRT 文档](https://docs.nvidia.com/deeplearning/tensorrt/)*
+_参考资料：[TensorRT-LLM GitHub](https://github.com/NVIDIA/TensorRT-LLM) | [NVIDIA TensorRT 文档](https://docs.nvidia.com/deeplearning/tensorrt/)_

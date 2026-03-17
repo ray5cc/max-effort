@@ -3,24 +3,26 @@
 > 覆盖类型系统、泛型、类型体操、工程配置的高频 TypeScript 面试题。
 
 ## 相关链接
+
 - 对应技术资料：[TypeScript高级编程](../../01-技术资料/01-前端/05-TypeScript高级编程.md)
 
 ## 🔥 高频考点速记
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|---------|
-| 1 | interface vs type | interface可声明合并+extends，type支持联合交叉+映射 | ★★★★★ |
-| 2 | 泛型 | 类型参数化，约束extends+推断infer | ★★★★★ |
-| 3 | 类型收窄 | typeof/instanceof/in/判别联合，控制流分析 | ★★★★★ |
-| 4 | 工具类型实现 | Partial/Pick/Omit/ReturnType 手写源码 | ★★★★★ |
-| 5 | any vs unknown vs never | any无检查，unknown需收窄，never=空集 | ★★★★☆ |
-| 6 | 条件类型 | T extends U ? X : Y，联合分布特性 | ★★★★☆ |
-| 7 | 协变与逆变 | 函数参数逆变(-in)，返回值协变(+out) | ★★★★☆ |
-| 8 | 声明文件 | .d.ts/declare module/三斜杠/DefinitelyTyped | ★★★☆☆ |
-| 9 | tsconfig strict | strictNullChecks/strictFunctionTypes/noImplicitAny | ★★★☆☆ |
-| 10 | TypeScript 5.x | satisfies/const type params/decorators/using | ★★★☆☆ |
+| #   | 考点                    | 核心要点（一句话）                                 | 出题概率 |
+| --- | ----------------------- | -------------------------------------------------- | -------- |
+| 1   | interface vs type       | interface可声明合并+extends，type支持联合交叉+映射 | ★★★★★    |
+| 2   | 泛型                    | 类型参数化，约束extends+推断infer                  | ★★★★★    |
+| 3   | 类型收窄                | typeof/instanceof/in/判别联合，控制流分析          | ★★★★★    |
+| 4   | 工具类型实现            | Partial/Pick/Omit/ReturnType 手写源码              | ★★★★★    |
+| 5   | any vs unknown vs never | any无检查，unknown需收窄，never=空集               | ★★★★☆    |
+| 6   | 条件类型                | T extends U ? X : Y，联合分布特性                  | ★★★★☆    |
+| 7   | 协变与逆变              | 函数参数逆变(-in)，返回值协变(+out)                | ★★★★☆    |
+| 8   | 声明文件                | .d.ts/declare module/三斜杠/DefinitelyTyped        | ★★★☆☆    |
+| 9   | tsconfig strict         | strictNullChecks/strictFunctionTypes/noImplicitAny | ★★★☆☆    |
+| 10  | TypeScript 5.x          | satisfies/const type params/decorators/using       | ★★★☆☆    |
 
 ## 目录
+
 - [⭐ 基础题 (Q1-Q10)](#-基础题-q1-q10)
 - [⭐⭐ 进阶题 (Q11-Q18)](#-进阶题-q11-q18)
 - [⭐⭐⭐ 高级题 (Q19-Q25)](#-高级题-q19-q25)
@@ -43,41 +45,49 @@
 
 ```typescript
 // interface 支持声明合并 — 同名自动合并
-interface User { name: string }
-interface User { age: number }
+interface User {
+  name: string;
+}
+interface User {
+  age: number;
+}
 // 等价于 interface User { name: string; age: number }
 
 // type 不支持 — 同名会报错
-type User = { name: string }
-type User = { age: number }  // ❌ Error: Duplicate identifier 'User'
+type User = { name: string };
+type User = { age: number }; // ❌ Error: Duplicate identifier 'User'
 ```
 
 **2. 扩展方式**
 
 ```typescript
 // interface 用 extends
-interface Animal { name: string }
-interface Dog extends Animal { bark(): void }
+interface Animal {
+  name: string;
+}
+interface Dog extends Animal {
+  bark(): void;
+}
 
 // type 用 & 交叉类型
-type Animal = { name: string }
-type Dog = Animal & { bark(): void }
+type Animal = { name: string };
+type Dog = Animal & { bark(): void };
 ```
 
 **3. type 独占的能力**
 
 ```typescript
 // 联合类型
-type ID = string | number
+type ID = string | number;
 
 // 映射类型
-type Optional<T> = { [K in keyof T]?: T[K] }
+type Optional<T> = { [K in keyof T]?: T[K] };
 
 // 条件类型
-type IsString<T> = T extends string ? true : false
+type IsString<T> = T extends string ? true : false;
 
 // 元组
-type Pair = [string, number]
+type Pair = [string, number];
 ```
 
 **4. 编译器性能**
@@ -85,6 +95,7 @@ type Pair = [string, number]
 `interface` 有命名缓存机制，在复杂类型运算中性能略优于 `type`。TypeScript 官方推荐：能用 `interface` 的场景优先使用 `interface`。
 
 **选型建议**：
+
 - 对象形状定义、类的契约 → `interface`
 - 联合类型、交叉类型、工具类型 → `type`
 - 扩展第三方库类型（利用声明合并）→ `interface`
@@ -101,7 +112,7 @@ type Pair = [string, number]
 
 ```
           any（不在正常层级中，绕过类型检查）
-            
+
          unknown（最顶部类型，接受一切赋值）
         ┌───┼───┐
      string number boolean ... （具体类型）
@@ -109,44 +120,47 @@ type Pair = [string, number]
          never（最底部类型，空集）
 ```
 
-| 特性 | `any` | `unknown` | `never` |
-|------|-------|-----------|---------|
-| 赋值给其他类型 | ✅ 任意 | ❌ 需收窄 | ✅ 任意（子类型） |
-| 其他类型赋值给它 | ✅ 任意 | ✅ 任意 | ❌ 不可能 |
-| 可做任意操作 | ✅ | ❌ | ❌ |
-| 类型安全 | ❌ | ✅ | ✅ |
+| 特性             | `any`   | `unknown` | `never`           |
+| ---------------- | ------- | --------- | ----------------- |
+| 赋值给其他类型   | ✅ 任意 | ❌ 需收窄 | ✅ 任意（子类型） |
+| 其他类型赋值给它 | ✅ 任意 | ✅ 任意   | ❌ 不可能         |
+| 可做任意操作     | ✅      | ❌        | ❌                |
+| 类型安全         | ❌      | ✅        | ✅                |
 
 ```typescript
 // any — 关闭类型检查
-let a: any = 42
-a.nonexistent.method()  // 不报错，但运行时崩溃
+let a: any = 42;
+a.nonexistent.method(); // 不报错，但运行时崩溃
 
 // unknown — 安全的顶部类型，使用前必须收窄
-let u: unknown = 42
+let u: unknown = 42;
 // u.toFixed()  // ❌ 不能直接操作
-if (typeof u === 'number') {
-  u.toFixed()  // ✅ 收窄后可以
+if (typeof u === "number") {
+  u.toFixed(); // ✅ 收窄后可以
 }
 
 // never — 不可能存在的类型
 function throwError(msg: string): never {
-  throw new Error(msg)  // 永远不会返回
+  throw new Error(msg); // 永远不会返回
 }
 
 // never 在穷举检查中的妙用
-type Shape = 'circle' | 'square'
+type Shape = "circle" | "square";
 function area(shape: Shape) {
   switch (shape) {
-    case 'circle': return 3.14 * 100
-    case 'square': return 100
+    case "circle":
+      return 3.14 * 100;
+    case "square":
+      return 100;
     default:
-      const _: never = shape  // 如果新增了类型但没加 case，这里报错
-      return _
+      const _: never = shape; // 如果新增了类型但没加 case，这里报错
+      return _;
   }
 }
 ```
 
 **使用场景**：
+
 - `any`：仅用于 JS 迁移过渡期，新代码禁止使用
 - `unknown`：替代 `any` 用于接受未知数据（如 API 响应、JSON.parse）
 - `never`：函数永不返回、穷举检查、类型运算中的空集
@@ -167,10 +181,10 @@ function area(shape: Shape) {
 
 ```typescript
 function format(value: string | number) {
-  if (typeof value === 'string') {
-    return value.toUpperCase()  // string
+  if (typeof value === "string") {
+    return value.toUpperCase(); // string
   }
-  return value.toFixed(2)  // number
+  return value.toFixed(2); // number
 }
 ```
 
@@ -179,9 +193,9 @@ function format(value: string | number) {
 ```typescript
 function logError(err: Error | string) {
   if (err instanceof Error) {
-    console.log(err.stack)  // Error
+    console.log(err.stack); // Error
   } else {
-    console.log(err)  // string
+    console.log(err); // string
   }
 }
 ```
@@ -189,14 +203,18 @@ function logError(err: Error | string) {
 **方式三：in 操作符**
 
 ```typescript
-interface Bird { fly(): void }
-interface Fish { swim(): void }
+interface Bird {
+  fly(): void;
+}
+interface Fish {
+  swim(): void;
+}
 
 function move(animal: Bird | Fish) {
-  if ('fly' in animal) {
-    animal.fly()  // Bird
+  if ("fly" in animal) {
+    animal.fly(); // Bird
   } else {
-    animal.swim()  // Fish
+    animal.swim(); // Fish
   }
 }
 ```
@@ -204,15 +222,13 @@ function move(animal: Bird | Fish) {
 **方式四：判别联合（Discriminated Unions）**
 
 ```typescript
-type Result<T> = 
-  | { ok: true; value: T }
-  | { ok: false; error: Error }
+type Result<T> = { ok: true; value: T } | { ok: false; error: Error };
 
 function unwrap<T>(result: Result<T>): T {
   if (result.ok) {
-    return result.value  // TS 知道是 { ok: true; value: T }
+    return result.value; // TS 知道是 { ok: true; value: T }
   }
-  throw result.error  // TS 知道是 { ok: false; error: Error }
+  throw result.error; // TS 知道是 { ok: false; error: Error }
 }
 ```
 
@@ -220,11 +236,11 @@ function unwrap<T>(result: Result<T>): T {
 
 ```typescript
 function isNonNull<T>(value: T | null | undefined): value is T {
-  return value != null
+  return value != null;
 }
 
-const items = [1, null, 2, undefined, 3]
-const nonNullItems = items.filter(isNonNull)  // number[]
+const items = [1, null, 2, undefined, 3];
+const nonNullItems = items.filter(isNonNull); // number[]
 ```
 
 ---
@@ -239,7 +255,11 @@ const nonNullItems = items.filter(isNonNull)  // number[]
 
 ```typescript
 // 普通 enum — 编译为 IIFE 对象
-enum Color { Red, Green, Blue }
+enum Color {
+  Red,
+  Green,
+  Blue,
+}
 // 编译结果：
 // var Color;
 // (function (Color) {
@@ -249,24 +269,28 @@ enum Color { Red, Green, Blue }
 // })(Color || (Color = {}));
 
 // const enum — 编译时完全内联
-const enum Color2 { Red, Green, Blue }
-const c = Color2.Red
+const enum Color2 {
+  Red,
+  Green,
+  Blue,
+}
+const c = Color2.Red;
 // 编译结果：const c = 0  （Color2 完全消失）
 ```
 
-| 对比 | `enum` | `const enum` |
-|------|--------|-------------|
-| 运行时产物 | 有（JS 对象） | 无（内联替换） |
-| 反向映射 | ✅ `Color[0] === 'Red'` | ❌ 不支持 |
-| 动态访问 | ✅ `Color[variable]` | ❌ 不支持 |
-| 树摇友好 | ❌ | ✅ |
-| 跨文件使用 | ✅ | ⚠️ 需 `preserveConstEnums` |
+| 对比       | `enum`                  | `const enum`               |
+| ---------- | ----------------------- | -------------------------- |
+| 运行时产物 | 有（JS 对象）           | 无（内联替换）             |
+| 反向映射   | ✅ `Color[0] === 'Red'` | ❌ 不支持                  |
+| 动态访问   | ✅ `Color[variable]`    | ❌ 不支持                  |
+| 树摇友好   | ❌                      | ✅                         |
+| 跨文件使用 | ✅                      | ⚠️ 需 `preserveConstEnums` |
 
 **最佳实践**：现代项目推荐用 `as const` 对象替代枚举：
 
 ```typescript
-const Status = { Active: 'active', Inactive: 'inactive' } as const
-type Status = typeof Status[keyof typeof Status]  // 'active' | 'inactive'
+const Status = { Active: "active", Inactive: "inactive" } as const;
+type Status = (typeof Status)[keyof typeof Status]; // 'active' | 'inactive'
 ```
 
 ---
@@ -286,25 +310,27 @@ type Status = typeof Status[keyof typeof Status]  // 'active' | 'inactive'
 ```typescript
 // 泛型函数
 function first<T>(arr: T[]): T | undefined {
-  return arr[0]
+  return arr[0];
 }
-first([1, 2, 3])      // number | undefined
-first(['a', 'b'])      // string | undefined
+first([1, 2, 3]); // number | undefined
+first(["a", "b"]); // string | undefined
 
 // 泛型约束 — 用 extends 限制
-interface HasId { id: string }
+interface HasId {
+  id: string;
+}
 
 function findById<T extends HasId>(items: T[], id: string): T | undefined {
-  return items.find(item => item.id === id)
+  return items.find((item) => item.id === id);
 }
 
 // T 必须包含 id 属性
-findById([{ id: '1', name: 'Alice' }], '1')  // ✅
+findById([{ id: "1", name: "Alice" }], "1"); // ✅
 // findById([{ name: 'Bob' }], '1')           // ❌ 缺少 id 属性
 
 // 多泛型参数 + keyof 约束
 function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
-  return obj[key]
+  return obj[key];
 }
 ```
 
@@ -320,14 +346,14 @@ function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
 
 ```typescript
 // 联合类型 (Union)：T 或 U — 集合的"并集"
-type StringOrNumber = string | number
-let value: StringOrNumber = 'hello'  // ✅
-value = 42                           // ✅
+type StringOrNumber = string | number;
+let value: StringOrNumber = "hello"; // ✅
+value = 42; // ✅
 
 // 交叉类型 (Intersection)：T 且 U — 集合的"交集"（合并属性）
-type WithTimestamp = { createdAt: Date }
-type WithId = { id: string }
-type Entity = WithTimestamp & WithId
+type WithTimestamp = { createdAt: Date };
+type WithId = { id: string };
+type Entity = WithTimestamp & WithId;
 // 等价于 { createdAt: Date; id: string }
 ```
 
@@ -335,12 +361,12 @@ type Entity = WithTimestamp & WithId
 
 ```typescript
 // 基础类型的交叉可能产生 never
-type Impossible = string & number  // never — 不可能同时是字符串和数字
+type Impossible = string & number; // never — 不可能同时是字符串和数字
 
 // 对象类型的交叉是属性合并
-type A = { x: number; y: number }
-type B = { y: string; z: string }
-type C = A & B  // { x: number; y: never; z: string }
+type A = { x: number; y: number };
+type B = { y: string; z: string };
+type C = A & B; // { x: number; y: never; z: string }
 // y 属性类型是 number & string = never
 ```
 
@@ -357,28 +383,28 @@ type C = A & B  // { x: number; y: never; z: string }
 ```typescript
 // keyof — 获取类型的所有属性名联合
 interface User {
-  name: string
-  age: number
-  email: string
+  name: string;
+  age: number;
+  email: string;
 }
-type UserKeys = keyof User  // 'name' | 'age' | 'email'
+type UserKeys = keyof User; // 'name' | 'age' | 'email'
 
 // typeof — 从值推断类型（从值空间到类型空间的桥梁）
 const config = {
-  host: 'localhost',
+  host: "localhost",
   port: 3000,
   debug: true,
-} as const
+} as const;
 
-type Config = typeof config
+type Config = typeof config;
 // { readonly host: 'localhost'; readonly port: 3000; readonly debug: true }
 
 // keyof + typeof 组合：从对象值获取键的联合类型
-type ConfigKeys = keyof typeof config  // 'host' | 'port' | 'debug'
+type ConfigKeys = keyof typeof config; // 'host' | 'port' | 'debug'
 
 // 实际应用：类型安全的对象访问
 function getValue<T extends object, K extends keyof T>(obj: T, key: K): T[K] {
-  return obj[key]
+  return obj[key];
 }
 ```
 
@@ -395,42 +421,42 @@ function getValue<T extends object, K extends keyof T>(obj: T, key: K): T[K] {
 ```typescript
 // 1. Partial<T> — 所有属性变可选
 type Partial<T> = {
-  [K in keyof T]?: T[K]
+  [K in keyof T]?: T[K];
   // keyof T 获取所有键
   // K in ... 遍历每个键
   // ? 添加可选标记
   // T[K] 保持原始值类型
-}
+};
 
 // 2. Required<T> — 所有属性变必选
 type Required<T> = {
-  [K in keyof T]-?: T[K]
+  [K in keyof T]-?: T[K];
   // -? 移除可选标记（注意 - 号）
-}
+};
 
 // 3. Pick<T, K> — 选取指定属性
 type Pick<T, K extends keyof T> = {
-  [P in K]: T[P]
+  [P in K]: T[P];
   // K extends keyof T 约束 K 必须是 T 的键
   // P in K 只遍历选中的键
-}
+};
 
 // 4. Omit<T, K> — 排除指定属性
-type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>
+type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
 // Exclude<keyof T, K> 从 T 的所有键中排除 K
 // 然后用 Pick 选取剩余的键
 
 // 使用示例
 interface User {
-  id: number
-  name: string
-  email: string
-  password: string
+  id: number;
+  name: string;
+  email: string;
+  password: string;
 }
 
-type UserUpdate = Partial<User>                // 所有可选
-type UserPublic = Omit<User, 'password'>       // 去掉 password
-type UserCreate = Pick<User, 'name' | 'email'> // 只要 name 和 email
+type UserUpdate = Partial<User>; // 所有可选
+type UserPublic = Omit<User, "password">; // 去掉 password
+type UserCreate = Pick<User, "name" | "email">; // 只要 name 和 email
 ```
 
 ---
@@ -445,18 +471,19 @@ type UserCreate = Pick<User, 'name' | 'email'> // 只要 name 和 email
 
 ```typescript
 // as 类型断言 — 告诉编译器"相信我，我知道这是什么类型"
-const input = document.getElementById('name') as HTMLInputElement
-input.value = 'hello'  // 不加 as 会报错，因为返回类型是 HTMLElement | null
+const input = document.getElementById("name") as HTMLInputElement;
+input.value = "hello"; // 不加 as 会报错，因为返回类型是 HTMLElement | null
 
 // ! 非空断言 — 告诉编译器"相信我，这不是 null/undefined"
-const el = document.getElementById('app')!  // 断言不为 null
-el.textContent = 'loaded'
+const el = document.getElementById("app")!; // 断言不为 null
+el.textContent = "loaded";
 
 // 双重断言（应极少使用）
-const value = 'hello' as unknown as number  // string 不能直接断言为 number
+const value = "hello" as unknown as number; // string 不能直接断言为 number
 ```
 
 **关键区别**：
+
 - `as`：改变 TypeScript 眼中的类型，不影响运行时
 - `!`：只是移除 `null | undefined`，告诉 TS "一定有值"
 
@@ -466,14 +493,14 @@ const value = 'hello' as unknown as number  // string 不能直接断言为 numb
 
 ```typescript
 // 替代 ! 断言：用条件判断
-const el = document.getElementById('app')
+const el = document.getElementById("app");
 if (el) {
-  el.textContent = 'loaded'  // 安全收窄
+  el.textContent = "loaded"; // 安全收窄
 }
 
 // 替代 as 断言：用类型守卫
 function isHTMLInputElement(el: Element): el is HTMLInputElement {
-  return el.tagName === 'INPUT'
+  return el.tagName === "INPUT";
 }
 ```
 
@@ -499,11 +526,11 @@ npm install -D @types/lodash
 
 ```typescript
 // src/types/legacy-lib.d.ts
-declare module 'legacy-lib' {
-  export function doStuff(input: string): number
+declare module "legacy-lib" {
+  export function doStuff(input: string): number;
   export interface Config {
-    verbose: boolean
-    timeout: number
+    verbose: boolean;
+    timeout: number;
   }
 }
 ```
@@ -512,11 +539,11 @@ declare module 'legacy-lib' {
 
 ```typescript
 // src/types/modules.d.ts
-declare module 'untyped-lib'  // 所有导出都是 any
-declare module '*.css'        // CSS 模块
-declare module '*.svg' {
-  const content: string
-  export default content
+declare module "untyped-lib"; // 所有导出都是 any
+declare module "*.css"; // CSS 模块
+declare module "*.svg" {
+  const content: string;
+  export default content;
 }
 ```
 
@@ -524,7 +551,7 @@ declare module '*.svg' {
 
 ```typescript
 // @ts-ignore — 下一行忽略类型检查
-import something from 'untyped-lib'
+import something from "untyped-lib";
 ```
 
 **优先级**：`@types` > 自写声明 > 通配符 > `@ts-ignore`
@@ -544,10 +571,10 @@ import something from 'untyped-lib'
 当条件类型中的 `T` 是**裸类型参数**（naked type parameter），且传入联合类型时，条件会自动对联合的每个成员分别应用，然后将结果联合起来。
 
 ```typescript
-type ToArray<T> = T extends any ? T[] : never
+type ToArray<T> = T extends any ? T[] : never;
 
 // 传入联合类型 → 自动分发
-type Result = ToArray<string | number>
+type Result = ToArray<string | number>;
 // = ToArray<string> | ToArray<number>
 // = string[] | number[]
 
@@ -555,6 +582,7 @@ type Result = ToArray<string | number>
 ```
 
 **分布的触发条件**：
+
 1. `T` 必须是裸类型参数（不能被包裹）
 2. `T` 处于 `extends` 的左侧
 3. 传入的类型是联合类型
@@ -562,9 +590,9 @@ type Result = ToArray<string | number>
 **如何阻止分布**：用方括号包裹 `T`
 
 ```typescript
-type ToArrayNonDist<T> = [T] extends [any] ? T[] : never
+type ToArrayNonDist<T> = [T] extends [any] ? T[] : never;
 
-type Result2 = ToArrayNonDist<string | number>
+type Result2 = ToArrayNonDist<string | number>;
 // = (string | number)[]  // 不分发了！
 ```
 
@@ -572,9 +600,9 @@ type Result2 = ToArrayNonDist<string | number>
 
 ```typescript
 // Exclude 就是利用分布特性实现的
-type Exclude<T, U> = T extends U ? never : T
+type Exclude<T, U> = T extends U ? never : T;
 
-type Result = Exclude<'a' | 'b' | 'c', 'a'>
+type Result = Exclude<"a" | "b" | "c", "a">;
 // = ('a' extends 'a' ? never : 'a') | ('b' extends 'a' ? never : 'b') | ('c' extends 'a' ? never : 'c')
 // = never | 'b' | 'c'
 // = 'b' | 'c'
@@ -594,30 +622,36 @@ type Result = Exclude<'a' | 'b' | 'c', 'a'>
 
 ```typescript
 // 实现 ReturnType — 提取函数返回类型
-type MyReturnType<T extends (...args: any) => any> = 
-  T extends (...args: any) => infer R ? R : never
+type MyReturnType<T extends (...args: any) => any> = T extends (
+  ...args: any
+) => infer R
+  ? R
+  : never;
 //                              ↑ infer R 捕获返回类型
 
-type A = MyReturnType<() => string>       // string
-type B = MyReturnType<() => Promise<User>> // Promise<User>
+type A = MyReturnType<() => string>; // string
+type B = MyReturnType<() => Promise<User>>; // Promise<User>
 
 // 实现 Parameters — 提取函数参数类型
-type MyParameters<T extends (...args: any) => any> = 
-  T extends (...args: infer P) => any ? P : never
+type MyParameters<T extends (...args: any) => any> = T extends (
+  ...args: infer P
+) => any
+  ? P
+  : never;
 
-type C = MyParameters<(a: string, b: number) => void>  // [string, number]
+type C = MyParameters<(a: string, b: number) => void>; // [string, number]
 
 // 提取 Promise 内部类型（递归）
-type Awaited<T> = T extends Promise<infer U> ? Awaited<U> : T
+type Awaited<T> = T extends Promise<infer U> ? Awaited<U> : T;
 
-type D = Awaited<Promise<Promise<number>>>  // number
+type D = Awaited<Promise<Promise<number>>>; // number
 
 // 提取数组元素类型
-type ElementOf<T> = T extends (infer E)[] ? E : never
+type ElementOf<T> = T extends (infer E)[] ? E : never;
 
 // 提取元组第一个元素
-type Head<T extends any[]> = T extends [infer First, ...any[]] ? First : never
-type E = Head<[string, number, boolean]>  // string
+type Head<T extends any[]> = T extends [infer First, ...any[]] ? First : never;
+type E = Head<[string, number, boolean]>; // string
 ```
 
 ---
@@ -637,34 +671,37 @@ type E = Head<[string, number, boolean]>  // string
 
 // 实现 Readonly
 type MyReadonly<T> = {
-  readonly [K in keyof T]: T[K]
-}
+  readonly [K in keyof T]: T[K];
+};
 
 // 实现可选 Readonly（只读部分属性）
 type ReadonlyPick<T, K extends keyof T> = {
-  readonly [P in K]: T[P]
-} & Omit<T, K>
+  readonly [P in K]: T[P];
+} & Omit<T, K>;
 
 // as 子句重映射键名（TS 4.1+）
 type Getters<T> = {
-  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K]
-}
+  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];
+};
 
-interface User { name: string; age: number }
-type UserGetters = Getters<User>
+interface User {
+  name: string;
+  age: number;
+}
+type UserGetters = Getters<User>;
 // { getName: () => string; getAge: () => number }
 
 // 过滤属性：用 as + never 移除键
 type RemoveFunctions<T> = {
-  [K in keyof T as T[K] extends Function ? never : K]: T[K]
-}
+  [K in keyof T as T[K] extends Function ? never : K]: T[K];
+};
 
 interface Mixed {
-  name: string
-  age: number
-  greet(): void
+  name: string;
+  age: number;
+  greet(): void;
 }
-type DataOnly = RemoveFunctions<Mixed>
+type DataOnly = RemoveFunctions<Mixed>;
 // { name: string; age: number }
 ```
 
@@ -682,43 +719,45 @@ type DataOnly = RemoveFunctions<Mixed>
 
 ```typescript
 // 基础拼接
-type Greeting = `Hello, ${string}`  // 匹配所有 "Hello, ..." 字符串
-const g: Greeting = 'Hello, world'   // ✅
+type Greeting = `Hello, ${string}`; // 匹配所有 "Hello, ..." 字符串
+const g: Greeting = "Hello, world"; // ✅
 // const g2: Greeting = 'Hi, world'  // ❌
 
 // 联合类型自动展开（笛卡尔积）
-type Color = 'red' | 'blue'
-type Size = 'sm' | 'lg'
-type ClassName = `${Color}-${Size}`
+type Color = "red" | "blue";
+type Size = "sm" | "lg";
+type ClassName = `${Color}-${Size}`;
 // 'red-sm' | 'red-lg' | 'blue-sm' | 'blue-lg'
 
 // 内置字符串操作类型
-type A = Uppercase<'hello'>     // 'HELLO'
-type B = Lowercase<'HELLO'>     // 'hello'
-type C = Capitalize<'hello'>    // 'Hello'
-type D = Uncapitalize<'Hello'>  // 'hello'
+type A = Uppercase<"hello">; // 'HELLO'
+type B = Lowercase<"HELLO">; // 'hello'
+type C = Capitalize<"hello">; // 'Hello'
+type D = Uncapitalize<"Hello">; // 'hello'
 
 // 实际应用：事件系统
 type EventMap = {
-  click: MouseEvent
-  focus: FocusEvent
-  keydown: KeyboardEvent
-}
+  click: MouseEvent;
+  focus: FocusEvent;
+  keydown: KeyboardEvent;
+};
 
 type EventHandler = {
-  [K in keyof EventMap as `on${Capitalize<K & string>}`]: (e: EventMap[K]) => void
-}
+  [K in keyof EventMap as `on${Capitalize<K & string>}`]: (
+    e: EventMap[K],
+  ) => void;
+};
 // { onClick: (e: MouseEvent) => void; onFocus: (e: FocusEvent) => void; onKeydown: (e: KeyboardEvent) => void }
 
 // 模式匹配：提取路由参数
-type ExtractParams<S extends string> = 
+type ExtractParams<S extends string> =
   S extends `${string}:${infer Param}/${infer Rest}`
     ? { [K in Param]: string } & ExtractParams<Rest>
     : S extends `${string}:${infer Param}`
       ? { [K in Param]: string }
-      : {}
+      : {};
 
-type Params = ExtractParams<'/users/:userId/posts/:postId'>
+type Params = ExtractParams<"/users/:userId/posts/:postId">;
 // { userId: string } & { postId: string }
 ```
 
@@ -737,28 +776,34 @@ type Params = ExtractParams<'/users/:userId/posts/:postId'>
 > **类比**：你有一个"能装水果的篮子"（`Basket<Fruit>`）。如果换成"能装苹果的篮子"（`Basket<Apple>`），往外拿水果没问题（协变），但往里放橘子就有风险（逆变）。
 
 ```typescript
-class Animal { name = '' }
-class Dog extends Animal { bark() {} }
-class Corgi extends Dog { cute = true }
+class Animal {
+  name = "";
+}
+class Dog extends Animal {
+  bark() {}
+}
+class Corgi extends Dog {
+  cute = true;
+}
 // 层级：Corgi <: Dog <: Animal
 
 // 协变 (Covariance)：子类保持方向
 // 函数返回值是协变的
-type Producer<T> = () => T
+type Producer<T> = () => T;
 
-let produceDog: Producer<Dog> = () => new Dog()
-let produceAnimal: Producer<Animal> = produceDog  // ✅ Dog <: Animal → Producer<Dog> <: Producer<Animal>
+let produceDog: Producer<Dog> = () => new Dog();
+let produceAnimal: Producer<Animal> = produceDog; // ✅ Dog <: Animal → Producer<Dog> <: Producer<Animal>
 
 // 逆变 (Contravariance)：子类方向反转
 // 函数参数是逆变的（在 strict 模式下）
-type Consumer<T> = (value: T) => void
+type Consumer<T> = (value: T) => void;
 
-let consumeAnimal: Consumer<Animal> = (a: Animal) => console.log(a.name)
-let consumeDog: Consumer<Dog> = consumeAnimal  // ✅ Animal :> Dog → Consumer<Animal> <: Consumer<Dog>
+let consumeAnimal: Consumer<Animal> = (a: Animal) => console.log(a.name);
+let consumeDog: Consumer<Dog> = consumeAnimal; // ✅ Animal :> Dog → Consumer<Animal> <: Consumer<Dog>
 
 // TypeScript 语法标注 (5.0+)
-type Producer2<out T> = () => T     // out = 协变位置
-type Consumer2<in T> = (v: T) => void  // in = 逆变位置
+type Producer2<out T> = () => T; // out = 协变位置
+type Consumer2<in T> = (v: T) => void; // in = 逆变位置
 ```
 
 **strictFunctionTypes 的作用**：开启后函数参数严格逆变检查。关闭时参数是双变（bivariant），更宽松但不安全。
@@ -776,33 +821,34 @@ type Consumer2<in T> = (v: T) => void  // in = 逆变位置
 ```typescript
 // 方式 1：联合类型参数
 function format(value: string | number): string {
-  if (typeof value === 'string') return value.trim()
-  return value.toFixed(2)
+  if (typeof value === "string") return value.trim();
+  return value.toFixed(2);
 }
 // 问题：返回类型始终是 string，无法根据输入类型细化
 
 // 方式 2：函数重载
-function format(value: string): string
-function format(value: number): string
+function format(value: string): string;
+function format(value: number): string;
 function format(value: string | number): string {
-  if (typeof value === 'string') return value.trim()
-  return value.toFixed(2)
+  if (typeof value === "string") return value.trim();
+  return value.toFixed(2);
 }
 
 // 重载真正有用的场景：返回类型随参数变化
-function createElement(tag: 'div'): HTMLDivElement
-function createElement(tag: 'span'): HTMLSpanElement
-function createElement(tag: 'input'): HTMLInputElement
-function createElement(tag: string): HTMLElement
+function createElement(tag: "div"): HTMLDivElement;
+function createElement(tag: "span"): HTMLSpanElement;
+function createElement(tag: "input"): HTMLInputElement;
+function createElement(tag: string): HTMLElement;
 function createElement(tag: string): HTMLElement {
-  return document.createElement(tag)
+  return document.createElement(tag);
 }
 
-const div = createElement('div')    // HTMLDivElement
-const input = createElement('input') // HTMLInputElement
+const div = createElement("div"); // HTMLDivElement
+const input = createElement("input"); // HTMLInputElement
 ```
 
 **选型建议**：
+
 - 参数类型不同但返回类型相同 → 联合类型
 - 返回类型随参数类型变化 → 函数重载
 - 泛型 + 条件类型有时能替代重载（更灵活）
@@ -820,46 +866,46 @@ const input = createElement('input') // HTMLInputElement
 ```typescript
 // 定义事件映射
 interface EventMap {
-  login: { userId: string; timestamp: number }
-  logout: { userId: string }
-  error: { code: number; message: string }
+  login: { userId: string; timestamp: number };
+  logout: { userId: string };
+  error: { code: number; message: string };
 }
 
 // 类型安全的 EventEmitter
 class TypedEmitter<Events extends Record<string, any>> {
-  private listeners = new Map<string, Set<Function>>()
+  private listeners = new Map<string, Set<Function>>();
 
   on<K extends keyof Events>(
     event: K,
-    listener: (payload: Events[K]) => void
+    listener: (payload: Events[K]) => void,
   ): this {
     if (!this.listeners.has(event as string)) {
-      this.listeners.set(event as string, new Set())
+      this.listeners.set(event as string, new Set());
     }
-    this.listeners.get(event as string)!.add(listener)
-    return this
+    this.listeners.get(event as string)!.add(listener);
+    return this;
   }
 
   emit<K extends keyof Events>(event: K, payload: Events[K]): void {
-    this.listeners.get(event as string)?.forEach(fn => fn(payload))
+    this.listeners.get(event as string)?.forEach((fn) => fn(payload));
   }
 
   off<K extends keyof Events>(
     event: K,
-    listener: (payload: Events[K]) => void
+    listener: (payload: Events[K]) => void,
   ): void {
-    this.listeners.get(event as string)?.delete(listener)
+    this.listeners.get(event as string)?.delete(listener);
   }
 }
 
 // 使用
-const emitter = new TypedEmitter<EventMap>()
+const emitter = new TypedEmitter<EventMap>();
 
-emitter.on('login', (data) => {
-  console.log(data.userId)     // ✅ 自动补全 userId, timestamp
-})
+emitter.on("login", (data) => {
+  console.log(data.userId); // ✅ 自动补全 userId, timestamp
+});
 
-emitter.emit('login', { userId: '123', timestamp: Date.now() })  // ✅
+emitter.emit("login", { userId: "123", timestamp: Date.now() }); // ✅
 // emitter.emit('login', { wrong: true })  // ❌ 类型错误
 // emitter.emit('unknown', {})             // ❌ 事件名不存在
 ```
@@ -877,33 +923,34 @@ emitter.emit('login', { userId: '123', timestamp: Date.now() })  // ✅
 `satisfies` 解决了一个长期痛点：**类型标注和类型推断二选一**的困境。
 
 ```typescript
-type Route = Record<string, { path: string; component: string }>
+type Route = Record<string, { path: string; component: string }>;
 
 // 问题 1：用 : 注解 — 丢失具体推断
 const routes: Route = {
-  home: { path: '/', component: 'Home' },
-  about: { path: '/about', component: 'About' },
-}
+  home: { path: "/", component: "Home" },
+  about: { path: "/about", component: "About" },
+};
 // routes.home 的类型是 { path: string; component: string }
 // 无法知道 path 具体是 '/' 还是 '/about'
 
 // 问题 2：不注解 — 没有类型校验
 const routes2 = {
-  home: { path: '/', component: 'Home' },
-  about: { path: '/about', compnent: 'About' },  // 拼写错误！没人发现
-}
+  home: { path: "/", component: "Home" },
+  about: { path: "/about", compnent: "About" }, // 拼写错误！没人发现
+};
 
 // ✅ satisfies：既校验又保留推断
 const routes3 = {
-  home: { path: '/', component: 'Home' },
-  about: { path: '/about', component: 'About' },
-} satisfies Route
+  home: { path: "/", component: "Home" },
+  about: { path: "/about", component: "About" },
+} satisfies Route;
 
 // routes3.home.path 的类型是 '/'（保留了字面量类型）
 // 如果拼写错误，satisfies 会报错
 ```
 
 **satisfies 的核心价值**：
+
 1. 在编写时进行类型约束检查
 2. 在使用时保留最精确的推断结果
 3. 特别适合配置对象、路由表、颜色映射等场景
@@ -922,29 +969,29 @@ const routes3 = {
 
 ```typescript
 type DeepPartial<T> = T extends Function
-  ? T  // 函数不处理
+  ? T // 函数不处理
   : T extends Array<infer U>
-    ? DeepPartialArray<U>  // 数组特殊处理
+    ? DeepPartialArray<U> // 数组特殊处理
     : T extends object
-      ? { [K in keyof T]?: DeepPartial<T[K]> }  // 对象递归
-      : T  // 基本类型直接返回
+      ? { [K in keyof T]?: DeepPartial<T[K]> } // 对象递归
+      : T; // 基本类型直接返回
 
 interface DeepPartialArray<T> extends Array<DeepPartial<T>> {}
 
 // 测试
 interface Config {
   server: {
-    host: string
-    port: number
+    host: string;
+    port: number;
     ssl: {
-      enabled: boolean
-      cert: string
-    }
-  }
-  features: string[]
+      enabled: boolean;
+      cert: string;
+    };
+  };
+  features: string[];
 }
 
-type PartialConfig = DeepPartial<Config>
+type PartialConfig = DeepPartial<Config>;
 // {
 //   server?: {
 //     host?: string
@@ -959,15 +1006,16 @@ type PartialConfig = DeepPartial<Config>
 
 // 使用场景：深度合并配置
 function mergeConfig(base: Config, override: DeepPartial<Config>): Config {
-  return deepMerge(base, override) as Config
+  return deepMerge(base, override) as Config;
 }
 
 mergeConfig(defaultConfig, {
-  server: { port: 8080 }  // ✅ 只修改 port，其他保持默认
-})
+  server: { port: 8080 }, // ✅ 只修改 port，其他保持默认
+});
 ```
 
 **追问方向**：
+
 - 如何实现 `DeepRequired`？（把 `?` 改成 `-?`）
 - 如何实现 `DeepReadonly`？（加 `readonly`）
 - 如何限制递归深度？（加计数器泛型参数）
@@ -984,15 +1032,13 @@ mergeConfig(defaultConfig, {
 
 ```typescript
 // 将 kebab-case 转为 camelCase
-type CamelCase<S extends string> = 
-  S extends `${infer Head}-${infer Tail}`
-    ? `${Lowercase<Head>}${CamelCaseInner<Tail>}`
-    : Lowercase<S>
+type CamelCase<S extends string> = S extends `${infer Head}-${infer Tail}`
+  ? `${Lowercase<Head>}${CamelCaseInner<Tail>}`
+  : Lowercase<S>;
 
-type CamelCaseInner<S extends string> =
-  S extends `${infer First}-${infer Rest}`
-    ? `${Capitalize<Lowercase<First>>}${CamelCaseInner<Rest>}`
-    : Capitalize<Lowercase<S>>
+type CamelCaseInner<S extends string> = S extends `${infer First}-${infer Rest}`
+  ? `${Capitalize<Lowercase<First>>}${CamelCaseInner<Rest>}`
+  : Capitalize<Lowercase<S>>;
 
 // 推导过程（'border-top-width'）：
 // 1. Head='border', Tail='top-width'
@@ -1003,26 +1049,27 @@ type CamelCaseInner<S extends string> =
 // 6. 结果：'border' + 'Top' + 'Width' = 'borderTopWidth'
 
 // 测试
-type A = CamelCase<'background-color'>    // 'backgroundColor'
-type B = CamelCase<'border-top-width'>    // 'borderTopWidth'
-type C = CamelCase<'font-size'>           // 'fontSize'
-type D = CamelCase<'color'>               // 'color'（无横线，不变）
+type A = CamelCase<"background-color">; // 'backgroundColor'
+type B = CamelCase<"border-top-width">; // 'borderTopWidth'
+type C = CamelCase<"font-size">; // 'fontSize'
+type D = CamelCase<"color">; // 'color'（无横线，不变）
 
 // 将对象所有 kebab-case 键名转为 camelCase
 type CamelCaseKeys<T extends object> = {
-  [K in keyof T as K extends string ? CamelCase<K> : K]: T[K]
-}
+  [K in keyof T as K extends string ? CamelCase<K> : K]: T[K];
+};
 
 type CSSProps = {
-  'background-color': string
-  'font-size': string
-  'border-radius': string
-}
-type JSProps = CamelCaseKeys<CSSProps>
+  "background-color": string;
+  "font-size": string;
+  "border-radius": string;
+};
+type JSProps = CamelCaseKeys<CSSProps>;
 // { backgroundColor: string; fontSize: string; borderRadius: string }
 ```
 
 **追问方向**：
+
 - 如何实现反向的 `KebabCase`（camelCase → kebab-case）？
 - 如何同时支持 snake_case 和 kebab-case 的转换？
 
@@ -1039,58 +1086,64 @@ type JSProps = CamelCaseKeys<CSSProps>
 **问题**：TypeScript 是结构化类型系统，结构相同的类型可以互相赋值：
 
 ```typescript
-type UserId = string
-type OrderId = string
+type UserId = string;
+type OrderId = string;
 
-function getUser(id: UserId) { /* ... */ }
+function getUser(id: UserId) {
+  /* ... */
+}
 
-const orderId: OrderId = 'order-123'
-getUser(orderId)  // ✅ 但这是 Bug！传了订单 ID 而非用户 ID
+const orderId: OrderId = "order-123";
+getUser(orderId); // ✅ 但这是 Bug！传了订单 ID 而非用户 ID
 ```
 
 **解决方案：Branded Types**
 
 ```typescript
 // 方式 1：交叉类型 + 幽灵属性
-type Brand<T, B extends string> = T & { readonly __brand: B }
+type Brand<T, B extends string> = T & { readonly __brand: B };
 
-type UserId = Brand<string, 'UserId'>
-type OrderId = Brand<string, 'OrderId'>
-type Amount = Brand<number, 'Amount'>
+type UserId = Brand<string, "UserId">;
+type OrderId = Brand<string, "OrderId">;
+type Amount = Brand<number, "Amount">;
 
 // 工厂函数（唯一的合法构造方式）
 function createUserId(id: string): UserId {
   // 可以在这里添加验证逻辑
-  if (!id.startsWith('user-')) throw new Error('Invalid user ID')
-  return id as UserId
+  if (!id.startsWith("user-")) throw new Error("Invalid user ID");
+  return id as UserId;
 }
 
 function createOrderId(id: string): OrderId {
-  return id as OrderId
+  return id as OrderId;
 }
 
 // 使用
-function getUser(id: UserId) { /* ... */ }
+function getUser(id: UserId) {
+  /* ... */
+}
 
-const userId = createUserId('user-123')
-const orderId = createOrderId('order-456')
+const userId = createUserId("user-123");
+const orderId = createOrderId("order-456");
 
-getUser(userId)    // ✅
+getUser(userId); // ✅
 // getUser(orderId) // ❌ Type 'OrderId' is not assignable to type 'UserId'
 // getUser('raw')   // ❌ 普通 string 也不行
 
 // 方式 2：unique symbol（更严格）
-declare const UserIdBrand: unique symbol
-type UserId2 = string & { readonly [UserIdBrand]: typeof UserIdBrand }
+declare const UserIdBrand: unique symbol;
+type UserId2 = string & { readonly [UserIdBrand]: typeof UserIdBrand };
 ```
 
 **实际应用场景**：
+
 - 用户 ID / 订单 ID / 商品 ID 区分
 - 金额（美元 vs 人民币）
 - 经纬度（lat vs lng 不混淆）
 - 已验证的字符串（ValidEmail，SanitizedHTML）
 
 **追问方向**：
+
 - Branded Types 的运行时开销是多少？（零，brand 属性只存在于类型层面）
 - 如何跟 zod 等运行时验证库配合？
 
@@ -1107,14 +1160,19 @@ type UserId2 = string & { readonly [UserIdBrand]: typeof UserIdBrand }
 TypeScript 的类型兼容性基于**结构化子类型（Structural Subtyping）**：只要目标类型的每个属性在源类型中都有对应的兼容属性，就认为兼容。
 
 ```typescript
-interface Named { name: string }
-interface Person { name: string; age: number }
+interface Named {
+  name: string;
+}
+interface Person {
+  name: string;
+  age: number;
+}
 
 // Person 有 Named 的所有属性（还多了 age），所以 Person <: Named
-let named: Named = { name: 'Alice', age: 30 } as Person  // ✅
+let named: Named = { name: "Alice", age: 30 } as Person; // ✅
 
 // 多余属性检查（仅在直接对象字面量赋值时生效）
-let named2: Named = { name: 'Alice', age: 30 }  // ❌ 直接赋值时报错
+let named2: Named = { name: "Alice", age: 30 }; // ❌ 直接赋值时报错
 // 这是 TS 的额外安全检查，防止拼写错误
 ```
 
@@ -1122,19 +1180,20 @@ let named2: Named = { name: 'Alice', age: 30 }  // ❌ 直接赋值时报错
 
 ```typescript
 // 参数少的兼容参数多的（安全：忽略多余参数）
-type Callback = (a: string, b: number) => void
-const fn: Callback = (a) => console.log(a)  // ✅ 少一个参数没问题
+type Callback = (a: string, b: number) => void;
+const fn: Callback = (a) => console.log(a); // ✅ 少一个参数没问题
 
 // 参数类型：逆变（strict 模式下）
-type Handler = (event: MouseEvent) => void
-const handler: Handler = (event: Event) => {}  // ✅ Event :> MouseEvent
+type Handler = (event: MouseEvent) => void;
+const handler: Handler = (event: Event) => {}; // ✅ Event :> MouseEvent
 
 // 返回值类型：协变
-type Producer = () => Named
-const producer: Producer = () => ({ name: 'Alice', age: 30 })  // ✅ Person <: Named
+type Producer = () => Named;
+const producer: Producer = () => ({ name: "Alice", age: 30 }); // ✅ Person <: Named
 ```
 
 **追问方向**：
+
 - 什么情况下结构化类型会造成问题？（Branded Types 的动机）
 - 函数参数双变（bivariant）是什么？在哪些场景下发生？
 
@@ -1153,50 +1212,50 @@ const producer: Producer = () => ({ name: 'Alice', age: 30 })  // ✅ Person <: 
 
 // 标记必填字段
 interface UserConfig {
-  name: string
-  email: string
-  age: number
-  role?: string
+  name: string;
+  email: string;
+  age: number;
+  role?: string;
 }
 
 // 构建器：追踪已设置的字段
-type RequiredKeys = 'name' | 'email' | 'age'
+type RequiredKeys = "name" | "email" | "age";
 
 class UserBuilder<Set extends string = never> {
-  private config: Partial<UserConfig> = {}
+  private config: Partial<UserConfig> = {};
 
-  setName(name: string): UserBuilder<Set | 'name'> {
-    this.config.name = name
-    return this as any
+  setName(name: string): UserBuilder<Set | "name"> {
+    this.config.name = name;
+    return this as any;
   }
 
-  setEmail(email: string): UserBuilder<Set | 'email'> {
-    this.config.email = email
-    return this as any
+  setEmail(email: string): UserBuilder<Set | "email"> {
+    this.config.email = email;
+    return this as any;
   }
 
-  setAge(age: number): UserBuilder<Set | 'age'> {
-    this.config.age = age
-    return this as any
+  setAge(age: number): UserBuilder<Set | "age"> {
+    this.config.age = age;
+    return this as any;
   }
 
   setRole(role: string): UserBuilder<Set> {
-    this.config.role = role
-    return this as any
+    this.config.role = role;
+    return this as any;
   }
 
   // 只有设置了所有必填字段后才能 build
   build(this: UserBuilder<RequiredKeys>): UserConfig {
-    return this.config as UserConfig
+    return this.config as UserConfig;
   }
 }
 
 // 使用
 const user = new UserBuilder()
-  .setName('Alice')
-  .setEmail('alice@example.com')
+  .setName("Alice")
+  .setEmail("alice@example.com")
   .setAge(30)
-  .build()  // ✅ 所有必填字段已设置
+  .build(); // ✅ 所有必填字段已设置
 
 // const bad = new UserBuilder()
 //   .setName('Bob')
@@ -1204,6 +1263,7 @@ const user = new UserBuilder()
 ```
 
 **追问方向**：
+
 - 如何让 `build` 的错误提示更友好？（用条件类型生成缺失字段的错误信息）
 - 如何支持任意顺序设置字段？（当前方案已支持）
 - 生产环境中有哪些替代方案？（参数对象 + Required 约束更简洁）
@@ -1247,12 +1307,14 @@ Emitter（发射器）→ .js + .d.ts + .js.map
 5. **Emitter**：移除所有类型注解，生成 JavaScript 代码
 
 **性能相关知识**：
+
 - Checker 占整个编译时间的 70%+
 - `skipLibCheck: true` 跳过 `.d.ts` 检查可显著加速
 - `isolatedDeclarations` 允许每个文件独立生成 `.d.ts`，可并行化
 - Project References 实现增量编译
 
 **追问方向**：
+
 - tsc 和 esbuild/swc 有什么区别？（esbuild/swc 只做转译不做类型检查）
 - 如何优化大型项目的 tsc 编译速度？
 
@@ -1267,6 +1329,7 @@ Emitter（发射器）→ .js + .d.ts + .js.map
 **参考答案**：
 
 **痛点**：在 monorepo 中，多个子包互相依赖。如果用单一 tsconfig 编译所有代码：
+
 - 编译速度慢（改一个文件重新编译所有包）
 - 无法确保包之间的边界（A 包直接 import B 包的内部文件）
 - IDE 性能差
@@ -1356,6 +1419,7 @@ tsc --build --clean
 ```
 
 **核心要点**：
+
 1. **`composite: true`**：每个子包必须开启，声明自己可以被引用
 2. **`declaration: true`**：必须生成 `.d.ts`，其他包通过声明文件读取类型
 3. **`declarationMap: true`**：可选，启用"跳转到源码定义"
@@ -1363,6 +1427,7 @@ tsc --build --clean
 5. **边界隔离**：包 A 只能 import 包 B 的公开 API，不能直接引用内部文件
 
 **追问方向**：
+
 - `composite` 模式有什么限制？（必须有 `rootDir`，不能用 `noEmit`）
 - 如何解决包之间的循环依赖？（提取共享类型到独立的 `types` 包）
 - Project References 和 pnpm workspace 如何配合？

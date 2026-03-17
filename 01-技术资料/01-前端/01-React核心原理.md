@@ -46,40 +46,41 @@ Fiber 的本质是**将递归改为可中断的迭代**：把渲染工作拆分�
 // 精简自 ReactFiber.js 中的 FiberNode 构造函数
 function FiberNode(tag, pendingProps, key, mode) {
   // ─── 静态数据结构 ───────────────────────────────
-  this.tag = tag;           // 组件类型标记（FunctionComponent=0, ClassComponent=1, HostRoot=3...）
-  this.key = key;           // React key，用于 Diff
-  this.elementType = null;  // createElement 的第一个参数（组件函数/类/字符串）
-  this.type = null;         // 解析后的类型（lazy 组件会解析出实际类型）
-  this.stateNode = null;    // 关联的真实 DOM 节点或类组件实例
+  this.tag = tag; // 组件类型标记（FunctionComponent=0, ClassComponent=1, HostRoot=3...）
+  this.key = key; // React key，用于 Diff
+  this.elementType = null; // createElement 的第一个参数（组件函数/类/字符串）
+  this.type = null; // 解析后的类型（lazy 组件会解析出实际类型）
+  this.stateNode = null; // 关联的真实 DOM 节点或类组件实例
 
   // ─── Fiber 树链接 ───────────────────────────────
-  this.return = null;   // 父 Fiber（注意：不叫 parent，叫 return）
-  this.child = null;    // 第一个子 Fiber
-  this.sibling = null;  // 右侧兄弟 Fiber
-  this.index = 0;       // 在兄弟中的位置索引
+  this.return = null; // 父 Fiber（注意：不叫 parent，叫 return）
+  this.child = null; // 第一个子 Fiber
+  this.sibling = null; // 右侧兄弟 Fiber
+  this.index = 0; // 在兄弟中的位置索引
 
   // ─── 动态工作单元 ────────────────────────────────
-  this.pendingProps = pendingProps;  // 本次渲染的新 props
-  this.memoizedProps = null;         // 上次渲染完成时的 props
-  this.updateQueue = null;           // 状态更新队列（useState/setState 的更新链表）
-  this.memoizedState = null;         // 上次渲染完成时的 state（Hook 链表的头节点）
-  this.dependencies = null;          // Context/EventSource 依赖列表
+  this.pendingProps = pendingProps; // 本次渲染的新 props
+  this.memoizedProps = null; // 上次渲染完成时的 props
+  this.updateQueue = null; // 状态更新队列（useState/setState 的更新链表）
+  this.memoizedState = null; // 上次渲染完成时的 state（Hook 链表的头节点）
+  this.dependencies = null; // Context/EventSource 依赖列表
 
   // ─── 副作用 ──────────────────────────────────────
-  this.flags = NoFlags;              // 副作用标记（Placement|Update|Deletion 等）
-  this.subtreeFlags = NoFlags;       // 子树的副作用标记（优化：跳过无副作用子树）
-  this.deletions = null;             // 待删除的子 Fiber 列表
+  this.flags = NoFlags; // 副作用标记（Placement|Update|Deletion 等）
+  this.subtreeFlags = NoFlags; // 子树的副作用标记（优化：跳过无副作用子树）
+  this.deletions = null; // 待删除的子 Fiber 列表
 
   // ─── 调度优先级 ──────────────────────────────────
-  this.lanes = NoLanes;              // 本 Fiber 挂起的更新优先级
-  this.childLanes = NoLanes;         // 子树中挂起的更新优先级
+  this.lanes = NoLanes; // 本 Fiber 挂起的更新优先级
+  this.childLanes = NoLanes; // 子树中挂起的更新优先级
 
   // ─── 双缓冲 ──────────────────────────────────────
-  this.alternate = null;  // 指向另一棵树中对应的 Fiber 节点
+  this.alternate = null; // 指向另一棵树中对应的 Fiber 节点
 }
 ```
 
 **关键设计点**：
+
 - `return` 而非 `parent`：因为 Fiber 完成工作后需要"返回"给父节点继续处理，与调用栈的返回语义一致。
 - `subtreeFlags`：避免遍历没有副作用的子树，是 React 18 的重要优化。
 - `alternate`：双缓冲树的核心，指向另一棵树中的对应节点。
@@ -186,6 +187,7 @@ function beginWork(current, workInProgress, renderLanes) {
 ### 1.5 Diff 算法
 
 React 的 Diff 基于三个假设（启发式策略），将 O(n³) 降为 O(n)：
+
 1. 不同类型的节点产生不同树（直接删除旧树，创建新树）
 2. `key` 属性可以标识跨位置的稳定节点
 3. 同层节点才比较（不跨层）
@@ -214,6 +216,7 @@ React 的 Diff 基于三个假设（启发式策略），将 O(n³) 降为 O(n)�
 `reconcileChildrenArray` 采用**两轮遍历**策略：
 
 **第一轮**：从头遍历，处理节点更新（不移动位置）：
+
 ```
 oldFibers: A  B  C  D  E
 newElements: A  B  E  C  D
@@ -225,6 +228,7 @@ newElements: A  B  E  C  D
 ```
 
 **第二轮**：将剩余旧节点存入 `Map`，遍历剩余新节点：
+
 ```
 剩余旧节点 Map: { C:fiberC, D:fiberD, E:fiberE }
 继续遍历新节点:
@@ -251,10 +255,10 @@ React 18 用**位运算**实现优先级，一个 Lane 就是一个 32 位整数
 ```javascript
 // 源码中的 Lane 定义（精简）
 export const NoLanes = 0b0000000000000000000000000000000;
-export const SyncLane = 0b0000000000000000000000000000001;  // 同步（最高优先级）
-export const InputContinuousLane = 0b0000000000000000000000000000100;  // 连续输入（滚动）
-export const DefaultLane = 0b0000000000000000000000000010000;  // 默认（fetch 回调）
-export const TransitionLane1 = 0b0000000000000000000000001000000;  // startTransition
+export const SyncLane = 0b0000000000000000000000000000001; // 同步（最高优先级）
+export const InputContinuousLane = 0b0000000000000000000000000000100; // 连续输入（滚动）
+export const DefaultLane = 0b0000000000000000000000000010000; // 默认（fetch 回调）
+export const TransitionLane1 = 0b0000000000000000000000001000000; // startTransition
 // ... 共 31 个 Lane
 
 // Lanes 是多个 Lane 的集合（OR 运算）
@@ -262,26 +266,33 @@ export const InputContinuousLanes = SyncLane | InputContinuousLane;
 ```
 
 位运算的优势：
+
 ```javascript
 // 判断是否包含某 Lane（比较操作）
-function includesSomeLane(a, b) { return (a & b) !== NoLanes; }
+function includesSomeLane(a, b) {
+  return (a & b) !== NoLanes;
+}
 
 // 合并多个优先级（OR）
-function mergeLanes(a, b) { return a | b; }
+function mergeLanes(a, b) {
+  return a | b;
+}
 
 // 移除某个优先级（AND NOT）
-function removeLanes(set, subset) { return set & ~subset; }
+function removeLanes(set, subset) {
+  return set & ~subset;
+}
 ```
 
 **Lane 与用户行为的对应关系**：
 
-| 用户行为 | Lane | 调度优先级 |
-|---------|------|-----------|
-| `onClick`/`onChange` | `SyncLane` | 同步，不可中断 |
+| 用户行为                          | Lane             | 调度优先级       |
+| --------------------------------- | ---------------- | ---------------- |
+| `onClick`/`onChange`              | `SyncLane`       | 同步，不可中断   |
 | `useTransition`/`startTransition` | `TransitionLane` | 低优先级，可中断 |
-| `useDeferredValue` | `TransitionLane` | 可被高优先级打断 |
-| `setTimeout` 内的 setState | `DefaultLane` | 正常调度 |
-| `requestIdleCallback` 内 | `IdleLane` | 最低优先级 |
+| `useDeferredValue`                | `TransitionLane` | 可被高优先级打断 |
+| `setTimeout` 内的 setState        | `DefaultLane`    | 正常调度         |
+| `requestIdleCallback` 内          | `IdleLane`       | 最低优先级       |
 
 ### 2.2 时间切片（Time Slicing）
 
@@ -338,14 +349,14 @@ Scheduler 任务队列（最小堆，按 sortIndex/过期时间排序）：
 
 ```javascript
 // 任务定义
-var taskQueue = [];    // 已到期任务（min-heap，按 expirationTime 排序）
-var timerQueue = [];   // 未到期任务（min-heap，按 startTime 排序）
+var taskQueue = []; // 已到期任务（min-heap，按 expirationTime 排序）
+var timerQueue = []; // 未到期任务（min-heap，按 startTime 排序）
 
 // 入堆（push）
 function push(heap, node) {
   const index = heap.length;
   heap.push(node);
-  siftUp(heap, node, index);  // 上浮调整堆
+  siftUp(heap, node, index); // 上浮调整堆
 }
 
 // 堆顶（peek）
@@ -359,7 +370,7 @@ function pop(heap) {
   const last = heap.pop();
   if (last !== first) {
     heap[0] = last;
-    siftDown(heap, last, 0);  // 下沉调整堆
+    siftDown(heap, last, 0); // 下沉调整堆
   }
   return first;
 }
@@ -374,7 +385,7 @@ export function startTransition(scope, options) {
   // 设置当前正在执行 transition
   ReactSharedInternals.T = {};
   try {
-    scope();  // 执行回调，其中的 setState 会被打上 TransitionLane
+    scope(); // 执行回调，其中的 setState 会被打上 TransitionLane
   } finally {
     ReactSharedInternals.T = prevTransition;
   }
@@ -420,14 +431,14 @@ FiberNode.memoizedState
 ```javascript
 // packages/react/src/ReactHooks.js
 function resolveDispatcher() {
-  const dispatcher = ReactSharedInternals.H;  // H = current dispatcher
+  const dispatcher = ReactSharedInternals.H; // H = current dispatcher
   // ReactSharedInternals 是 react 和 react-reconciler 包的共享内部状态
   return dispatcher;
 }
 
 export function useState(initialState) {
   const dispatcher = resolveDispatcher();
-  return dispatcher.useState(initialState);  // 委托给当前 dispatcher
+  return dispatcher.useState(initialState); // 委托给当前 dispatcher
 }
 
 export function useEffect(create, deps) {
@@ -486,7 +497,7 @@ function mountState(initialState) {
   const hook = mountWorkInProgressHook();
 
   // 处理 initialState 函数形式（惰性初始化）
-  if (typeof initialState === 'function') {
+  if (typeof initialState === "function") {
     initialState = initialState();
   }
 
@@ -494,16 +505,20 @@ function mountState(initialState) {
 
   // 创建更新队列
   const queue = {
-    pending: null,      // 待处理的 Update 环形链表
+    pending: null, // 待处理的 Update 环形链表
     lanes: NoLanes,
     dispatch: null,
-    lastRenderedReducer: basicStateReducer,  // (state, action) => action
+    lastRenderedReducer: basicStateReducer, // (state, action) => action
     lastRenderedState: initialState,
   };
   hook.queue = queue;
 
   // dispatch 函数绑定到当前 fiber 和 queue
-  const dispatch = (queue.dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue));
+  const dispatch = (queue.dispatch = dispatchSetState.bind(
+    null,
+    currentlyRenderingFiber,
+    queue,
+  ));
   return [hook.memoizedState, dispatch];
 }
 ```
@@ -530,19 +545,19 @@ function updateReducer(reducer, initialArg) {
 
   // 遍历 Update 链表，计算新 state
   let newState = hook.baseState;
-  let update = baseQueue.next;  // 从链表头开始
+  let update = baseQueue.next; // 从链表头开始
   do {
     if (!isSubsetOfLanes(renderLanes, update.lane)) {
       // 优先级不够，跳过此 update，保留到下次渲染
     } else {
-      newState = reducer(newState, update.action);  // 应用 update
+      newState = reducer(newState, update.action); // 应用 update
     }
     update = update.next;
   } while (update !== null && update !== baseQueue.next);
 
   // Bailout 优化：如果 state 没有变化，跳过渲染
   if (Object.is(newState, hook.memoizedState)) {
-    return [newState, queue.dispatch];  // 直接返回，不触发重渲染
+    return [newState, queue.dispatch]; // 直接返回，不触发重渲染
   }
 
   hook.memoizedState = newState;
@@ -567,11 +582,13 @@ Commit 阶段时间轴：
 ```
 
 **useLayoutEffect**：
+
 - 在 DOM 变更完成后、浏览器绘制前**同步执行**。
 - 适用场景：需要在绘制前读取/修改 DOM（如计算滚动位置、避免闪烁）。
 - 类比 `componentDidMount`/`componentDidUpdate`。
 
 **useEffect**：
+
 - 通过 Scheduler 调度，在浏览器绘制**完成后**异步执行。
 - 不阻塞主线程，适合大多数副作用（数据获取、事件监听）。
 
@@ -580,7 +597,7 @@ Commit 阶段时间轴：
 ```javascript
 // commitRootImpl 末尾
 scheduleCallback(NormalSchedulerPriority, () => {
-  flushPassiveEffects();  // 执行 useEffect
+  flushPassiveEffects(); // 执行 useEffect
   return null;
 });
 ```
@@ -591,19 +608,20 @@ scheduleCallback(NormalSchedulerPriority, () => {
 
 ```javascript
 function areHookInputsEqual(nextDeps, prevDeps) {
-  if (prevDeps === null) return false;  // 首次渲染，不相等
+  if (prevDeps === null) return false; // 首次渲染，不相等
 
   for (let i = 0; i < prevDeps.length && i < nextDeps.length; i++) {
     if (Object.is(nextDeps[i], prevDeps[i])) {
       continue;
     }
-    return false;  // 找到不相等的依赖，重新计算
+    return false; // 找到不相等的依赖，重新计算
   }
-  return true;  // 所有依赖都相等，使用缓存
+  return true; // 所有依赖都相等，使用缓存
 }
 ```
 
 `Object.is` 与 `===` 的区别：
+
 - `NaN === NaN` → `false`，`Object.is(NaN, NaN)` → `true`
 - `+0 === -0` → `true`，`Object.is(+0, -0)` → `false`
 
@@ -619,13 +637,17 @@ JSX 经 Babel 编译后调用 `React.createElement`（新版本用 `jsx` 函数�
 
 ```jsx
 // 编译前
-const element = <div className="app"><h1>Hello</h1></div>;
+const element = (
+  <div className="app">
+    <h1>Hello</h1>
+  </div>
+);
 
 // 编译后（React 17+ 自动引入 jsx runtime）
-import { jsx as _jsx } from 'react/jsx-runtime';
+import { jsx as _jsx } from "react/jsx-runtime";
 const element = _jsx("div", {
   className: "app",
-  children: _jsx("h1", { children: "Hello" })
+  children: _jsx("h1", { children: "Hello" }),
 });
 ```
 
@@ -690,16 +712,19 @@ performConcurrentWorkOnRoot()
 ### 4.3 Commit 三子阶段详解
 
 **Before Mutation** (`commitBeforeMutationEffects`)：
+
 - 调用 `getSnapshotBeforeUpdate`（类组件）
 - 调度 `useEffect` 的 cleanup（异步）
 
 **Mutation** (`commitMutationEffects`)：
+
 - 处理 `Deletion` flag：移除 DOM 节点，调用 `useLayoutEffect` cleanup 和 `componentWillUnmount`
 - 处理 `Placement` flag：`insertBefore`/`appendChild` 插入 DOM
 - 处理 `Update` flag：更新 DOM 属性
 - **此处**：`fiberRoot.current = finishedWork`（切换双缓冲树）
 
 **Layout** (`commitLayoutEffects`)：
+
 - 调用 `componentDidMount`/`componentDidUpdate`（类组件）
 - 执行 `useLayoutEffect` 的 create 回调
 - 赋值 `ref`（`ref.current = DOM 节点`）
@@ -713,6 +738,7 @@ performConcurrentWorkOnRoot()
 ### 5.1 背景与动机
 
 手动 `useMemo`/`useCallback`/`React.memo` 的问题：
+
 1. **认知负担高**：需要开发者手动判断哪些值需要缓存
 2. **容易遗漏**：忘记 memoize 导致子组件不必要重渲染
 3. **依赖数组维护**：deps 不正确导致 stale closure 或过度重渲染
@@ -755,31 +781,35 @@ React Compiler（原名 React Forget）在**编译时**自动插入等价的 `us
 ```javascript
 // 开发者编写的原始代码
 function TodoList({ todos, filter }) {
-  const visibleTodos = todos.filter(todo => todo.status === filter);
+  const visibleTodos = todos.filter((todo) => todo.status === filter);
   return (
     <ul>
-      {visibleTodos.map(todo => <TodoItem key={todo.id} todo={todo} />)}
+      {visibleTodos.map((todo) => (
+        <TodoItem key={todo.id} todo={todo} />
+      ))}
     </ul>
   );
 }
 
 // React Compiler 输出（伪代码，实际更复杂）
 function TodoList({ todos, filter }) {
-  const $ = useMemoCache(3);  // 编译器分配的缓存槽
+  const $ = useMemoCache(3); // 编译器分配的缓存槽
 
   let visibleTodos;
   if ($[0] !== todos || $[1] !== filter) {
-    visibleTodos = todos.filter(todo => todo.status === filter);
+    visibleTodos = todos.filter((todo) => todo.status === filter);
     $[0] = todos;
     $[1] = filter;
     $[2] = visibleTodos;
   } else {
-    visibleTodos = $[2];  // 缓存命中
+    visibleTodos = $[2]; // 缓存命中
   }
 
   return (
     <ul>
-      {visibleTodos.map(todo => <TodoItem key={todo.id} todo={todo} />)}
+      {visibleTodos.map((todo) => (
+        <TodoItem key={todo.id} todo={todo} />
+      ))}
     </ul>
   );
 }
@@ -787,13 +817,13 @@ function TodoList({ todos, filter }) {
 
 ### 5.3 编译时 vs 运行时优化对比
 
-| 维度 | 运行时（手动 useMemo） | 编译时（React Compiler） |
-|------|----------------------|------------------------|
-| **开发体验** | 需手动判断、维护 deps | 自动，零额外代码 |
-| **精确度** | 依赖开发者判断 | 编译器静态分析，更精确 |
-| **适用范围** | 任意 React 版本 | 需要支持 Compiler 的构建工具链 |
-| **调试难度** | 直观，源码可见 | 需要 Compiler DevTools |
-| **规避问题** | 可手动控制跳过 | 需满足 Rules of React 才能优化 |
+| 维度         | 运行时（手动 useMemo） | 编译时（React Compiler）       |
+| ------------ | ---------------------- | ------------------------------ |
+| **开发体验** | 需手动判断、维护 deps  | 自动，零额外代码               |
+| **精确度**   | 依赖开发者判断         | 编译器静态分析，更精确         |
+| **适用范围** | 任意 React 版本        | 需要支持 Compiler 的构建工具链 |
+| **调试难度** | 直观，源码可见         | 需要 Compiler DevTools         |
+| **规避问题** | 可手动控制跳过         | 需满足 Rules of React 才能优化 |
 
 ### 5.4 Rules of React（编译器前提）
 
@@ -806,7 +836,7 @@ React Compiler 要求代码遵循 **Rules of React**，否则跳过优化（不�
 ```javascript
 // ❌ 无法被编译器优化（mutate props）
 function BadComponent({ items }) {
-  items.push(newItem);  // 修改了 props！
+  items.push(newItem); // 修改了 props！
   return <List items={items} />;
 }
 
@@ -864,7 +894,7 @@ React 18 引入了并发渲染的基础设施，但许多开发者的日常体�
 `use` 是 React 19 唯一"可以在条件语句中调用"的 Hook，它能直接读取 Promise 或 Context。
 
 ```jsx
-import { use, Suspense } from 'react';
+import { use, Suspense } from "react";
 
 // 在组件外创建 Promise（通常来自框架或缓存层）
 const userPromise = fetchUser(userId);
@@ -884,28 +914,28 @@ function UserProfile() {
 // 使用
 <Suspense fallback={<Skeleton />}>
   <UserProfile />
-</Suspense>
+</Suspense>;
 ```
 
 **与 useEffect + useState 数据获取模式对比**：
 
-| 方面 | React 18（useEffect 模式） | React 19（use + Suspense） |
-|------|---------------------------|---------------------------|
-| 代码量 | 需要 loading/error/data 三个状态 | 一行 `use(promise)` |
+| 方面       | React 18（useEffect 模式）                    | React 19（use + Suspense）     |
+| ---------- | --------------------------------------------- | ------------------------------ |
+| 代码量     | 需要 loading/error/data 三个状态              | 一行 `use(promise)`            |
 | 瀑布流问题 | 父组件 useEffect → 子组件 useEffect，串行请求 | Promise 在渲染前创建，并行获取 |
-| 服务端渲染 | 需要 useEffect 在客户端重新获取 | Suspense 与 SSR 深度集成 |
-| 错误处理 | try-catch 或 .catch() | ErrorBoundary 自动捕获 |
+| 服务端渲染 | 需要 useEffect 在客户端重新获取               | Suspense 与 SSR 深度集成       |
+| 错误处理   | try-catch 或 .catch()                         | ErrorBoundary 自动捕获         |
 
 ### 6.2 Actions 与 `useActionState`——表单处理的终极方案
 
 React 19 引入 **Actions** 概念：任何使用 `async` 转换（transition）的函数都是 Action。配合 `useActionState`，表单处理变得极其简洁。
 
 ```jsx
-import { useActionState } from 'react';
+import { useActionState } from "react";
 
 async function submitOrder(prevState, formData) {
-  const name = formData.get('name');
-  const address = formData.get('address');
+  const name = formData.get("name");
+  const address = formData.get("address");
 
   // 服务端校验
   const result = await createOrder({ name, address });
@@ -925,9 +955,7 @@ function OrderForm() {
     <form action={formAction}>
       <input name="name" required />
       <input name="address" required />
-      <button disabled={isPending}>
-        {isPending ? '提交中...' : '下单'}
-      </button>
+      <button disabled={isPending}>{isPending ? "提交中..." : "下单"}</button>
       {state.error && <p className="error">{state.error}</p>}
       {state.success && <p>订单 {state.orderId} 已创建！</p>}
     </form>
@@ -942,7 +970,7 @@ function OrderForm() {
 在社交应用中点赞、购物车修改数量等场景，用户不想等服务端响应才看到 UI 变化。`useOptimistic` 让你在请求发出的同时立即显示预期结果，失败时自动回滚。
 
 ```jsx
-import { useOptimistic } from 'react';
+import { useOptimistic } from "react";
 
 function MessageList({ messages, sendMessage }) {
   const [optimisticMessages, addOptimistic] = useOptimistic(
@@ -951,13 +979,13 @@ function MessageList({ messages, sendMessage }) {
     (currentMessages, newMessage) => [
       ...currentMessages,
       { text: newMessage, sending: true },
-    ]
+    ],
   );
 
   async function handleSend(formData) {
-    const text = formData.get('message');
-    addOptimistic(text);           // 立即显示（乐观）
-    await sendMessage(text);       // 实际请求
+    const text = formData.get("message");
+    addOptimistic(text); // 立即显示（乐观）
+    await sendMessage(text); // 实际请求
     // 成功后 messages prop 更新，sending: true 消失
     // 失败则自动回滚到 messages
   }
@@ -966,7 +994,7 @@ function MessageList({ messages, sendMessage }) {
     <>
       {optimisticMessages.map((msg, i) => (
         <div key={i} style={{ opacity: msg.sending ? 0.6 : 1 }}>
-          {msg.text} {msg.sending && '⏳'}
+          {msg.text} {msg.sending && "⏳"}
         </div>
       ))}
       <form action={handleSend}>
@@ -1001,14 +1029,14 @@ function BlogPost({ post }) {
 ### 6.5 资源预加载——组件内声明 `<link rel="preload">`
 
 ```jsx
-import { prefetchDNS, preconnect, preload, preinit } from 'react-dom';
+import { prefetchDNS, preconnect, preload, preinit } from "react-dom";
 
 function CriticalPage() {
   // 这些调用会提升到 <head>，在页面加载早期执行
-  preinit('/critical.js', { as: 'script' });      // 预加载 + 执行
-  preload('/hero.webp', { as: 'image' });          // 预加载（不执行）
-  preconnect('https://api.example.com');            // DNS + TCP + TLS
-  prefetchDNS('https://cdn.example.com');           // 仅 DNS
+  preinit("/critical.js", { as: "script" }); // 预加载 + 执行
+  preload("/hero.webp", { as: "image" }); // 预加载（不执行）
+  preconnect("https://api.example.com"); // DNS + TCP + TLS
+  prefetchDNS("https://cdn.example.com"); // 仅 DNS
 
   return <div>...</div>;
 }
@@ -1016,34 +1044,35 @@ function CriticalPage() {
 
 ### 6.6 React Server Components 成熟度（2026）
 
-| 维度 | 2024 状态 | 2026 状态 |
-|------|-----------|-----------|
-| 框架支持 | Next.js App Router（实验性） | Next.js / Remix / Waku 全面支持 |
-| 打包工具 | 仅 Next.js 自带打包 | Rspack / Turbopack / Vite 均支持 RSC 协议 |
-| 数据库直连 | 可行但生态不成熟 | Drizzle / Prisma 有官方 RSC 适配层 |
-| 流式渲染 | 支持但边界情况多 | 稳定、错误恢复机制完善 |
-| 开发者体验 | `'use client'` / `'use server'` 边界容易混淆 | IDE 插件自动标注、编译器报错更友好 |
+| 维度       | 2024 状态                                    | 2026 状态                                 |
+| ---------- | -------------------------------------------- | ----------------------------------------- |
+| 框架支持   | Next.js App Router（实验性）                 | Next.js / Remix / Waku 全面支持           |
+| 打包工具   | 仅 Next.js 自带打包                          | Rspack / Turbopack / Vite 均支持 RSC 协议 |
+| 数据库直连 | 可行但生态不成熟                             | Drizzle / Prisma 有官方 RSC 适配层        |
+| 流式渲染   | 支持但边界情况多                             | 稳定、错误恢复机制完善                    |
+| 开发者体验 | `'use client'` / `'use server'` 边界容易混淆 | IDE 插件自动标注、编译器报错更友好        |
 
 ### 6.7 React Compiler 进展
 
 React Compiler（已在[第 5 节](#5-react-compilerreact-forget)详细介绍）在 2025-2026 年进入稳定阶段：
+
 - Meta 内部已在 Instagram Web 全面部署
 - 与 React 19 配合后，`useMemo`、`useCallback`、`React.memo` 基本可以移除
 - 支持 Vite / Rspack / Next.js 等主流构建工具的 Babel 插件集成
 
 ### 6.8 React 18 vs 19 关键变化对照表
 
-| 特性 | React 18 | React 19 |
-|------|----------|----------|
-| 数据获取 | useEffect + useState 手动管理 | `use(promise)` + Suspense |
-| 表单处理 | onChange + onSubmit + 手动 pending 状态 | `<form action>` + `useActionState` |
-| 乐观更新 | 手动实现回滚逻辑 | `useOptimistic` 内置 |
-| 文档元数据 | react-helmet / next/head | 原生 `<title>` `<meta>` `<link>` |
-| 资源预加载 | 手动在 HTML 中添加 | `preload` / `preinit` API |
-| `ref` 传递 | 需要 `forwardRef` 包裹 | props 直接传 `ref`（forwardRef 不再需要） |
-| Context 使用 | `<Context.Provider>` | `<Context>` 直接作为 Provider |
-| 错误处理 | 有限的 ErrorBoundary | 改进的错误报告 + 重试机制 |
-| Compiler | 实验性 | 稳定，Meta 生产部署 |
+| 特性         | React 18                                | React 19                                  |
+| ------------ | --------------------------------------- | ----------------------------------------- |
+| 数据获取     | useEffect + useState 手动管理           | `use(promise)` + Suspense                 |
+| 表单处理     | onChange + onSubmit + 手动 pending 状态 | `<form action>` + `useActionState`        |
+| 乐观更新     | 手动实现回滚逻辑                        | `useOptimistic` 内置                      |
+| 文档元数据   | react-helmet / next/head                | 原生 `<title>` `<meta>` `<link>`          |
+| 资源预加载   | 手动在 HTML 中添加                      | `preload` / `preinit` API                 |
+| `ref` 传递   | 需要 `forwardRef` 包裹                  | props 直接传 `ref`（forwardRef 不再需要） |
+| Context 使用 | `<Context.Provider>`                    | `<Context>` 直接作为 Provider             |
+| 错误处理     | 有限的 ErrorBoundary                    | 改进的错误报告 + 重试机制                 |
+| Compiler     | 实验性                                  | 稳定，Meta 生产部署                       |
 
 ### 6.9 常见陷阱与最佳实践
 
@@ -1056,15 +1085,15 @@ React Compiler（已在[第 5 节](#5-react-compilerreact-forget)详细介绍）
 
 ## 附录：关键源码文件索引
 
-| 文件 | 核心内容 |
-|------|---------|
-| `packages/react/src/ReactHooks.js` | Hook 公开 API，`resolveDispatcher()` |
-| `packages/react-reconciler/src/ReactFiber.js` | `FiberNode` 构造函数，Fiber 数据结构 |
-| `packages/react-reconciler/src/ReactFiberHooks.js` | Hook 完整实现（mount/update dispatcher） |
-| `packages/react-reconciler/src/ReactFiberBeginWork.js` | Render 阶段向下递归，Diff 子节点 |
-| `packages/react-reconciler/src/ReactFiberCompleteWork.js` | Render 阶段向上回溯，创建 DOM |
-| `packages/react-reconciler/src/ReactFiberCommitWork.js` | Commit 三子阶段，真实 DOM 操作 |
-| `packages/react-reconciler/src/ReactFiberWorkLoop.js` | 工作循环，`performConcurrentWorkOnRoot` |
-| `packages/react-reconciler/src/ReactFiberLane.js` | Lane 优先级模型，位运算操作 |
-| `packages/scheduler/src/forks/Scheduler.js` | 任务调度器，小顶堆，`shouldYieldToHost` |
-| `compiler/packages/babel-plugin-react-compiler/` | React Compiler Babel 插件 |
+| 文件                                                      | 核心内容                                 |
+| --------------------------------------------------------- | ---------------------------------------- |
+| `packages/react/src/ReactHooks.js`                        | Hook 公开 API，`resolveDispatcher()`     |
+| `packages/react-reconciler/src/ReactFiber.js`             | `FiberNode` 构造函数，Fiber 数据结构     |
+| `packages/react-reconciler/src/ReactFiberHooks.js`        | Hook 完整实现（mount/update dispatcher） |
+| `packages/react-reconciler/src/ReactFiberBeginWork.js`    | Render 阶段向下递归，Diff 子节点         |
+| `packages/react-reconciler/src/ReactFiberCompleteWork.js` | Render 阶段向上回溯，创建 DOM            |
+| `packages/react-reconciler/src/ReactFiberCommitWork.js`   | Commit 三子阶段，真实 DOM 操作           |
+| `packages/react-reconciler/src/ReactFiberWorkLoop.js`     | 工作循环，`performConcurrentWorkOnRoot`  |
+| `packages/react-reconciler/src/ReactFiberLane.js`         | Lane 优先级模型，位运算操作              |
+| `packages/scheduler/src/forks/Scheduler.js`               | 任务调度器，小顶堆，`shouldYieldToHost`  |
+| `compiler/packages/babel-plugin-react-compiler/`          | React Compiler Babel 插件                |

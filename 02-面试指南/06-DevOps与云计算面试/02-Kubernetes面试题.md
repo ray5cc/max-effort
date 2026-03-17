@@ -9,33 +9,33 @@
 
 ## 题目列表
 
-| 难度 | 题目 |
-|------|------|
-| ⭐ | [K8s 和 Docker 有什么关系？](#q1) |
-| ⭐ | [Pod 和容器的关系是什么？](#q2) |
-| ⭐ | [Deployment、ReplicaSet、Pod 三者的关系？](#q3) |
-| ⭐ | [Service 有哪几种类型？分别适用什么场景？](#q4) |
-| ⭐ | [ConfigMap 和 Secret 的区别？](#q5) |
-| ⭐⭐ | [kube-scheduler 的调度流程是什么？](#q6) |
-| ⭐⭐ | [StatefulSet 和 Deployment 的区别？](#q7) |
-| ⭐⭐ | [什么是 Taints 和 Tolerations？如何使用？](#q8) |
-| ⭐⭐ | [HPA 的工作原理是什么？](#q9) |
-| ⭐⭐ | [K8s 的 RBAC 如何工作？Role 和 ClusterRole 的区别？](#q10) |
-| ⭐⭐ | [PV、PVC、StorageClass 三者关系？](#q11) |
-| ⭐⭐ | [K8s 网络模型的三条基本原则是什么？](#q12) |
-| ⭐⭐⭐ | [etcd 在 K8s 中的作用及生产部署建议？](#q13) |
-| ⭐⭐⭐ | [kube-proxy 的 iptables 和 ipvs 模式有什么区别？](#q14) |
-| ⭐⭐⭐ | [Pod 的 QoS 类别有哪些？调度和驱逐时如何影响？](#q15) |
-| ⭐⭐⭐ | [Calico 和 Flannel 的核心区别？生产如何选型？](#q16) |
-| ⭐⭐⭐ | [CSI 的架构和动态供应流程？](#q17) |
-| ⭐⭐⭐ | [K8s 的 List-Watch 机制是什么？](#q18) |
-| ⭐⭐⭐ | [滚动更新、蓝绿部署、金丝雀发布的区别？](#q19) |
-| 场景题 | [Pod 一直处于 Pending 状态，如何排查？](#q20) |
-| 场景题 | [节点 NotReady 如何处理？](#q21) |
-| 场景题 | [如何设计一个高可用的 K8s 生产集群？](#q22) |
-| 场景题 | [如何实现零停机的数据库迁移？](#q23) |
-| 场景题 | [集群资源不足，Pod 调度失败，如何处理？](#q24) |
-| 场景题 | [如何排查 K8s 服务网络不通的问题？](#q25) |
+| 难度   | 题目                                                       |
+| ------ | ---------------------------------------------------------- |
+| ⭐     | [K8s 和 Docker 有什么关系？](#q1)                          |
+| ⭐     | [Pod 和容器的关系是什么？](#q2)                            |
+| ⭐     | [Deployment、ReplicaSet、Pod 三者的关系？](#q3)            |
+| ⭐     | [Service 有哪几种类型？分别适用什么场景？](#q4)            |
+| ⭐     | [ConfigMap 和 Secret 的区别？](#q5)                        |
+| ⭐⭐   | [kube-scheduler 的调度流程是什么？](#q6)                   |
+| ⭐⭐   | [StatefulSet 和 Deployment 的区别？](#q7)                  |
+| ⭐⭐   | [什么是 Taints 和 Tolerations？如何使用？](#q8)            |
+| ⭐⭐   | [HPA 的工作原理是什么？](#q9)                              |
+| ⭐⭐   | [K8s 的 RBAC 如何工作？Role 和 ClusterRole 的区别？](#q10) |
+| ⭐⭐   | [PV、PVC、StorageClass 三者关系？](#q11)                   |
+| ⭐⭐   | [K8s 网络模型的三条基本原则是什么？](#q12)                 |
+| ⭐⭐⭐ | [etcd 在 K8s 中的作用及生产部署建议？](#q13)               |
+| ⭐⭐⭐ | [kube-proxy 的 iptables 和 ipvs 模式有什么区别？](#q14)    |
+| ⭐⭐⭐ | [Pod 的 QoS 类别有哪些？调度和驱逐时如何影响？](#q15)      |
+| ⭐⭐⭐ | [Calico 和 Flannel 的核心区别？生产如何选型？](#q16)       |
+| ⭐⭐⭐ | [CSI 的架构和动态供应流程？](#q17)                         |
+| ⭐⭐⭐ | [K8s 的 List-Watch 机制是什么？](#q18)                     |
+| ⭐⭐⭐ | [滚动更新、蓝绿部署、金丝雀发布的区别？](#q19)             |
+| 场景题 | [Pod 一直处于 Pending 状态，如何排查？](#q20)              |
+| 场景题 | [节点 NotReady 如何处理？](#q21)                           |
+| 场景题 | [如何设计一个高可用的 K8s 生产集群？](#q22)                |
+| 场景题 | [如何实现零停机的数据库迁移？](#q23)                       |
+| 场景题 | [集群资源不足，Pod 调度失败，如何处理？](#q24)             |
+| 场景题 | [如何排查 K8s 服务网络不通的问题？](#q25)                  |
 
 ---
 
@@ -43,18 +43,18 @@
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|----------|
-| 1 | K8s 架构 | API Server+etcd+Scheduler+Controller+kubelet | ★★★★★ |
-| 2 | Pod 生命周期 | Pending→Running→Succeeded/Failed，探针(liveness/readiness/startup) | ★★★★★ |
-| 3 | Deployment vs StatefulSet | Deployment无状态(滚动更新)，StatefulSet有状态(稳定标识) | ★★★★☆ |
-| 4 | Service 类型 | ClusterIP/NodePort/LoadBalancer/ExternalName | ★★★★★ |
-| 5 | 调度策略 | nodeAffinity/podAntiAffinity/Taints+Tolerations | ★★★★☆ |
-| 6 | 存储 PV/PVC | 动态供应(StorageClass)+CSI驱动 | ★★★☆☆ |
-| 7 | RBAC 权限 | Role/ClusterRole + RoleBinding/ClusterRoleBinding | ★★★★☆ |
-| 8 | HPA 自动伸缩 | 基于CPU/Memory/自定义指标自动扩缩Pod | ★★★★☆ |
-| 9 | 网络模型 | Pod间直连(CNI)，Service(kube-proxy iptables/ipvs) | ★★★☆☆ |
-| 10 | 故障排查 | kubectl describe/logs/exec，Pod Pending/CrashLoopBackOff | ★★★★★ |
+| #   | 考点                      | 核心要点（一句话）                                                 | 出题概率 |
+| --- | ------------------------- | ------------------------------------------------------------------ | -------- |
+| 1   | K8s 架构                  | API Server+etcd+Scheduler+Controller+kubelet                       | ★★★★★    |
+| 2   | Pod 生命周期              | Pending→Running→Succeeded/Failed，探针(liveness/readiness/startup) | ★★★★★    |
+| 3   | Deployment vs StatefulSet | Deployment无状态(滚动更新)，StatefulSet有状态(稳定标识)            | ★★★★☆    |
+| 4   | Service 类型              | ClusterIP/NodePort/LoadBalancer/ExternalName                       | ★★★★★    |
+| 5   | 调度策略                  | nodeAffinity/podAntiAffinity/Taints+Tolerations                    | ★★★★☆    |
+| 6   | 存储 PV/PVC               | 动态供应(StorageClass)+CSI驱动                                     | ★★★☆☆    |
+| 7   | RBAC 权限                 | Role/ClusterRole + RoleBinding/ClusterRoleBinding                  | ★★★★☆    |
+| 8   | HPA 自动伸缩              | 基于CPU/Memory/自定义指标自动扩缩Pod                               | ★★★★☆    |
+| 9   | 网络模型                  | Pod间直连(CNI)，Service(kube-proxy iptables/ipvs)                  | ★★★☆☆    |
+| 10  | 故障排查                  | kubectl describe/logs/exec，Pod Pending/CrashLoopBackOff           | ★★★★★    |
 
 ---
 
@@ -69,19 +69,20 @@
 Docker 是**容器运行时**，负责构建镜像、运行容器；Kubernetes 是**容器编排平台**，负责管理大规模容器集群。
 
 两者的关系演变：
+
 - **早期**：K8s 直接集成 Docker（通过 dockershim）
 - **K8s v1.20**：宣布弃用 dockershim
 - **K8s v1.24+**：移除 dockershim，通过 **CRI（Container Runtime Interface）** 标准与 containerd、CRI-O 等运行时交互
 
 本质区别：
 
-| 维度 | Docker | Kubernetes |
-|------|--------|-----------|
-| 作用 | 单机容器管理 | 多节点集群编排 |
-| 调度 | 无 | 自动调度 |
-| 自愈 | 无（需手动）| 自动重启/迁移 |
-| 伸缩 | 手动 | 自动（HPA/VPA）|
-| 网络 | 单机 bridge | 跨节点 CNI 插件 |
+| 维度 | Docker       | Kubernetes      |
+| ---- | ------------ | --------------- |
+| 作用 | 单机容器管理 | 多节点集群编排  |
+| 调度 | 无           | 自动调度        |
+| 自愈 | 无（需手动） | 自动重启/迁移   |
+| 伸缩 | 手动         | 自动（HPA/VPA） |
+| 网络 | 单机 bridge  | 跨节点 CNI 插件 |
 
 ---
 
@@ -94,6 +95,7 @@ Docker 是**容器运行时**，负责构建镜像、运行容器；Kubernetes �
 **Pod 是 K8s 的最小调度和部署单元**，一个 Pod 可以包含一个或多个容器。
 
 Pod 内的所有容器：
+
 - **共享网络命名空间**：同一个 IP 地址，通过 `localhost` 互相通信
 - **共享存储（Volume）**：可以挂载同一个 Volume 共享文件
 - **共享 IPC 命名空间**：可以通过共享内存通信
@@ -125,6 +127,7 @@ Deployment（管理版本策略）
 - **Deployment**：管理 ReplicaSet，提供**滚动更新、回滚、暂停/恢复**等高级能力
 
 实际工作流：
+
 1. `kubectl apply` 创建/更新 Deployment
 2. Deployment Controller 创建新的 ReplicaSet
 3. ReplicaSet Controller 创建/删除 Pod
@@ -140,12 +143,12 @@ Deployment（管理版本策略）
 
 **参考答案**：
 
-| 类型 | IP 来源 | 访问范围 | 适用场景 |
-|------|--------|---------|---------|
-| **ClusterIP**（默认）| 集群内虚拟 IP | 仅集群内 | 服务间内部调用（最常用）|
-| **NodePort** | 节点 IP + 随机端口（30000-32767）| 节点 IP 可达的客户端 | 开发测试、裸金属集群外部访问 |
-| **LoadBalancer** | 云厂商外部 IP | 公网 | 云上生产环境外部访问 |
-| **ExternalName** | DNS CNAME 重定向 | 集群内 | 访问集群外部的服务（如 RDS、第三方 API）|
+| 类型                  | IP 来源                           | 访问范围             | 适用场景                                 |
+| --------------------- | --------------------------------- | -------------------- | ---------------------------------------- |
+| **ClusterIP**（默认） | 集群内虚拟 IP                     | 仅集群内             | 服务间内部调用（最常用）                 |
+| **NodePort**          | 节点 IP + 随机端口（30000-32767） | 节点 IP 可达的客户端 | 开发测试、裸金属集群外部访问             |
+| **LoadBalancer**      | 云厂商外部 IP                     | 公网                 | 云上生产环境外部访问                     |
+| **ExternalName**      | DNS CNAME 重定向                  | 集群内               | 访问集群外部的服务（如 RDS、第三方 API） |
 
 **Headless Service**（特殊用法）：`clusterIP: None`，不分配 VIP，DNS 直接返回 Pod IP 列表，适用于 StatefulSet 和需要客户端负载均衡的场景。
 
@@ -157,17 +160,18 @@ Deployment（管理版本策略）
 
 **参考答案**：
 
-| 维度 | ConfigMap | Secret |
-|------|----------|--------|
-| 用途 | 非敏感配置（环境变量、配置文件）| 敏感数据（密码、Token、TLS 证书）|
-| 存储方式 | 明文存储在 etcd | Base64 编码存储（**非加密**）|
-| 加密 | 无 | 需额外配置 etcd 静态加密或 Sealed Secrets |
-| 大小限制 | 1 MiB | 1 MiB |
-| 类型 | 通用 | Opaque / kubernetes.io/tls / kubernetes.io/dockerconfigjson 等 |
+| 维度     | ConfigMap                        | Secret                                                         |
+| -------- | -------------------------------- | -------------------------------------------------------------- |
+| 用途     | 非敏感配置（环境变量、配置文件） | 敏感数据（密码、Token、TLS 证书）                              |
+| 存储方式 | 明文存储在 etcd                  | Base64 编码存储（**非加密**）                                  |
+| 加密     | 无                               | 需额外配置 etcd 静态加密或 Sealed Secrets                      |
+| 大小限制 | 1 MiB                            | 1 MiB                                                          |
+| 类型     | 通用                             | Opaque / kubernetes.io/tls / kubernetes.io/dockerconfigjson 等 |
 
 **重要**：Secret 的 Base64 只是编码，**不是加密**。生产环境应配合 **Sealed Secrets**（Bitnami）或 **External Secrets Operator**（对接 Vault/AWS SSM）实现真正的密钥安全管理。
 
 使用方式（两者相同）：
+
 - 环境变量注入（`envFrom` / `valueFrom`）
 - Volume 挂载为文件
 - 在 Pod 启动时作为初始化参数
@@ -185,6 +189,7 @@ Deployment（管理版本策略）
 kube-scheduler 调度分为三个阶段：
 
 **① 过滤（Filter/Predicate）**：淘汰不满足条件的节点
+
 - `NodeUnschedulable`：排除 `unschedulable=true` 的节点
 - `NodeResourcesFit`：排除 CPU/Memory 不足的节点
 - `NodeAffinity`：排除不满足节点亲和性规则的节点
@@ -193,6 +198,7 @@ kube-scheduler 调度分为三个阶段：
 - `PodTopologySpread`：排除违反拓扑扩散约束的节点
 
 **② 打分（Score/Priority）**：对候选节点打分（0-100）
+
 - `LeastAllocated`：资源使用率低的节点得分高
 - `BalancedAllocation`：CPU/Memory 使用均衡的节点得分高
 - `ImageLocality`：本地已有所需镜像的节点得分高
@@ -210,16 +216,17 @@ kube-scheduler 调度分为三个阶段：
 
 **参考答案**：
 
-| 维度 | Deployment | StatefulSet |
-|------|-----------|------------|
-| Pod 名称 | 随机后缀（nginx-7d4b8-xkcd）| 有序固定（mysql-0, mysql-1）|
-| 网络标识 | Pod IP 变化，通过 Service 访问 | 每个 Pod 有固定 DNS（pod-name.headless-svc）|
-| 存储 | 共享 PVC 或无状态 | 每个 Pod 独立 PVC（volumeClaimTemplates）|
-| 部署顺序 | 并行创建 | 有序（0→1→2），前一个 Ready 才创建下一个 |
-| 删除顺序 | 无序 | 有序（N→N-1→...→0）|
-| 适用场景 | Web 服务、API、无状态微服务 | 数据库、消息队列、ZooKeeper 等有状态服务 |
+| 维度     | Deployment                     | StatefulSet                                  |
+| -------- | ------------------------------ | -------------------------------------------- |
+| Pod 名称 | 随机后缀（nginx-7d4b8-xkcd）   | 有序固定（mysql-0, mysql-1）                 |
+| 网络标识 | Pod IP 变化，通过 Service 访问 | 每个 Pod 有固定 DNS（pod-name.headless-svc） |
+| 存储     | 共享 PVC 或无状态              | 每个 Pod 独立 PVC（volumeClaimTemplates）    |
+| 部署顺序 | 并行创建                       | 有序（0→1→2），前一个 Ready 才创建下一个     |
+| 删除顺序 | 无序                           | 有序（N→N-1→...→0）                          |
+| 适用场景 | Web 服务、API、无状态微服务    | 数据库、消息队列、ZooKeeper 等有状态服务     |
 
 **选择依据**：
+
 - 服务实例是否可互换？→ 可互换用 Deployment
 - 需要稳定的网络标识（主从发现）？→ 用 StatefulSet
 - 每个实例需要独立持久化数据？→ 用 StatefulSet
@@ -236,11 +243,13 @@ kube-scheduler 调度分为三个阶段：
 **Toleration（容忍）** 打在 Pod 上，表示"我可以接受带有此污点的节点"。
 
 Taint 的 Effect 类型：
+
 - `NoSchedule`：不调度新 Pod（已运行的不受影响）
 - `PreferNoSchedule`：尽量不调度（软限制）
 - `NoExecute`：不调度且驱逐已运行的不容忍 Pod（可设 `tolerationSeconds` 延迟驱逐）
 
 典型使用场景：
+
 1. **Master 节点隔离**：Control Plane 节点自动有 `node-role.kubernetes.io/control-plane:NoSchedule` 污点
 2. **GPU 节点独占**：`kubectl taint nodes gpu-node gpu=true:NoSchedule`，只有 AI 训练 Pod 才有对应 Toleration
 3. **节点维护**：`kubectl taint nodes node1 maintenance=true:NoExecute` 驱逐所有 Pod
@@ -257,20 +266,24 @@ Taint 的 Effect 类型：
 HPA（Horizontal Pod Autoscaler）通过**周期性采集指标**（默认 15s），与目标阈值对比，计算期望副本数并更新 Deployment/StatefulSet 的 replicas。
 
 **期望副本数计算公式**：
+
 ```
 desiredReplicas = ceil(currentReplicas × (currentMetricValue / desiredMetricValue))
 ```
 
 **指标来源**（metrics.k8s.io）：
+
 - **Resource Metrics**：CPU/Memory，由 metrics-server 提供
 - **Custom Metrics**：应用自定义指标（通过 custom.metrics.k8s.io），如 QPS、队列长度
 - **External Metrics**：外部系统指标（如 Kafka lag、SQS 队列长度）
 
 **伸缩保护机制**：
+
 - `stabilizationWindowSeconds`：稳定窗口，避免频繁抖动（缩容默认 300s，扩容默认 0s）
 - `scaleDown.policies`：限制每次缩容的幅度（防止误操作导致大规模缩容）
 
 **HPA vs VPA**：
+
 - HPA：水平扩容，通过增减 Pod 数量应对流量变化（推荐用于无状态服务）
 - VPA：垂直扩容，调整单个 Pod 的 CPU/Memory 请求（需重启 Pod，适合有状态服务资源优化）
 - 注意：HPA 和 VPA **不建议同时作用于同一 Deployment 的 CPU 指标**（可能冲突）
@@ -286,20 +299,22 @@ desiredReplicas = ceil(currentReplicas × (currentMetricValue / desiredMetricVal
 RBAC（Role-Based Access Control）通过四种资源对象控制访问权限：
 
 **对象关系**：
+
 ```
 Subject（谁）→ RoleBinding/ClusterRoleBinding（绑定）→ Role/ClusterRole（权限）
 ```
 
-| 对象 | 作用域 | 说明 |
-|------|--------|------|
-| Role | 命名空间 | 定义命名空间内的权限规则 |
-| ClusterRole | 集群（全局）| 定义集群级别权限，可作用于跨命名空间资源（Node/PV/Namespace）|
-| RoleBinding | 命名空间 | 将 Role 或 ClusterRole 绑定到命名空间内的 Subject |
-| ClusterRoleBinding | 集群 | 将 ClusterRole 绑定到全局 Subject |
+| 对象               | 作用域       | 说明                                                          |
+| ------------------ | ------------ | ------------------------------------------------------------- |
+| Role               | 命名空间     | 定义命名空间内的权限规则                                      |
+| ClusterRole        | 集群（全局） | 定义集群级别权限，可作用于跨命名空间资源（Node/PV/Namespace） |
+| RoleBinding        | 命名空间     | 将 Role 或 ClusterRole 绑定到命名空间内的 Subject             |
+| ClusterRoleBinding | 集群         | 将 ClusterRole 绑定到全局 Subject                             |
 
 **关键用法**：用 `ClusterRole` 定义权限规则，用 `RoleBinding` 在特定命名空间生效 → 复用权限定义，限制作用域。
 
 **最小权限原则**：
+
 - 每个应用创建专属 ServiceAccount
 - 只授予必要的 verbs（get/list/watch > create/update/patch > delete）
 - 避免使用 `cluster-admin` ClusterRole
@@ -329,12 +344,14 @@ Pod（消费者）
 ```
 
 **绑定规则**：
+
 - PVC 与 PV 是 1:1 绑定关系
 - 绑定后，其他 PVC 无法使用同一 PV（即使 PV 容量有剩余）
 - PV 的 `accessModes` 必须包含 PVC 的 `accessModes`
 - PV 的 `capacity` 必须 ≥ PVC 的 `requests.storage`
 
 **ReclaimPolicy**：
+
 - `Retain`：PVC 删除后 PV 保留，需手动清理（推荐生产，防止误删数据）
 - `Delete`：PVC 删除后自动删除 PV 和底层存储（动态供应默认值）
 - `Recycle`：已废弃
@@ -356,6 +373,7 @@ K8s 网络模型规定的三条不变原则：
 这三条原则屏蔽了底层网络实现差异，应用开发者可以把集群当作一个"平面网络"使用。
 
 具体实现由 CNI 插件负责：
+
 - **Flannel**：VXLAN 封装（有封装开销）或 host-gw（仅限同 L2 网络）
 - **Calico**：BGP 路由（无封装，性能最优）或 IPIP/VXLAN
 - **Cilium**：eBPF（绕过 iptables，性能极高，支持 L7 NetworkPolicy）
@@ -373,6 +391,7 @@ K8s 网络模型规定的三条不变原则：
 **etcd 的作用**：K8s 的**唯一状态存储**，存储集群所有对象（Node/Pod/Service/ConfigMap/Secret 等）的期望状态和实际状态。所有组件（包括 API Server）是无状态的，真正的"状态"全在 etcd 中。
 
 **etcd 技术特性**：
+
 - 基于 **Raft 算法**实现强一致性，保证 Leader 选举和日志复制
 - 支持 **Watch 机制**，API Server 通过 Watch 获取资源变更，再推送给 controller-manager、scheduler、kubelet
 - **MVCC**（多版本并发控制），支持历史版本查询和事务操作
@@ -400,16 +419,17 @@ K8s 网络模型规定的三条不变原则：
 
 **参考答案**：
 
-| 维度 | iptables 模式 | ipvs 模式 |
-|------|-------------|---------|
-| 实现方式 | 内核 netfilter iptables 规则链 | 内核 LVS（Linux Virtual Server）哈希表 |
-| 查找复杂度 | O(n)：规则数随 Service/Endpoint 线性增长 | O(1)：哈希表查找，不受 Service 数量影响 |
-| 规模瓶颈 | 数千 Service 后性能明显下降 | 支持数万 Service |
-| LB 算法 | 仅随机（random）| rr（轮询）/lc（最少连接）/dh（目标哈希）/sh（源哈希）/sed/nq |
-| 部署依赖 | 内核标配，无需额外组件 | 需要内核模块 `ip_vs`、`ip_vs_rr` 等 |
-| 生产建议 | 小规模集群（<100 Service）| 生产环境推荐 |
+| 维度       | iptables 模式                            | ipvs 模式                                                    |
+| ---------- | ---------------------------------------- | ------------------------------------------------------------ |
+| 实现方式   | 内核 netfilter iptables 规则链           | 内核 LVS（Linux Virtual Server）哈希表                       |
+| 查找复杂度 | O(n)：规则数随 Service/Endpoint 线性增长 | O(1)：哈希表查找，不受 Service 数量影响                      |
+| 规模瓶颈   | 数千 Service 后性能明显下降              | 支持数万 Service                                             |
+| LB 算法    | 仅随机（random）                         | rr（轮询）/lc（最少连接）/dh（目标哈希）/sh（源哈希）/sed/nq |
+| 部署依赖   | 内核标配，无需额外组件                   | 需要内核模块 `ip_vs`、`ip_vs_rr` 等                          |
+| 生产建议   | 小规模集群（<100 Service）               | 生产环境推荐                                                 |
 
 **配置方式**：
+
 ```yaml
 # kube-proxy ConfigMap
 apiVersion: v1
@@ -434,22 +454,25 @@ data:
 
 K8s 根据 Pod 的 `requests` 和 `limits` 设置，自动分配三种 QoS 类别：
 
-| QoS 类别 | 满足条件 | 驱逐优先级 |
-|---------|---------|----------|
-| **Guaranteed** | 所有容器的 CPU 和 Memory 均设置了 requests=limits | 最低（最后被驱逐）|
-| **Burstable** | 至少一个容器设置了 requests 或 limits，但不满足 Guaranteed | 中 |
-| **BestEffort** | 所有容器均未设置 requests 和 limits | 最高（最先被驱逐）|
+| QoS 类别       | 满足条件                                                   | 驱逐优先级         |
+| -------------- | ---------------------------------------------------------- | ------------------ |
+| **Guaranteed** | 所有容器的 CPU 和 Memory 均设置了 requests=limits          | 最低（最后被驱逐） |
+| **Burstable**  | 至少一个容器设置了 requests 或 limits，但不满足 Guaranteed | 中                 |
+| **BestEffort** | 所有容器均未设置 requests 和 limits                        | 最高（最先被驱逐） |
 
 **对调度的影响**：
+
 - 调度器只使用 `requests` 来决策节点是否有足够资源（不用 limits）
 - Guaranteed Pod 的请求更精确，调度结果更可预测
 
 **对驱逐的影响（节点内存压力时）**：
+
 ```
 驱逐顺序：BestEffort → Burstable（超过 requests 的部分）→ Guaranteed
 ```
 
 **生产最佳实践**：
+
 - 核心服务设置 `requests=limits`（Guaranteed），确保不被驱逐
 - 一般服务设置合理的 `requests`（Burstable），留有 burst 空间
 - 离线/批处理任务可用 BestEffort（接受被随时驱逐）
@@ -463,12 +486,14 @@ K8s 根据 Pod 的 `requests` 和 `limits` 设置，自动分配三种 QoS 类�
 **参考答案**：
 
 **Flannel**：
+
 - 设计目标：简单易用，快速搭建集群网络
 - 默认 VXLAN 模式：封装 UDP，有 ~10-20% 性能损耗
 - 不支持 NetworkPolicy（需额外安装 Calico 仅用于网络策略）
 - 适合：学习环境、小规模内网集群
 
 **Calico**：
+
 - 设计目标：企业级网络安全与高性能
 - BGP 模式：无封装，路由层面直接转发，性能接近裸金属（推荐同 L3 网络）
 - IPIP/VXLAN 模式：适合跨 L3 环境（如多 VPC、混合云）
@@ -476,12 +501,14 @@ K8s 根据 Pod 的 `requests` 和 `limits` 设置，自动分配三种 QoS 类�
 - 适合：生产环境首选，特别是安全要求高、规模较大的场景
 
 **Cilium**（新一代）：
+
 - 基于 eBPF，绕过 iptables，性能极高
 - 支持 L7 NetworkPolicy（基于 HTTP 方法/路径的访问控制）
 - 内置可观测性（Hubble），网络流量可视化
 - 适合：大规模云原生集群、零信任安全要求高的场景
 
 **选型建议**：
+
 - 学习/测试 → Flannel
 - 企业生产（中大规模）→ Calico（BGP 模式）
 - 大规模/高安全/可观测性要求 → Cilium
@@ -497,6 +524,7 @@ K8s 根据 Pod 的 `requests` 和 `limits` 设置，自动分配三种 QoS 类�
 **CSI（Container Storage Interface）** 是 K8s 与存储厂商之间的标准接口，通过 gRPC 规范解耦。
 
 **CSI 组件架构**：
+
 ```
 K8s 控制面（Sidecar 容器）          CSI 驱动（存储厂商实现）
 ─────────────────────────────────────────────────────
@@ -512,6 +540,7 @@ kubelet                   ──RPC──►  NodeStageVolume()
 ```
 
 **动态供应流程**（以 AWS EBS 为例）：
+
 1. 用户创建 PVC，指定 `storageClassName: ebs-sc`
 2. `external-provisioner` 监听到 PVC，调用 CSI `CreateVolume` RPC → AWS API 创建 EBS 卷
 3. K8s 创建对应 PV，并将 PVC 状态设为 `Bound`
@@ -530,6 +559,7 @@ kubelet                   ──RPC──►  NodeStageVolume()
 **List-Watch** 是 K8s 各组件与 API Server 之间的**事件驱动通信机制**，实现了组件间的解耦和最终一致性。
 
 **工作流程**：
+
 1. **List**：组件首次启动，通过 HTTP GET 获取所有资源的当前状态（带 `resourceVersion`）
 2. **Watch**：基于 `resourceVersion`，建立长连接（HTTP/2 Streaming / WebSocket），监听增量变更事件（ADDED / MODIFIED / DELETED）
 3. **Informer 缓存**：客户端（如 controller-manager）在本地维护缓存（Store），减少对 API Server 的直接查询压力
@@ -551,6 +581,7 @@ Reconcile Loop（调谐）：对比期望状态 vs 实际状态 → 执行调整
 ```
 
 **为什么不用轮询**：
+
 - 轮询有延迟且浪费资源
 - Watch 基于事件推送，延迟低、资源效率高
 - 结合 Informer 本地缓存，大幅降低 API Server 负载
@@ -563,15 +594,16 @@ Reconcile Loop（调谐）：对比期望状态 vs 实际状态 → 执行调整
 
 **参考答案**：
 
-| 维度 | 滚动更新 | 蓝绿部署 | 金丝雀发布 |
-|------|---------|---------|----------|
-| 资源占用 | 低（少量额外 Pod）| 高（双倍资源）| 低（少量新 Pod）|
-| 发布速度 | 中（逐批替换）| 快（瞬间切换）| 慢（逐步放量）|
-| 回滚速度 | 中（需逐批回滚）| 极快（切回旧版本）| 快（缩容新版本）|
-| 风险 | 中（新旧版本短暂共存）| 低（完整测试后切换）| 最低（小范围验证）|
-| 适用场景 | 一般服务更新 | 重大版本发布、数据库 schema 变更 | 新功能灰度验证、A/B 测试 |
+| 维度     | 滚动更新               | 蓝绿部署                         | 金丝雀发布               |
+| -------- | ---------------------- | -------------------------------- | ------------------------ |
+| 资源占用 | 低（少量额外 Pod）     | 高（双倍资源）                   | 低（少量新 Pod）         |
+| 发布速度 | 中（逐批替换）         | 快（瞬间切换）                   | 慢（逐步放量）           |
+| 回滚速度 | 中（需逐批回滚）       | 极快（切回旧版本）               | 快（缩容新版本）         |
+| 风险     | 中（新旧版本短暂共存） | 低（完整测试后切换）             | 最低（小范围验证）       |
+| 适用场景 | 一般服务更新           | 重大版本发布、数据库 schema 变更 | 新功能灰度验证、A/B 测试 |
 
 **选型建议**：
+
 - **日常发布**：滚动更新（K8s 默认，操作简单）
 - **重大变更/数据库迁移**：蓝绿部署（切换前完整测试）
 - **新功能验证**：金丝雀发布（5% → 20% → 50% → 100% 逐步放量）
@@ -664,11 +696,13 @@ telnet <api-server-ip> 6443
 **参考思路**：
 
 **控制面高可用**：
+
 - **API Server**：3 个以上副本，前置 L4 负载均衡器（HAProxy / AWS ALB）
 - **etcd**：独立部署 3/5 节点，SSD 磁盘，跨 AZ 分布
 - **controller-manager / scheduler**：多副本，通过 Leader 选举保证只有一个活跃实例
 
 **工作节点高可用**：
+
 - **多 AZ 部署**：节点跨 3 个可用区，配合 `topologySpreadConstraints` 确保 Pod 跨 AZ 分散
 - **节点池分级**：按用途划分（通用 / GPU / 大内存），通过 Taints + NodeAffinity 隔离
 - **PDB（PodDisruptionBudget）**：限制同时不可用的 Pod 数，保证节点维护时的可用性
@@ -679,13 +713,14 @@ kind: PodDisruptionBudget
 metadata:
   name: app-pdb
 spec:
-  minAvailable: 2     # 至少 2 个 Pod 保持可用
+  minAvailable: 2 # 至少 2 个 Pod 保持可用
   selector:
     matchLabels:
       app: critical-service
 ```
 
 **其他关键配置**：
+
 - 开启 **Cluster Autoscaler**（节点自动伸缩）
 - 配置 **Network Policy**（零信任网络）
 - 启用 **etcd 加密**（`--encryption-provider-config`）
@@ -706,11 +741,11 @@ spec:
 阶段 1：Expand（扩展）
   - 添加新列/表（向后兼容，旧代码不受影响）
   - 部署支持新旧结构的新版应用（双写新旧列）
-  
+
 阶段 2：Migrate（迁移）
   - 离线/在线迁移历史数据（小批量，避免锁表）
   - 使用 Job 或 Init Container 执行迁移脚本
-  
+
 阶段 3：Contract（收缩）
   - 确认所有数据迁移完成
   - 删除旧列/表（清理阶段）
@@ -718,6 +753,7 @@ spec:
 ```
 
 **K8s 实现方式**：
+
 - Init Container：Pod 启动前执行 `db migrate`（保证迁移先于应用启动）
 - Job：独立执行一次性迁移任务（有重试机制）
 - 蓝绿部署：迁移完成后整体切换

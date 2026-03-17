@@ -3,6 +3,7 @@
 > 基于 InnoDB 源码（`MariaDB/server` → `storage/innobase/`）的分层面试题，涵盖 Buffer Pool、B+树索引、MVCC、锁机制、Redo Log 与崩溃恢复等核心机制。
 
 ## 相关链接
+
 - 对应技术资料：[MySQL/InnoDB 核心技术](../../01-技术资料/03-数据库/04-MySQL-InnoDB核心技术.md)
 
 ## 题目列表
@@ -13,18 +14,18 @@
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|----------|
-| 1 | B+树索引 | 聚簇(主键)=数据+索引，辅助索引→回表 | ★★★★★ |
-| 2 | MVCC (Read View) | 版本链 + ReadView(m_ids/min/max) 可见性判断 | ★★★★★ |
-| 3 | 事务隔离级别 | RC(每次SELECT新ReadView) vs RR(首次SELECT固定ReadView) | ★★★★★ |
-| 4 | Next-Key Lock | Record Lock + Gap Lock 解决幻读 | ★★★★★ |
-| 5 | Buffer Pool | LRU 分区(Young/Old)，预读优化，脏页刷盘 | ★★★★☆ |
-| 6 | Redo/Undo Log | Redo保证持久性(WAL)，Undo保证原子性(回滚+MVCC) | ★★★★☆ |
-| 7 | 索引优化 | 最左前缀，覆盖索引，ICP索引下推 | ★★★★★ |
-| 8 | 慢查询优化 | EXPLAIN(type/key/Extra)，索引失效场景 | ★★★★★ |
-| 9 | 主从复制 | binlog(ROW/STATEMENT/MIXED) + relay log | ★★★☆☆ |
-| 10 | 死锁检测 | Wait-For Graph，innodb_deadlock_detect | ★★★☆☆ |
+| #   | 考点             | 核心要点（一句话）                                     | 出题概率 |
+| --- | ---------------- | ------------------------------------------------------ | -------- |
+| 1   | B+树索引         | 聚簇(主键)=数据+索引，辅助索引→回表                    | ★★★★★    |
+| 2   | MVCC (Read View) | 版本链 + ReadView(m_ids/min/max) 可见性判断            | ★★★★★    |
+| 3   | 事务隔离级别     | RC(每次SELECT新ReadView) vs RR(首次SELECT固定ReadView) | ★★★★★    |
+| 4   | Next-Key Lock    | Record Lock + Gap Lock 解决幻读                        | ★★★★★    |
+| 5   | Buffer Pool      | LRU 分区(Young/Old)，预读优化，脏页刷盘                | ★★★★☆    |
+| 6   | Redo/Undo Log    | Redo保证持久性(WAL)，Undo保证原子性(回滚+MVCC)         | ★★★★☆    |
+| 7   | 索引优化         | 最左前缀，覆盖索引，ICP索引下推                        | ★★★★★    |
+| 8   | 慢查询优化       | EXPLAIN(type/key/Extra)，索引失效场景                  | ★★★★★    |
+| 9   | 主从复制         | binlog(ROW/STATEMENT/MIXED) + relay log                | ★★★☆☆    |
+| 10  | 死锁检测         | Wait-For Graph，innodb_deadlock_detect                 | ★★★☆☆    |
 
 ---
 
@@ -36,18 +37,19 @@
 
 **参考答案：**
 
-| 特性 | InnoDB | MyISAM |
-|------|--------|--------|
-| 事务支持 | ✓ ACID | ✗ |
-| 行级锁 | ✓ | ✗（表锁，并发写性能差）|
-| 外键 | ✓ | ✗ |
-| MVCC | ✓（读不加锁）| ✗ |
-| 崩溃恢复 | ✓ Redo Log 自动恢复 | ✗（可能损坏，需 myisamchk 修复）|
-| 全表 COUNT(*) | 需扫描估算 | 精确（存元数据）|
-| 聚簇索引 | ✓（数据按主键物理有序）| ✗（堆表，主键是辅助索引）|
-| 全文索引 | ✓（5.6+）| ✓ |
+| 特性           | InnoDB                  | MyISAM                           |
+| -------------- | ----------------------- | -------------------------------- |
+| 事务支持       | ✓ ACID                  | ✗                                |
+| 行级锁         | ✓                       | ✗（表锁，并发写性能差）          |
+| 外键           | ✓                       | ✗                                |
+| MVCC           | ✓（读不加锁）           | ✗                                |
+| 崩溃恢复       | ✓ Redo Log 自动恢复     | ✗（可能损坏，需 myisamchk 修复） |
+| 全表 COUNT(\*) | 需扫描估算              | 精确（存元数据）                 |
+| 聚簇索引       | ✓（数据按主键物理有序） | ✗（堆表，主键是辅助索引）        |
+| 全文索引       | ✓（5.6+）               | ✓                                |
 
 **选择 InnoDB 的原因：**
+
 - 绝大多数业务需要事务保证数据一致性
 - 行级锁大幅提升并发写性能
 - 崩溃恢复能力是生产系统的基本要求
@@ -64,6 +66,7 @@ MyISAM 仅在特定场景有优势：数据仓库只读表（精确的行数统�
 Buffer Pool 是 InnoDB 最重要的内存组件，所有数据访问（读/写）都必须经过它：
 
 **核心作用：**
+
 - 缓存从磁盘读入的数据页和索引页（默认 16KB/页）
 - 所有修改先在内存中进行，异步刷盘（Write-Ahead Logging 保证持久性）
 - 避免频繁的磁盘随机 I/O（内存速度 vs 磁盘速度差 3-4 个数量级）
@@ -88,6 +91,7 @@ SHOW STATUS LIKE 'Innodb_buffer_pool_reads';           -- 磁盘读次数
 **聚簇索引定义：** 表数据本身按照聚簇索引键值的顺序存储，数据与索引合一——InnoDB B+树的叶子节点直接存储**完整行数据**（而非行指针）。
 
 **选择规则（优先级从高到低）：**
+
 1. 用户定义的 PRIMARY KEY
 2. 第一个 UNIQUE NOT NULL 索引
 3. InnoDB 自动生成的隐式 ROW_ID（6字节，全局递增）
@@ -95,11 +99,13 @@ SHOW STATUS LIKE 'Innodb_buffer_pool_reads';           -- 磁盘读次数
 **对性能的影响：**
 
 **好处：**
+
 - 主键查询（`SELECT * WHERE id=1`）只需一次 B+树遍历，直接获得完整数据
 - 主键范围查询（`WHERE id BETWEEN 100 AND 200`）利用 B+树叶子节点的双向链表，顺序 I/O 效率高
 - 覆盖索引扫描聚簇索引本身时，无需回表
 
 **坏处：**
+
 - 辅助索引需要回表（查聚簇索引），比 MyISAM 多一次 B+树遍历
 - 使用非单调递增主键（UUID/随机值）会导致大量页分裂，写性能差（推荐 AUTO_INCREMENT）
 - 主键过大会使辅助索引叶子节点也变大（每个辅助索引叶子存储主键值）
@@ -123,6 +129,7 @@ InnoDB MVCC（多版本并发控制）通过 **Undo Log + Read View** 实现，�
 3. **Read View：** 快照，记录创建时刻的活跃事务列表（`m_up_limit_id`, `m_low_limit_id`, `m_ids`）
 
 **可见性判断（伪代码）：**
+
 ```
 对行的 DB_TRX_ID = trx_id:
   if trx_id == 自己 → 可见
@@ -139,14 +146,14 @@ InnoDB MVCC（多版本并发控制）通过 **Undo Log + Read View** 实现，�
 
 **参考答案：**
 
-| | Redo Log（重做日志）| Undo Log（回滚日志）|
-|--|---------------------|---------------------|
-| 解决的问题 | 崩溃恢复（持久性 D）| 事务回滚（原子性 A）+ MVCC |
-| 记录内容 | 物理修改（页面 X 偏移 Y 处改为值 Z）| 逻辑修改（此行旧值是什么）|
-| 存储位置 | `ib_logfile0`, `ib_logfile1`（循环写）| Undo 表空间（`.ibu` 文件）|
-| 何时写入 | 数据修改时（先于数据页刷盘）| 数据修改时（先于数据修改）|
-| 何时清理 | Checkpoint 后可覆盖 | 没有任何 Read View 依赖时（Purge 线程）|
-| 访问时机 | 崩溃恢复重放 | 事务回滚 / 快照读时追溯历史版本 |
+|            | Redo Log（重做日志）                   | Undo Log（回滚日志）                    |
+| ---------- | -------------------------------------- | --------------------------------------- |
+| 解决的问题 | 崩溃恢复（持久性 D）                   | 事务回滚（原子性 A）+ MVCC              |
+| 记录内容   | 物理修改（页面 X 偏移 Y 处改为值 Z）   | 逻辑修改（此行旧值是什么）              |
+| 存储位置   | `ib_logfile0`, `ib_logfile1`（循环写） | Undo 表空间（`.ibu` 文件）              |
+| 何时写入   | 数据修改时（先于数据页刷盘）           | 数据修改时（先于数据修改）              |
+| 何时清理   | Checkpoint 后可覆盖                    | 没有任何 Read View 依赖时（Purge 线程） |
+| 访问时机   | 崩溃恢复重放                           | 事务回滚 / 快照读时追溯历史版本         |
 
 **WAL 原则：** Redo Log 必须在数据页写盘前先 fsync（`innodb_flush_log_at_trx_commit=1`），保证即使 Buffer Pool 中的数据页未刷盘，崩溃后也能通过 Redo Log 恢复。
 
@@ -156,14 +163,14 @@ InnoDB MVCC（多版本并发控制）通过 **Undo Log + Read View** 实现，�
 
 **参考答案：**
 
-| 隔离级别 | 脏读 | 不可重复读 | 幻读 | InnoDB 实现 | 适用场景 |
-|----------|------|-----------|------|------------|---------|
-| READ UNCOMMITTED | 可能 | 可能 | 可能 | 不用 Read View，读最新版本 | 基本不用 |
-| READ COMMITTED | 否 | 可能 | 可能 | 每条 SQL 新建 Read View | Oracle 默认，报表查询 |
-| **REPEATABLE READ（MySQL默认）** | 否 | 否 | 否* | 事务首条 SQL 建 Read View + Next-Key Lock | 绝大多数 OLTP |
-| SERIALIZABLE | 否 | 否 | 否 | 普通 SELECT 也加共享锁 | 强一致性要求 |
+| 隔离级别                         | 脏读 | 不可重复读 | 幻读 | InnoDB 实现                               | 适用场景              |
+| -------------------------------- | ---- | ---------- | ---- | ----------------------------------------- | --------------------- |
+| READ UNCOMMITTED                 | 可能 | 可能       | 可能 | 不用 Read View，读最新版本                | 基本不用              |
+| READ COMMITTED                   | 否   | 可能       | 可能 | 每条 SQL 新建 Read View                   | Oracle 默认，报表查询 |
+| **REPEATABLE READ（MySQL默认）** | 否   | 否         | 否\* | 事务首条 SQL 建 Read View + Next-Key Lock | 绝大多数 OLTP         |
+| SERIALIZABLE                     | 否   | 否         | 否   | 普通 SELECT 也加共享锁                    | 强一致性要求          |
 
-*InnoDB RR 通过 Next-Key Lock 防止幻读（当前读），快照读通过 MVCC 防止幻读。
+\*InnoDB RR 通过 Next-Key Lock 防止幻读（当前读），快照读通过 MVCC 防止幻读。
 
 **实际建议：** 大多数互联网业务使用默认的 REPEATABLE READ，兼顾一致性和性能。READ COMMITTED 减少间隙锁（Gap Lock）范围，在高并发插入场景可减少死锁。
 
@@ -195,6 +202,7 @@ INSERT INTO t VALUES (8, ...);  -- 被阻塞！被 Gap Lock (5,10) 阻止
 ```
 
 **幻读防止原理：**
+
 - 如果没有 Gap Lock，事务 A 第一次查询看到 id=5,10，另一个事务插入 id=7，事务 A 第二次查询看到 id=5,7,10 → 幻读
 - 有 Gap Lock 后，id=7 的插入被阻塞，直到事务 A 提交 → 防止幻读
 
@@ -215,6 +223,7 @@ INSERT INTO t VALUES (8, ...);  -- 被阻塞！被 Gap Lock (5,10) 阻止
 **Change Buffer 的做法：** 将修改操作先缓存在内存（Change Buffer）中，不立即读取磁盘，等该页被读入 Buffer Pool 时再**合并（Merge）**变更。
 
 **合并时机：**
+
 - 索引页被读入 Buffer Pool 时
 - Purge 操作
 - MySQL 关闭/慢关闭时
@@ -224,6 +233,7 @@ INSERT INTO t VALUES (8, ...);  -- 被阻塞！被 Gap Lock (5,10) 阻止
 对唯一索引写入时，必须判断是否违反唯一性约束（不能有重复值）。这个判断**需要将索引页读入内存才能做**（需要看页里现有的值）。既然页必须读入，就没有"延迟"的必要，Change Buffer 失去意义，且存在正确性风险（不读入就无法判断唯一性）。
 
 **适用场景（效果最好）：**
+
 - 批量写入后才查询的场景（写入时 Change Buffer 缓存，查询时统一 Merge）
 - 表以写为主，索引页访问频率低
 
@@ -293,6 +303,7 @@ innodb_old_blocks_time = 1000    -- 晋升等待时间（ms）
 **死锁检测：Wait-For Graph（等待图）**
 
 InnoDB 维护一个等待图：
+
 - 节点 = 活跃事务
 - 有向边 T1 → T2 = T1 正在等待 T2 持有的锁
 
@@ -305,6 +316,7 @@ InnoDB 维护一个等待图：
 3. 释放 victim 事务持有的所有锁，其他等待事务可以继续
 
 **查看死锁信息：**
+
 ```sql
 SHOW ENGINE INNODB STATUS\G
 -- 找到 LATEST DETECTED DEADLOCK 部分，包含:
@@ -314,6 +326,7 @@ SHOW ENGINE INNODB STATUS\G
 ```
 
 **死锁预防最佳实践：**
+
 1. 多个事务以**相同顺序**访问资源（防止环的形成）
 2. 缩短事务时间（减少持锁时间）
 3. 使用 `SELECT ... FOR UPDATE` 而非 `UPDATE` 提前锁定
@@ -328,10 +341,12 @@ SHOW ENGINE INNODB STATUS\G
 **自适应哈希索引（AHI）：**
 
 InnoDB 自动监控 B+树的访问模式。当某个索引的某个键值被**频繁等值查询**（默认阈值：同一 page_hash 访问 17 次，或某个 pattern 访问 100 次），自动在内存中为其建立哈希索引：
+
 - B+树等值查询：O(log n)，需要多次页读取
 - AHI 等值查询：O(1)，直接内存哈希查找
 
 **特点：**
+
 - 完全自动，无需用户干预
 - 存储在 Buffer Pool 中，占用内存
 - 热点数据效果显著，但对整体工作负载可能有负面影响
@@ -351,26 +366,31 @@ InnoDB 自动监控 B+树的访问模式。当某个索引的某个键值被**�
 MySQL 崩溃重启后，InnoDB 自动执行以下恢复流程：
 
 **Step 1: 读取 Checkpoint 信息**
+
 - 从 Redo Log 文件中找到最近的 checkpoint 记录
 - 获取 `checkpoint_lsn`（上次 checkpoint 时已刷盘的最大 LSN）
 
 **Step 2: Redo Phase（重做阶段）**
+
 - 从 `checkpoint_lsn` 开始，顺序扫描 Redo Log
 - 重放所有 LSN > checkpoint_lsn 的 Redo Log 记录
 - 将 Buffer Pool 恢复到崩溃前的状态（包含已提交和未提交事务的修改）
 - 目的：确保已提交事务的修改不丢失
 
 **Step 3: Undo Phase（回滚阶段）**
+
 - 扫描系统表空间中的 Undo Log
 - 找出崩溃时状态为"活跃"（未提交）的事务
 - 使用 Undo Log 逐条撤销这些事务的修改（保证原子性）
 - **注意：此阶段可以接受新连接（Hot Recovery）**，但进行中的 undo 会阻塞访问被修改行的查询
 
 **Step 4: Change Buffer 合并**
+
 - 将 Change Buffer 中缓存的辅助索引修改合并到对应页
 - 确保辅助索引与聚簇索引的数据一致
 
 **Step 5: 数据校验（Doublewrite 辅助）**
+
 - 在 Step 2 之前，先用 Doublewrite Buffer 修复损坏的页（partial write）
 - 然后再重放 Redo Log
 
@@ -391,6 +411,7 @@ MySQL 崩溃重启后，InnoDB 自动执行以下恢复流程：
 1. **定位到 B+树叶子页**：`btr_pcur_open_with_no_init()` 找到满足 WHERE 条件的记录位置
 
 2. **对每条记录进行 MVCC 可见性检查**（`lock_clust_rec_cons_read_sees()`）：
+
    ```
    检查 DB_TRX_ID（记录头中的事务ID）:
    - 如果 DB_TRX_ID < Read View.m_up_limit_id → 快照前已提交 → 直接可见，无需追溯
@@ -413,9 +434,9 @@ MySQL 崩溃重启后，InnoDB 自动执行以下恢复流程：
 
 **参考答案：**
 
-| 隔离级别 | Read View 创建时机 |
-|----------|-------------------|
-| READ COMMITTED | **每条 SQL 语句执行前**创建新的 Read View |
+| 隔离级别        | Read View 创建时机                                             |
+| --------------- | -------------------------------------------------------------- |
+| READ COMMITTED  | **每条 SQL 语句执行前**创建新的 Read View                      |
 | REPEATABLE READ | **事务中第一条读语句执行时**创建，整个事务复用同一个 Read View |
 
 **为什么 READ COMMITTED 允许不可重复读：**
@@ -454,14 +475,16 @@ MySQL 崩溃重启后，InnoDB 自动执行以下恢复流程：
 **参考答案：**
 
 **MySQL 5.6 之前的 DDL（Copy 方式）：**
+
 1. 创建新的临时表（新结构）
 2. 锁定原表（不允许写）
 3. 将原表数据全部复制到新表
 4. 重命名：新表 → 原表名
 5. 删除原表
-→ 整个过程锁表，数据量越大停机时间越长
+   → 整个过程锁表，数据量越大停机时间越长
 
 **ALGORITHM=INPLACE（MySQL 5.6+，Online DDL）：**
+
 - 在原表上直接修改，不创建完整副本
 - 支持并发 DML（修改过程中允许 INSERT/UPDATE/DELETE）
 - 通过 Online DDL Log 记录 DDL 期间的并发变更，最后重放
@@ -469,12 +492,14 @@ MySQL 崩溃重启后，InnoDB 自动执行以下恢复流程：
 - 需要短暂的 MDL（元数据锁），开始和结束时
 
 **ALGORITHM=INSTANT（MySQL 8.0+）：**
+
 - 仅修改数据字典（元数据），不触碰任何数据行
 - 瞬间完成（毫秒级），不阻塞任何操作
 - 仅支持：在表尾部**添加列**（不支持修改列类型、删除列等）
 - 原理：在 `.ibd` 文件的系统记录中存储"虚拟列"偏移信息，旧行读取时自动填充默认值
 
 **生产大表 DDL 建议：**
+
 ```sql
 -- 优先尝试 INSTANT
 ALTER TABLE large_table ADD COLUMN new_col INT DEFAULT 0, ALGORITHM=INSTANT;
@@ -546,6 +571,7 @@ InnoDB 在 REPEATABLE READ 下，等值和范围查询使用 Next-Key Lock：
 **最终锁范围：`(5, 20)` 之间的所有间隙 + id=10 和 id=15 的记录**
 
 **验证：**
+
 - 其他事务 `INSERT id=7`：可以（`7 <= 5` 或 `7 > 20` 都可以，但 `(5,20)` 范围不可以）→ 实际 id=7 在 (5,10) 间隙内，被阻塞！
 - 其他事务 `INSERT id=12`：被阻塞（在 (10,15) 间隙内）
 - 其他事务 `INSERT id=17`：被阻塞（在 (15,20) 间隙内，满足 < 18 的幻读防护）
@@ -561,6 +587,7 @@ InnoDB 在 REPEATABLE READ 下，等值和范围查询使用 Next-Key Lock：
 **UUID 作为主键的问题：**
 
 UUID（如 `550e8400-e29b-41d4-a716-446655440000`）是随机字符串，新插入的行无法预测在 B+树中的位置，导致：
+
 1. **页分裂**：每次插入都可能在 B+树中间插入（随机位置），触发页分裂，大量随机 I/O
 2. **索引碎片**：频繁分裂导致页填充率下降（默认 15/16 → 实际可能降至 1/2）
 3. **写放大**：修改的是随机分散的页，Buffer Pool 命中率低，每次写可能触发磁盘 I/O
@@ -568,12 +595,14 @@ UUID（如 `550e8400-e29b-41d4-a716-446655440000`）是随机字符串，新插�
 **优化方案：**
 
 **方案 1：使用 AUTO_INCREMENT 整数主键（最推荐）**
+
 ```sql
 ALTER TABLE your_table ADD COLUMN id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY;
 -- UUID 可以作为唯一索引，但不作为主键
 ```
 
 **方案 2：使用有序 UUID（UUID v7 或 UUIDv4+时间前缀）**
+
 ```sql
 -- MySQL 8.0: UUID_TO_BIN(UUID(), true) 将时间戳移到高位，实现有序
 INSERT INTO t VALUES (UUID_TO_BIN(UUID(), true), ...);
@@ -581,6 +610,7 @@ INSERT INTO t VALUES (UUID_TO_BIN(UUID(), true), ...);
 ```
 
 **方案 3：保留 UUID 但降低 B+树的随机性影响**
+
 ```sql
 -- 设置更大的 innodb_fill_factor（减少分裂频率）
 ALTER TABLE t STATS_PERSISTENT=1, STATS_SAMPLE_PAGES=64;
@@ -602,11 +632,13 @@ Buffer Pool 的所有操作（LRU 链表维护、Flush 链表操作、页的读�
 **多实例解决方案：**
 
 将 Buffer Pool 划分为多个独立实例（`innodb_buffer_pool_instances`），每个实例有独立的 LRU 链表、Flush 链表和 mutex：
+
 - 请求按照 `page_id % instances` 哈希分配到不同实例
 - 不同实例的操作可以真正并行（无锁竞争）
 - latch 竞争降低为原来的 1/N
 
 **配置建议：**
+
 ```sql
 # 当 Buffer Pool >= 1GB 时开启多实例（8GB 内存设 8 个实例）
 innodb_buffer_pool_instances = 8  -- 通常设为 CPU 核数或 4/8
@@ -614,6 +646,7 @@ innodb_buffer_pool_size = 8G
 ```
 
 **注意事项：**
+
 - 每个实例大小 = `buffer_pool_size / instances`，实例数过多会导致每个实例太小，预读效率降低
 - 当 `buffer_pool_size < 1GB` 时，强制为 1 个实例（单实例管理小内存足够）
 - `innodb_buffer_pool_instances` 只在启动时生效，无法动态修改
@@ -648,6 +681,7 @@ KILL <blocking_pid>;
 ```
 
 **锁等待超时配置：**
+
 ```sql
 -- 行锁等待超时（默认 50 秒，生产建议降低）
 SET innodb_lock_wait_timeout = 10;
@@ -657,6 +691,7 @@ SET innodb_deadlock_detect = ON;  -- 默认 ON
 ```
 
 **SHOW ENGINE INNODB STATUS 锁相关信息：**
+
 ```
 TRANSACTIONS
 ---
@@ -681,22 +716,26 @@ LOCK WAIT 3 lock struct(s), heap size 1136, 2 row lock(s)
 ```
 
 **变长字段长度列表（逆序存储）：**
+
 - 对于 VARCHAR/VARBINARY/BLOB 等变长字段，在行头存储其实际字节长度
 - 若长度 <= 255 字节：1 字节存储；若 > 255 字节：2 字节存储
 - 按**列定义的逆序**排列（方便从后向前读取）
 - **不包含** NULL 值的列（NULL 在 NULL 标志位中标记）
 
 **NULL 标志位（NULL Bitmap）：**
+
 - 按位存储每个**允许 NULL** 的列是否为 NULL
 - 1 = NULL，0 = 非 NULL
 - NULL 的列在数据区域**不占用空间**（节省存储）
 
 **隐藏列：**
+
 - `DB_ROW_ID`：只有表无主键且无唯一索引时存在（6字节，全局递增）
 - `DB_TRX_ID`：最后修改此行的事务 ID（6字节，MVCC 用）
 - `DB_ROLL_PTR`：回滚指针（7字节，指向 Undo Log 历史版本）
 
 **大字段处理（行溢出）：**
+
 - 当行数据 > 页大小一半（约 8000B）时，溢出字段存储在**溢出页（Overflow Page）**中
 - 行内保留 20 字节的前缀 + 指向溢出页的指针（Dynamic/Compressed 格式）
 - 这就是为什么不要在 InnoDB 表中存储大量 BLOB/TEXT 数据（会导致大量溢出页，随机 I/O 增加）

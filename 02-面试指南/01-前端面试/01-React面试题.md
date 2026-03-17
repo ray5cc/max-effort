@@ -19,18 +19,18 @@
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|----------|
-| 1 | Fiber 架构 | 链表结构替代递归栈，实现可中断渲染与优先级调度 | ★★★★★ |
-| 2 | Hooks 原理与规则 | 链表存储状态，Dispatcher 切换 mount/update，不能条件调用 | ★★★★★ |
-| 3 | Virtual DOM 与 Diff | 同层比较 + key 优化，O(n) 复杂度，双端 Diff | ★★★★★ |
-| 4 | 并发渲染 (Concurrent) | Lane 优先级模型 + 时间切片，startTransition 降低优先级 | ★★★★☆ |
-| 5 | React 生命周期/Effect | useEffect 异步执行 (paint 后)，useLayoutEffect 同步 (paint 前) | ★★★★☆ |
-| 6 | 状态管理方案对比 | Context(简单) / Redux(复杂) / Zustand(轻量) / Jotai(原子) | ★★★★☆ |
-| 7 | 性能优化 | memo/useMemo/useCallback + 代码分割 + 虚拟列表 | ★★★★☆ |
-| 8 | React Server Components | 服务端渲染组件，零 JS bundle，减少客户端 hydration | ★★★☆☆ |
-| 9 | React 19 新特性 | use hook / Actions / useOptimistic / 文档元数据 | ★★★☆☆ |
-| 10 | React Compiler | 编译时自动 memoization，消除手动 useMemo/useCallback | ★★★☆☆ |
+| #   | 考点                    | 核心要点（一句话）                                             | 出题概率 |
+| --- | ----------------------- | -------------------------------------------------------------- | -------- |
+| 1   | Fiber 架构              | 链表结构替代递归栈，实现可中断渲染与优先级调度                 | ★★★★★    |
+| 2   | Hooks 原理与规则        | 链表存储状态，Dispatcher 切换 mount/update，不能条件调用       | ★★★★★    |
+| 3   | Virtual DOM 与 Diff     | 同层比较 + key 优化，O(n) 复杂度，双端 Diff                    | ★★★★★    |
+| 4   | 并发渲染 (Concurrent)   | Lane 优先级模型 + 时间切片，startTransition 降低优先级         | ★★★★☆    |
+| 5   | React 生命周期/Effect   | useEffect 异步执行 (paint 后)，useLayoutEffect 同步 (paint 前) | ★★★★☆    |
+| 6   | 状态管理方案对比        | Context(简单) / Redux(复杂) / Zustand(轻量) / Jotai(原子)      | ★★★★☆    |
+| 7   | 性能优化                | memo/useMemo/useCallback + 代码分割 + 虚拟列表                 | ★★★★☆    |
+| 8   | React Server Components | 服务端渲染组件，零 JS bundle，减少客户端 hydration             | ★★★☆☆    |
+| 9   | React 19 新特性         | use hook / Actions / useOptimistic / 文档元数据                | ★★★☆☆    |
+| 10  | React Compiler          | 编译时自动 memoization，消除手动 useMemo/useCallback           | ★★★☆☆    |
 
 ---
 
@@ -76,11 +76,13 @@ Fiber 树（Render 阶段，可中断）
 <summary>参考答案</summary>
 
 **优势：**
+
 - **跨平台**：Fiber 树是平台无关的抽象，可以对接不同渲染器（ReactDOM、React Native、React Three Fiber）。
 - **批量更新**：多次 `setState` 可以合并成一次 DOM 操作，减少重排/重绘。
 - **声明式编程**：开发者描述"应该是什么样子"，框架决定"如何变"，降低复杂度。
 
 **局限：**
+
 - **内存开销**：每个 DOM 节点对应一个 FiberNode 对象，大型列表（10000+ 节点）内存占用高。
 - **初始渲染无优势**：首次渲染需要建立完整 Fiber 树，比直接操作 DOM 慢。
 - **Diff 开销**：每次更新都需要遍历 Fiber 树做 Diff，对极简场景是额外开销。
@@ -95,13 +97,13 @@ Fiber 树（Render 阶段，可中断）
 <details>
 <summary>参考答案</summary>
 
-| 维度 | 函数组件 | 类组件 |
-|------|---------|-------|
-| **数据模型** | 每次渲染闭包捕获当时的 props/state | `this.props`/`this.state` 是可变引用，可能出现 stale closure |
-| **生命周期** | `useEffect` 等 Hook 组合模拟 | `componentDidMount`/`componentDidUpdate` 等显式方法 |
-| **性能优化** | `React.memo` + `useMemo`/`useCallback` | `shouldComponentUpdate`/`PureComponent` |
-| **this 问题** | 无 this，逻辑更清晰 | 事件处理需要绑定 this |
-| **代码复用** | 自定义 Hook（完美组合） | HOC/render props（嵌套地狱） |
+| 维度          | 函数组件                               | 类组件                                                       |
+| ------------- | -------------------------------------- | ------------------------------------------------------------ |
+| **数据模型**  | 每次渲染闭包捕获当时的 props/state     | `this.props`/`this.state` 是可变引用，可能出现 stale closure |
+| **生命周期**  | `useEffect` 等 Hook 组合模拟           | `componentDidMount`/`componentDidUpdate` 等显式方法          |
+| **性能优化**  | `React.memo` + `useMemo`/`useCallback` | `shouldComponentUpdate`/`PureComponent`                      |
+| **this 问题** | 无 this，逻辑更清晰                    | 事件处理需要绑定 this                                        |
+| **代码复用**  | 自定义 Hook（完美组合）                | HOC/render props（嵌套地狱）                                 |
 
 **经典陷阱**（说明函数组件的闭包特性）：
 
@@ -139,6 +141,7 @@ React 并不直接在 DOM 节点上绑定原生事件，而是将所有事件委
 ```
 
 当事件触发时，React 在根容器的监听器中：
+
 1. 从触发元素向上遍历 Fiber 树，收集所有相关的事件处理函数。
 2. 创建 `SyntheticEvent` 对象（跨浏览器兼容的事件封装）。
 3. 模拟捕获/冒泡阶段，依次调用收集到的处理函数。
@@ -147,6 +150,7 @@ React 并不直接在 DOM 节点上绑定原生事件，而是将所有事件委
 **React 17+**：事件委托改为在 `root` 容器上，解决了多 React 版本共存问题。
 
 **优先级映射**：React 事件被分配不同的 Lane 优先级：
+
 - 离散事件（click/keydown）→ `SyncLane`（同步，最高优先级）
 - 连续事件（mousemove/scroll）→ `InputContinuousLane`
 
@@ -160,6 +164,7 @@ React 并不直接在 DOM 节点上绑定原生事件，而是将所有事件委
 <summary>参考答案</summary>
 
 `key` 是 React 标识列表中**哪个 Fiber 节点可以复用**的唯一标识。Diff 时（`reconcileChildrenArray`）：
+
 1. 第一轮按位置遍历，key 不同则停止。
 2. 第二轮将剩余旧节点存入 `Map<key, Fiber>`，遍历剩余新节点时通过 key 查找可复用节点。
 
@@ -177,6 +182,7 @@ React 认为：0 号节点从 A 变成了 B → 更新（而非删除 A 复用 B
 ```
 
 后果：
+
 - **性能浪费**：本可以复用的节点被更新，导致不必要的 DOM 操作。
 - **状态错乱**：受控组件（如输入框）的内部状态不会随节点位置移动，导致输入框内容错位。
 
@@ -205,14 +211,15 @@ Commit 阶段时序：
   (异步宏任务) ← useEffect 在此执行
 ```
 
-| 特性 | useLayoutEffect | useEffect |
-|------|----------------|-----------|
-| 执行时机 | DOM 变更后，浏览器绘制前（同步） | 浏览器绘制后（异步） |
-| 是否阻塞绘制 | 是 | 否 |
-| 对应类组件 | componentDidMount/Update | — |
-| 服务端渲染 | ⚠️ 会收到警告（无 DOM） | ✅ 安全 |
+| 特性         | useLayoutEffect                  | useEffect            |
+| ------------ | -------------------------------- | -------------------- |
+| 执行时机     | DOM 变更后，浏览器绘制前（同步） | 浏览器绘制后（异步） |
+| 是否阻塞绘制 | 是                               | 否                   |
+| 对应类组件   | componentDidMount/Update         | —                    |
+| 服务端渲染   | ⚠️ 会收到警告（无 DOM）          | ✅ 安全              |
 
 **适用场景**：
+
 - `useLayoutEffect`：需要在绘制前读取/修改 DOM（计算元素尺寸、修复视觉闪烁、滚动到指定位置）。
 - `useEffect`：大多数副作用（数据获取、事件订阅、日志上报），不阻塞渲染。
 
@@ -236,11 +243,11 @@ fiber.memoizedState → Hook1 → Hook2 → Hook3 → null
 
 ```javascript
 function BadComponent({ condition }) {
-  const [a] = useState(1);          // Hook1
+  const [a] = useState(1); // Hook1
   if (condition) {
-    const [b] = useState(2);        // Hook2（条件渲染）
+    const [b] = useState(2); // Hook2（条件渲染）
   }
-  const [c] = useState(3);          // 应该是 Hook3，但条件为 false 时变成了 Hook2
+  const [c] = useState(3); // 应该是 Hook3，但条件为 false 时变成了 Hook2
 }
 ```
 
@@ -260,6 +267,7 @@ function BadComponent({ condition }) {
 `StrictMode` 是一个开发工具，在**开发模式**下执行额外检查，**不影响生产构建**。
 
 主要检测项：
+
 1. **检测副作用不纯**：React 有意在开发模式下调用组件函数、`useState` 初始化函数、`useMemo`/`useCallback` 各两次，验证这些纯函数对多次调用的幂等性。
 2. **检测过时 API**：如 `componentWillMount`、字符串 ref、`ReactDOM.render`。
 3. **检测 useEffect cleanup**：在开发模式下，React 18 会在 mount 后立即执行一次 `effect cleanup → effect create`，模拟组件卸载/重挂载，暴露遗漏清理副作用的问题。
@@ -303,7 +311,8 @@ setTimeout(() => {
 ```javascript
 // React 18：统一批处理（渲染一次）
 setTimeout(() => {
-  setState(1); setState(2);  // 自动批处理！
+  setState(1);
+  setState(2); // 自动批处理！
 }, 0);
 ```
 
@@ -318,15 +327,16 @@ setTimeout(() => {
 <details>
 <summary>参考答案</summary>
 
-| API | 缓存对象 | 作用 |
-|-----|---------|------|
-| `React.memo` | 组件 | 对比 props 相等性，跳过子组件重渲染 |
-| `useMemo` | 计算值 | 缓存计算结果，依赖不变则跳过重计算 |
-| `useCallback` | 函数 | 缓存函数引用，依赖不变则返回同一引用 |
+| API           | 缓存对象 | 作用                                 |
+| ------------- | -------- | ------------------------------------ |
+| `React.memo`  | 组件     | 对比 props 相等性，跳过子组件重渲染  |
+| `useMemo`     | 计算值   | 缓存计算结果，依赖不变则跳过重计算   |
+| `useCallback` | 函数     | 缓存函数引用，依赖不变则返回同一引用 |
 
 `useCallback(fn, deps)` 等价于 `useMemo(() => fn, deps)`，底层都是 `mountMemo`/`updateMemo`。
 
 **正确使用场景**：
+
 ```javascript
 // ✅ useMemo：代价高的计算（大数组过滤/排序）
 const sorted = useMemo(() => heavySort(data), [data]);
@@ -336,7 +346,7 @@ const handleClick = useCallback(() => doSomething(id), [id]);
 // <MemoChild onClick={handleClick} /> 只有 id 变时才重渲染
 
 // ❌ 滥用：简单操作加 useMemo 徒增开销
-const double = useMemo(() => count * 2, [count]);  // 无需缓存
+const double = useMemo(() => count * 2, [count]); // 无需缓存
 ```
 
 </details>
@@ -351,11 +361,13 @@ const double = useMemo(() => count * 2, [count]);  // 无需缓存
 <summary>参考答案</summary>
 
 **Stack Reconciler 的问题**：
+
 - 同步递归遍历组件树，一旦开始无法中断。
 - 大型应用中，单次 Diff 可能超过 16ms（一帧预算），导致动画卡顿、输入延迟。
 
 **Fiber 的解决方案**：
 将渲染工作拆分为**可中断的工作单元**（FiberNode），每个单元可以：
+
 - 暂停并在下一个时间片继续（时间切片）。
 - 被高优先级更新打断（优先级调度）。
 - 复用上次工作（bailout 优化）。
@@ -374,6 +386,7 @@ Fiber Reconciler：
 ```
 
 **关键能力**：
+
 - **可中断**：`shouldYieldToHost()` 返回 true 时，保存 `workInProgress` 指针后退出，下次从同一节点继续。
 - **优先级调度**：Lane 模型允许低优先级任务被高优先级任务打断。
 - **双缓冲**：`current` 树和 `workInProgress` 树分离，用户始终看到完整的 UI 状态。
@@ -408,6 +421,7 @@ function dispatchSetState(fiber, queue, action) {
 ```
 
 bailout 发生的两个时机：
+
 1. **dispatch 时**（eager bailout）：新 state 与旧 state 相同（`Object.is`），直接跳过，不进入 Scheduler。
 2. **beginWork 时**（render bailout）：检查 `fiber.lanes`，若当前渲染 lane 中不包含该 fiber 的更新，且 `props`/`context` 未变，调用 `bailoutOnAlreadyFinishedWork()`，跳过整个子树。
 
@@ -426,20 +440,22 @@ Lane 模型用 **32 位整数的二进制位**表示优先级，支持同时处�
 
 ```javascript
 // packages/react-reconciler/src/ReactFiberLane.js
-const SyncLane           = 0b001;   // 同步（用户输入）
-const InputContinuousLane = 0b100;  // 连续输入（滚动）
-const DefaultLane        = 0b10000; // 默认（setTimeout/fetch）
-const TransitionLane1    = 0b1000000; // startTransition
-const IdleLane           = 0x10000000; // 空闲
+const SyncLane = 0b001; // 同步（用户输入）
+const InputContinuousLane = 0b100; // 连续输入（滚动）
+const DefaultLane = 0b10000; // 默认（setTimeout/fetch）
+const TransitionLane1 = 0b1000000; // startTransition
+const IdleLane = 0x10000000; // 空闲
 ```
 
 **位运算操作**：
+
 - 合并优先级：`mergeLanes(a, b) = a | b`
 - 判断包含：`includesSomeLane(set, subset) = (set & subset) !== 0`
 - 移除优先级：`removeLanes(set, subset) = set & ~subset`
 - 获取最高优先级：`getHighestPriorityLane(lanes) = lanes & -lanes`（取最低位）
 
 **调度流程**：
+
 1. 用户事件 → 根据事件类型确定 Lane → 打在 `fiber.lanes` 上。
 2. `ensureRootIsScheduled()` 根据 `root.pendingLanes` 中最高优先级的 Lane 决定调度策略：
    - `SyncLane` → `scheduleSyncCallback`（微任务，同步执行）
@@ -455,7 +471,7 @@ function markStarvedLanesAsExpired(root, currentTime) {
     const index = pickArbitraryLaneIndex(lanes);
     const expirationTime = root.expirationTimes[index];
     if (expirationTime <= currentTime) {
-      root.expiredLanes |= 1 << index;  // 标记为过期，下次必须同步处理
+      root.expiredLanes |= 1 << index; // 标记为过期，下次必须同步处理
     }
     lanes &= ~(1 << index);
   }
@@ -476,9 +492,9 @@ function markStarvedLanesAsExpired(root, currentTime) {
 ```javascript
 export function startTransition(scope) {
   const prevTransition = ReactSharedInternals.T;
-  ReactSharedInternals.T = {};  // 标记当前在 transition 上下文中
+  ReactSharedInternals.T = {}; // 标记当前在 transition 上下文中
   try {
-    scope();  // 执行回调，其中的 setState 会被打上 TransitionLane
+    scope(); // 执行回调，其中的 setState 会被打上 TransitionLane
   } finally {
     ReactSharedInternals.T = prevTransition;
   }
@@ -491,14 +507,14 @@ export function startTransition(scope) {
 
 ```javascript
 // 场景：搜索框输入，过滤大列表
-const [query, setQuery] = useState('');
+const [query, setQuery] = useState("");
 const [results, setResults] = useState([]);
 
 function handleInput(e) {
-  setQuery(e.target.value);          // 紧急更新（SyncLane）：立即更新输入框
+  setQuery(e.target.value); // 紧急更新（SyncLane）：立即更新输入框
 
   startTransition(() => {
-    setResults(filterData(e.target.value));  // 可中断更新（TransitionLane）
+    setResults(filterData(e.target.value)); // 可中断更新（TransitionLane）
   });
 }
 ```
@@ -521,14 +537,14 @@ Suspense 利用了 JavaScript 的异常机制实现"等待异步操作"：
 ```javascript
 // 数据获取库（如 React Query）的封装
 function fetchData(url) {
-  if (cache[url]) return cache[url];  // 缓存命中，同步返回
+  if (cache[url]) return cache[url]; // 缓存命中，同步返回
 
-  throw promise;  // ← 抛出 Promise！
+  throw promise; // ← 抛出 Promise！
 }
 
 // 组件中使用
 function UserProfile() {
-  const data = fetchData('/api/user');  // 可能 throw Promise
+  const data = fetchData("/api/user"); // 可能 throw Promise
   return <div>{data.name}</div>;
 }
 ```
@@ -583,6 +599,7 @@ Context 的 `value` 引用变化时，所有消费该 Context 的组件都会强
 **优化方案**：
 
 1. **拆分 Context**：将不同更新频率的数据拆到不同 Context：
+
 ```javascript
 <ThemeContext.Provider value={theme}>
   <UserContext.Provider value={user}>
@@ -592,6 +609,7 @@ Context 的 `value` 引用变化时，所有消费该 Context 的组件都会强
 ```
 
 2. **稳定引用（useMemo）**：
+
 ```javascript
 const value = useMemo(() => ({ theme, toggleTheme }), [theme]);
 <Context.Provider value={value}>
@@ -614,10 +632,10 @@ const value = useMemo(() => ({ theme, toggleTheme }), [theme]);
 
 Error Boundary 只能是**类组件**，需实现至少一个方法：
 
-| 方法 | 执行时机 | 用途 |
-|------|---------|------|
-| `getDerivedStateFromError` | Render 阶段（同步） | 更新 state，渲染降级 UI |
-| `componentDidCatch` | Commit 阶段（异步，layout 后） | 上报错误到监控服务 |
+| 方法                       | 执行时机                       | 用途                    |
+| -------------------------- | ------------------------------ | ----------------------- |
+| `getDerivedStateFromError` | Render 阶段（同步）            | 更新 state，渲染降级 UI |
+| `componentDidCatch`        | Commit 阶段（异步，layout 后） | 上报错误到监控服务      |
 
 **工作原理**（`ReactFiberThrow.js`）：
 
@@ -640,6 +658,7 @@ Commit 阶段
 ```
 
 **局限**：Error Boundary 无法捕获：
+
 - 事件处理函数（需用 try-catch）
 - 异步代码（setTimeout/Promise）
 - 服务端渲染
@@ -659,24 +678,26 @@ Commit 阶段
 ```javascript
 function mountRef(initialValue) {
   const hook = mountWorkInProgressHook();
-  const ref = { current: initialValue };  // 普通对象，非响应式
+  const ref = { current: initialValue }; // 普通对象，非响应式
   hook.memoizedState = ref;
   return ref;
 }
 
 function updateRef(initialValue) {
   const hook = updateWorkInProgressHook();
-  return hook.memoizedState;  // 每次渲染返回同一个对象引用
+  return hook.memoizedState; // 每次渲染返回同一个对象引用
 }
 ```
 
 **核心原因**：`ref` 是一个普通的 JavaScript 对象 `{ current: value }`，React 不追踪它的属性变化。修改 `ref.current` 不会调用任何通知机制，因此 React 不知道值变了，也就不会触发重渲染。
 
 对比 `useState`：
+
 - `setState` 调用 `dispatchSetState()` → 创建 Update → 触发调度 → 重渲染。
 - `ref.current = value` 直接修改对象属性，不经过任何 React 调度机制。
 
 **适用场景**：
+
 - 访问/操作 DOM 节点。
 - 存储不影响 UI 的可变值（定时器 ID、上一次的 state 值）。
 - 跨渲染保持稳定引用（避免 useEffect 依赖数组频繁变化）。
@@ -691,10 +712,12 @@ function updateRef(initialValue) {
 <summary>参考答案</summary>
 
 Scheduler（`packages/scheduler/src/forks/Scheduler.js`）维护两个**最小堆**：
+
 - `taskQueue`：已到期任务，按 `expirationTime` 排序（越小越优先）。
 - `timerQueue`：未到期任务，按 `startTime` 排序。
 
 **最小堆操作**（时间复杂度）：
+
 - `push`：O(log n)，插入后上浮（siftUp）。
 - `peek`：O(1)，堆顶元素。
 - `pop`：O(log n)，移除堆顶后下沉（siftDown）。
@@ -721,13 +744,13 @@ scheduleCallback(priority, callback)
 
 **优先级 → expirationTime 映射**：
 
-| Scheduler 优先级 | 超时时间 | 对应 React Lane |
-|----------------|---------|----------------|
-| ImmediatePriority | -1ms（立即过期） | SyncLane |
-| UserBlockingPriority | 250ms | InputContinuousLane |
-| NormalPriority | 5000ms | DefaultLane |
-| LowPriority | 10000ms | TransitionLane |
-| IdlePriority | 永不过期 | IdleLane |
+| Scheduler 优先级     | 超时时间         | 对应 React Lane     |
+| -------------------- | ---------------- | ------------------- |
+| ImmediatePriority    | -1ms（立即过期） | SyncLane            |
+| UserBlockingPriority | 250ms            | InputContinuousLane |
+| NormalPriority       | 5000ms           | DefaultLane         |
+| LowPriority          | 10000ms          | TransitionLane      |
+| IdlePriority         | 永不过期         | IdleLane            |
 
 </details>
 
@@ -740,11 +763,11 @@ scheduleCallback(priority, callback)
 
 RSC 将组件分为三类：
 
-| 类型 | 运行环境 | 标记方式 | 能力 |
-|------|---------|---------|------|
-| Server Components | 服务器 | 默认（无标记）/ `.server.js` | 直接访问 DB/文件系统，不能用 Hook，零客户端 JS |
-| Client Components | 浏览器 | `"use client"` 指令 | 完整 React 能力（Hook/事件） |
-| Shared Components | 两端均可 | 无副作用的纯组件 | — |
+| 类型              | 运行环境 | 标记方式                     | 能力                                           |
+| ----------------- | -------- | ---------------------------- | ---------------------------------------------- |
+| Server Components | 服务器   | 默认（无标记）/ `.server.js` | 直接访问 DB/文件系统，不能用 Hook，零客户端 JS |
+| Client Components | 浏览器   | `"use client"` 指令          | 完整 React 能力（Hook/事件）                   |
+| Shared Components | 两端均可 | 无副作用的纯组件             | —                                              |
 
 **工作流程**：
 
@@ -764,6 +787,7 @@ RSC 将组件分为三类：
 ```
 
 **关键优势**：
+
 - Server Components 的代码**不发送到客户端**，减小 bundle 体积。
 - 数据获取直接在服务器，消除客户端 waterfall 请求。
 - Client Components 可以嵌套在 Server Components 中（但反之不行）。
@@ -799,7 +823,7 @@ React 18 更新流程：
 
 ```javascript
 flushSync(() => {
-  setState(1);  // 立即同步渲染，不等待批处理
+  setState(1); // 立即同步渲染，不等待批处理
 });
 ```
 
@@ -821,7 +845,7 @@ function updateDeferredValueImpl(hook, prevValue, value, renderLanes) {
 
     // 以 TransitionLane 调度一次低优先级更新（用新值）
     scheduleUpdateOnFiber(currentlyRenderingFiber, TransitionLane);
-    return prevValue;  // 返回旧值
+    return prevValue; // 返回旧值
   } else {
     // 低优先级渲染（TransitionLane），使用新值
     hook.memoizedState = value;
@@ -831,6 +855,7 @@ function updateDeferredValueImpl(hook, prevValue, value, renderLanes) {
 ```
 
 **与 `startTransition` 的区别**：
+
 - `startTransition`：包裹 setter，标记更新为低优先级。
 - `useDeferredValue`：包裹 value，当高优先级渲染时自动"推迟"该值的更新。
 - 适用场景：当你无法控制 setState 的调用方（如第三方组件），可用 `useDeferredValue` 延迟接收新值。
@@ -854,11 +879,11 @@ function updateDeferredValueImpl(hook, prevValue, value, renderLanes) {
 function mountEffectImpl(fiberFlags, hookFlags, create, deps) {
   const hook = mountWorkInProgressHook();
   const nextDeps = deps === undefined ? null : deps;
-  currentlyRenderingFiber.flags |= fiberFlags;  // 打上 PassiveEffect flag
+  currentlyRenderingFiber.flags |= fiberFlags; // 打上 PassiveEffect flag
   hook.memoizedState = pushEffect(
-    HookHasEffect | hookFlags,  // 标记本次需要执行 create
+    HookHasEffect | hookFlags, // 标记本次需要执行 create
     create,
-    undefined,       // destroy 初始为 undefined
+    undefined, // destroy 初始为 undefined
     nextDeps,
   );
 }
@@ -892,7 +917,12 @@ function updateEffectImpl(fiberFlags, hookFlags, create, deps) {
   if (nextDeps !== null) {
     if (areHookInputsEqual(nextDeps, prevEffect.deps)) {
       // 依赖未变，不标记 HookHasEffect（本次不执行）
-      hook.memoizedState = pushEffect(hookFlags, create, prevEffect.destroy, nextDeps);
+      hook.memoizedState = pushEffect(
+        hookFlags,
+        create,
+        prevEffect.destroy,
+        nextDeps,
+      );
       return;
     }
   }
@@ -902,7 +932,7 @@ function updateEffectImpl(fiberFlags, hookFlags, create, deps) {
   hook.memoizedState = pushEffect(
     HookHasEffect | hookFlags,
     create,
-    prevEffect.destroy,  // 上次的 destroy 函数
+    prevEffect.destroy, // 上次的 destroy 函数
     nextDeps,
   );
 }
@@ -927,16 +957,16 @@ function updateEffectImpl(fiberFlags, hookFlags, create, deps) {
 let oldFiber = currentFirstChild;
 let newIdx = 0;
 for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
-  if (oldFiber.index > newIdx) break;  // 位置跳跃，停止
+  if (oldFiber.index > newIdx) break; // 位置跳跃，停止
 
   const newChild = newChildren[newIdx];
   const matchedFiber = updateSlot(returnFiber, oldFiber, newChild, lanes);
 
-  if (matchedFiber === null) break;  // key 不匹配，停止第一轮
+  if (matchedFiber === null) break; // key 不匹配，停止第一轮
 
   // key 匹配，复用或创建
   if (shouldTrackSideEffects && oldFiber && matchedFiber.alternate === null) {
-    deleteChild(returnFiber, oldFiber);  // 新类型，旧节点标记删除
+    deleteChild(returnFiber, oldFiber); // 新类型，旧节点标记删除
   }
   placeChild(matchedFiber, lastPlacedIndex, newIdx);
 
@@ -964,10 +994,16 @@ for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
 const existingChildren = mapRemainingChildren(returnFiber, oldFiber);
 
 for (; newIdx < newChildren.length; newIdx++) {
-  const newFiber = updateFromMap(existingChildren, returnFiber, newIdx, newChildren[newIdx], lanes);
+  const newFiber = updateFromMap(
+    existingChildren,
+    returnFiber,
+    newIdx,
+    newChildren[newIdx],
+    lanes,
+  );
   if (newFiber !== null) {
     if (shouldTrackSideEffects && newFiber.alternate !== null) {
-      existingChildren.delete(newFiber.key || newIdx);  // 从 Map 中移除（已使用）
+      existingChildren.delete(newFiber.key || newIdx); // 从 Map 中移除（已使用）
     }
     lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
   }
@@ -975,7 +1011,7 @@ for (; newIdx < newChildren.length; newIdx++) {
 
 // 删除未被使用的旧节点（Map 中剩余的）
 if (shouldTrackSideEffects) {
-  existingChildren.forEach(child => deleteChild(returnFiber, child));
+  existingChildren.forEach((child) => deleteChild(returnFiber, child));
 }
 ```
 
@@ -1013,6 +1049,7 @@ function placeChild(newFiber, lastPlacedIndex, newIndex) {
 <summary>参考答案</summary>
 
 **为何不用 requestIdleCallback（rAF）**：
+
 - `requestIdleCallback` 兼容性差（Safari 不支持），且调用频率不稳定（浏览器限制约 20fps）。
 - `requestAnimationFrame` 每帧只调用一次，粒度太粗。
 
@@ -1022,19 +1059,19 @@ function placeChild(newFiber, lastPlacedIndex, newIndex) {
 const channel = new MessageChannel();
 const port = channel.port2;
 
-channel.port1.onmessage = performWorkUntilDeadline;  // 宏任务回调
+channel.port1.onmessage = performWorkUntilDeadline; // 宏任务回调
 
 function schedulePerformWorkUntilDeadline() {
-  port.postMessage(null);  // 触发下一个宏任务
+  port.postMessage(null); // 触发下一个宏任务
 }
 
 function performWorkUntilDeadline() {
   if (scheduledHostCallback !== null) {
     const currentTime = getCurrentTime();
-    deadline = currentTime + frameInterval;  // 5ms 时间预算
+    deadline = currentTime + frameInterval; // 5ms 时间预算
     const hasMoreWork = scheduledHostCallback(true, currentTime);
     if (hasMoreWork) {
-      schedulePerformWorkUntilDeadline();  // 还有工作，继续调度
+      schedulePerformWorkUntilDeadline(); // 还有工作，继续调度
     } else {
       isMessageLoopRunning = false;
       scheduledHostCallback = null;
@@ -1048,11 +1085,11 @@ function performWorkUntilDeadline() {
 ```javascript
 function shouldYieldToHost() {
   const timeElapsed = getCurrentTime() - startTime;
-  if (timeElapsed < frameYieldMs) return false;  // 5ms 内不让步
+  if (timeElapsed < frameYieldMs) return false; // 5ms 内不让步
 
   // 检查浏览器是否有待处理的输入事件（Scheduling API）
   if (enableIsInputPending && navigator.scheduling?.isInputPending) {
-    if (needsPaint) return true;  // 需要绘制，立即让步
+    if (needsPaint) return true; // 需要绘制，立即让步
     return navigator.scheduling.isInputPending(continuousOptions);
   }
 
@@ -1128,9 +1165,8 @@ function useState(initialState) {
   if (isMounting) {
     // Mount 阶段
     const hook = mountWorkInProgressHook();
-    hook.memoizedState = typeof initialState === 'function'
-      ? initialState()
-      : initialState;
+    hook.memoizedState =
+      typeof initialState === "function" ? initialState() : initialState;
 
     const queue = { pending: null, dispatch: null };
     hook.queue = queue;
@@ -1146,7 +1182,7 @@ function useState(initialState) {
         pending.next = update;
       }
       queue.pending = update;
-      scheduleRender();  // 触发重新渲染
+      scheduleRender(); // 触发重新渲染
     };
 
     queue.dispatch = dispatch;
@@ -1159,11 +1195,12 @@ function useState(initialState) {
     // 处理待执行的 update
     let newState = hook.memoizedState;
     if (queue.pending !== null) {
-      let update = queue.pending.next;  // 环形链表的第一个
+      let update = queue.pending.next; // 环形链表的第一个
       do {
-        newState = typeof update.action === 'function'
-          ? update.action(newState)
-          : update.action;
+        newState =
+          typeof update.action === "function"
+            ? update.action(newState)
+            : update.action;
         update = update.next;
       } while (update !== queue.pending.next);
       queue.pending = null;
@@ -1212,7 +1249,7 @@ if ($[0] !== dep1 || $[1] !== dep2) {
   $[1] = dep2;
   $[2] = t0;
 } else {
-  t0 = $[2];  // 缓存命中
+  t0 = $[2]; // 缓存命中
 }
 ```
 
@@ -1220,6 +1257,7 @@ if ($[0] !== dep1 || $[1] !== dep2) {
 编译器会在编译时静态检测 React 规则违规，对无法优化的组件发出警告并跳过（降级为未优化代码），保证正确性。
 
 **与手动 useMemo 的区别**：
+
 - 编译器能分析**函数内任意子表达式**的可记忆性，粒度比手动 `useMemo` 更细。
 - 编译器理解条件/循环中的缓存失效，而手动 `useMemo` 依赖数组容易遗漏。
 
@@ -1238,24 +1276,24 @@ if ($[0] !== dep1 || $[1] !== dep2) {
 function getEventPriority(domEventName) {
   switch (domEventName) {
     // 离散事件（每次独立，不连续）→ 同步 Lane
-    case 'click':
-    case 'keydown':
-    case 'keyup':
-    case 'submit':
-    case 'focus':
-    case 'blur':
-      return DiscreteEventPriority;  // = SyncLane
+    case "click":
+    case "keydown":
+    case "keyup":
+    case "submit":
+    case "focus":
+    case "blur":
+      return DiscreteEventPriority; // = SyncLane
 
     // 连续事件（频繁触发）→ 连续 Lane
-    case 'drag':
-    case 'mousemove':
-    case 'scroll':
-    case 'touchmove':
-      return ContinuousEventPriority;  // = InputContinuousLane
+    case "drag":
+    case "mousemove":
+    case "scroll":
+    case "touchmove":
+      return ContinuousEventPriority; // = InputContinuousLane
 
     // 默认
     default:
-      return DefaultEventPriority;    // = DefaultLane
+      return DefaultEventPriority; // = DefaultLane
   }
 }
 ```
@@ -1267,15 +1305,15 @@ function getEventPriority(domEventName) {
 function lanesToEventPriority(lanes) {
   const lane = getHighestPriorityLane(lanes);
   if (!isHigherEventPriority(DiscreteEventPriority, lane)) {
-    return DiscreteEventPriority;  // → ImmediateSchedulerPriority
+    return DiscreteEventPriority; // → ImmediateSchedulerPriority
   }
   if (!isHigherEventPriority(ContinuousEventPriority, lane)) {
     return ContinuousEventPriority; // → UserBlockingSchedulerPriority
   }
   if (includesSomeLane(TransitionLanes, lane)) {
-    return DefaultEventPriority;    // → NormalSchedulerPriority
+    return DefaultEventPriority; // → NormalSchedulerPriority
   }
-  return IdleEventPriority;         // → IdleSchedulerPriority
+  return IdleEventPriority; // → IdleSchedulerPriority
 }
 ```
 
@@ -1293,6 +1331,7 @@ function lanesToEventPriority(lanes) {
 Hydration 是将服务端渲染的静态 HTML 与客户端 React 树关联（attach）的过程，由 `ReactFiberHydrationContext.js` 实现。
 
 **正常 Hydration 流程**：
+
 1. `beginWork` 处理 `HostComponent` 时，调用 `tryToClaimNextHydratableInstance()`。
 2. 从 SSR 生成的 DOM 中按位置（深度优先）匹配 Fiber 节点。
 3. 复用现有 DOM 节点（不重新创建），只绑定事件监听和 ref。
@@ -1315,10 +1354,12 @@ Hydration 是将服务端渲染的静态 HTML 与客户端 React 树关联（att
 ```
 
 **React 18 的并发 Hydration**（Selective Hydration）：
+
 - 页面分段 hydration，优先 hydrate 用户正在交互的部分。
 - 用户点击某个尚未 hydrated 的区域，React 立即 hydrate 该区域（通过 `SyncLane`），确保交互不丢失。
 
 **Mismatch 常见原因**：
+
 - 服务端/客户端时间不同（`Date.now()`）。
 - 客户端特有的 API（`window.innerWidth`）。
 - 随机数（`Math.random()`）。
@@ -1338,10 +1379,10 @@ Hydration 是将服务端渲染的静态 HTML 与客户端 React 树关联（att
 // 源码（packages/react-dom/src/ReactDOMRoot.js）
 function flushSync(fn) {
   const previousExecutionContext = executionContext;
-  executionContext |= SyncContext;  // 加入同步上下文标记
+  executionContext |= SyncContext; // 加入同步上下文标记
   try {
     if (fn) {
-      return fn();  // 执行回调（其中的 setState 会立即处理）
+      return fn(); // 执行回调（其中的 setState 会立即处理）
     }
   } finally {
     executionContext = previousExecutionContext;
@@ -1358,6 +1399,7 @@ function flushSync(fn) {
 3. `flushSync` 的 `finally` 中调用 `flushSyncWorkOnAllRoots()`，同步执行所有挂起的更新。
 
 **使用场景**：
+
 ```javascript
 // 强制立即更新（如第三方库的回调中需要同步状态）
 flushSync(() => {
@@ -1381,7 +1423,7 @@ document.getElementById('result').textContent = ...;
 <summary>参考答案</summary>
 
 ```typescript
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface FetchState<T> {
   data: T | null;
@@ -1389,7 +1431,9 @@ interface FetchState<T> {
   error: Error | null;
 }
 
-function useFetch<T>(url: string | null): FetchState<T> & { refetch: () => void } {
+function useFetch<T>(
+  url: string | null,
+): FetchState<T> & { refetch: () => void } {
   const [state, setState] = useState<FetchState<T>>({
     data: null,
     loading: false,
@@ -1406,24 +1450,24 @@ function useFetch<T>(url: string | null): FetchState<T> & { refetch: () => void 
     const requestId = ++requestIdRef.current;
     let cancelled = false;
 
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     const abortController = new AbortController();
 
     fetch(url, { signal: abortController.signal })
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<T>;
       })
-      .then(data => {
+      .then((data) => {
         // 只处理最新请求的结果（防竞态）
         if (requestId === requestIdRef.current && !cancelled) {
           setState({ data, loading: false, error: null });
         }
       })
-      .catch(error => {
+      .catch((error) => {
         if (requestId === requestIdRef.current && !cancelled) {
-          if (error.name !== 'AbortError') {
+          if (error.name !== "AbortError") {
             setState({ data: null, loading: false, error });
           }
         }
@@ -1431,12 +1475,12 @@ function useFetch<T>(url: string | null): FetchState<T> & { refetch: () => void 
 
     return () => {
       cancelled = true;
-      abortController.abort();  // 清理：取消请求
+      abortController.abort(); // 清理：取消请求
     };
   }, [url, refetchTrigger]);
 
   const refetch = useCallback(() => {
-    setRefetchTrigger(n => n + 1);
+    setRefetchTrigger((n) => n + 1);
   }, []);
 
   return { ...state, refetch };
@@ -1444,6 +1488,7 @@ function useFetch<T>(url: string | null): FetchState<T> & { refetch: () => void 
 ```
 
 **关键设计点**：
+
 1. **竞态处理**：`requestIdRef` 对比确保只处理最新请求。
 2. **请求取消**：`AbortController` 在 `useEffect` cleanup 中取消进行中的请求。
 3. **refetch 能力**：通过 `refetchTrigger` 触发重新请求。
@@ -1460,12 +1505,12 @@ function useFetch<T>(url: string | null): FetchState<T> & { refetch: () => void 
 <details>
 <summary>参考答案</summary>
 
-| 方案 | 原理 | 适用场景 | 局限 |
-|------|------|---------|------|
-| **虚拟滚动** | 只渲染可见区域的 DOM | 列表项 DOM 复杂、数量 10000+ | 实现复杂，需精确知道条目高度 |
-| **useDeferredValue** | 用旧值先渲染，低优先级更新为新值 | 过滤/搜索导致的列表更新 | 不减少 DOM 数量，仍受 DOM 数量影响 |
-| **React.memo + key** | 跳过未变化条目的重渲染 | 列表更新频率高但每次变化量小 | 不解决初始渲染慢 |
-| **分页/无限滚动** | 减少一次性渲染的条目数 | 数据量大、用户习惯翻页 | 需要后端支持 |
+| 方案                 | 原理                             | 适用场景                     | 局限                               |
+| -------------------- | -------------------------------- | ---------------------------- | ---------------------------------- |
+| **虚拟滚动**         | 只渲染可见区域的 DOM             | 列表项 DOM 复杂、数量 10000+ | 实现复杂，需精确知道条目高度       |
+| **useDeferredValue** | 用旧值先渲染，低优先级更新为新值 | 过滤/搜索导致的列表更新      | 不减少 DOM 数量，仍受 DOM 数量影响 |
+| **React.memo + key** | 跳过未变化条目的重渲染           | 列表更新频率高但每次变化量小 | 不解决初始渲染慢                   |
+| **分页/无限滚动**    | 减少一次性渲染的条目数           | 数据量大、用户习惯翻页       | 需要后端支持                       |
 
 **推荐决策**：
 
@@ -1485,18 +1530,18 @@ function useFetch<T>(url: string | null): FetchState<T> & { refetch: () => void 
 
 ```javascript
 function SearchableList({ items }) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
 
   // 只有 deferredQuery 变化时才重新过滤（低优先级）
   const filtered = useMemo(
-    () => items.filter(item => item.name.includes(deferredQuery)),
-    [items, deferredQuery]
+    () => items.filter((item) => item.name.includes(deferredQuery)),
+    [items, deferredQuery],
   );
 
   return (
     <>
-      <input value={query} onChange={e => setQuery(e.target.value)} />
+      <input value={query} onChange={(e) => setQuery(e.target.value)} />
       {/* 虚拟滚动处理大量结果 */}
       <VirtualList items={filtered} />
     </>
@@ -1516,14 +1561,16 @@ function SearchableList({ items }) {
 **常见内存泄漏来源**：
 
 1. **未清理的事件监听**：
+
 ```javascript
 useEffect(() => {
-  window.addEventListener('resize', handler);
-  return () => window.removeEventListener('resize', handler);  // 必须清理！
+  window.addEventListener("resize", handler);
+  return () => window.removeEventListener("resize", handler); // 必须清理！
 }, []);
 ```
 
 2. **未取消的异步操作**（竞态/泄漏双问题）：
+
 ```javascript
 useEffect(() => {
   const abort = new AbortController();
@@ -1556,6 +1603,7 @@ useEffect(() => {
 ```
 
 **防范措施**：
+
 - 开启 StrictMode（开发环境），暴露遗漏 cleanup 的 effect。
 - 使用 `eslint-plugin-react-hooks` 检查 Hook 规则。
 - 组件卸载时检查日志（在 cleanup 中 `console.log('cleanup')`）。
@@ -1569,12 +1617,12 @@ useEffect(() => {
 <details>
 <summary>参考答案</summary>
 
-| 方案 | 适用规模 | 性能特性 | 学习成本 | 特点 |
-|------|---------|---------|---------|------|
-| **Context** | 小型/低频更新 | 全量重渲染（需手动优化） | 极低 | React 内置，无依赖 |
-| **Redux** | 大型复杂应用 | 精确订阅（selector） | 高 | 可预测、时间旅行调试 |
-| **Zustand** | 中小型应用 | 精确订阅（内置） | 低 | 简单直接，无 boilerplate |
-| **Jotai** | 原子化状态 | 原子粒度订阅 | 中 | 细粒度响应式，类 Recoil |
+| 方案        | 适用规模      | 性能特性                 | 学习成本 | 特点                     |
+| ----------- | ------------- | ------------------------ | -------- | ------------------------ |
+| **Context** | 小型/低频更新 | 全量重渲染（需手动优化） | 极低     | React 内置，无依赖       |
+| **Redux**   | 大型复杂应用  | 精确订阅（selector）     | 高       | 可预测、时间旅行调试     |
+| **Zustand** | 中小型应用    | 精确订阅（内置）         | 低       | 简单直接，无 boilerplate |
+| **Jotai**   | 原子化状态    | 原子粒度订阅             | 中       | 细粒度响应式，类 Recoil  |
 
 **选型决策树**：
 
@@ -1592,6 +1640,7 @@ useEffect(() => {
 ```
 
 **Zustand 的优势原理**：
+
 - 使用发布-订阅模式，只有订阅了变化字段的组件重渲染。
 - `useStore(state => state.count)` 的 selector 函数使用 `Object.is` 浅比较，等价于自动 `React.memo`。
 
@@ -1599,11 +1648,11 @@ useEffect(() => {
 // Zustand 示例（简洁无 boilerplate）
 const useStore = create((set) => ({
   count: 0,
-  increment: () => set(state => ({ count: state.count + 1 })),
+  increment: () => set((state) => ({ count: state.count + 1 })),
 }));
 
 // 精确订阅，只有 count 变化时重渲染
-const count = useStore(state => state.count);
+const count = useStore((state) => state.count);
 ```
 
 </details>
@@ -1692,6 +1741,7 @@ class AppErrorBoundary extends React.Component {
 ```
 
 **关键设计决策**：
+
 1. **批量上报**（debounce 1s）：减少请求数量，同时用 `sendBeacon` 保证页面卸载时不丢失。
 2. **组件栈信息**：`componentDidCatch` 的 `info.componentStack` 精确定位出错组件。
 3. **会话 ID**：关联同一用户会话的多个错误，还原用户操作路径。

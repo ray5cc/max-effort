@@ -12,18 +12,18 @@
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|--------|
-| 1 | Self-Attention | Q×K^T/√d_k→Softmax→V，捕获全局依赖 | ★★★★★ |
-| 2 | Multi-Head Attention | 多个注意力头并行，不同子空间捕获不同模式 | ★★★★★ |
-| 3 | 位置编码 | 正弦(原始)/RoPE(旋转，主流)/ALiBi(线性偏置) | ★★★★☆ |
-| 4 | Layer Normalization | Pre-LN(训练稳定，GPT-2+)/Post-LN(原始Transformer) | ★★★★☆ |
-| 5 | KV Cache | 推理时缓存历史K/V避免重复计算，内存换速度 | ★★★★★ |
-| 6 | GPT vs BERT | GPT=Decoder-Only(生成)/BERT=Encoder-Only(理解)，现在GPT架构主导 | ★★★★★ |
-| 7 | Flash Attention | 分块计算+在线Softmax，IO感知减少HBM访问 | ★★★★☆ |
-| 8 | GQA/MQA | Grouped Query(LLaMA2)/Multi-Query，减少KV Cache大小 | ★★★★☆ |
-| 9 | FFN/SwiGLU | 两层线性+激活，SwiGLU(LLaMA)替代ReLU效果更好 | ★★★☆☆ |
-| 10 | Scaling Laws | C≈6ND(计算≈6×参数×数据)，指导模型规模决策 | ★★★☆☆ |
+| #   | 考点                 | 核心要点（一句话）                                              | 出题概率 |
+| --- | -------------------- | --------------------------------------------------------------- | -------- |
+| 1   | Self-Attention       | Q×K^T/√d_k→Softmax→V，捕获全局依赖                              | ★★★★★    |
+| 2   | Multi-Head Attention | 多个注意力头并行，不同子空间捕获不同模式                        | ★★★★★    |
+| 3   | 位置编码             | 正弦(原始)/RoPE(旋转，主流)/ALiBi(线性偏置)                     | ★★★★☆    |
+| 4   | Layer Normalization  | Pre-LN(训练稳定，GPT-2+)/Post-LN(原始Transformer)               | ★★★★☆    |
+| 5   | KV Cache             | 推理时缓存历史K/V避免重复计算，内存换速度                       | ★★★★★    |
+| 6   | GPT vs BERT          | GPT=Decoder-Only(生成)/BERT=Encoder-Only(理解)，现在GPT架构主导 | ★★★★★    |
+| 7   | Flash Attention      | 分块计算+在线Softmax，IO感知减少HBM访问                         | ★★★★☆    |
+| 8   | GQA/MQA              | Grouped Query(LLaMA2)/Multi-Query，减少KV Cache大小             | ★★★★☆    |
+| 9   | FFN/SwiGLU           | 两层线性+激活，SwiGLU(LLaMA)替代ReLU效果更好                    | ★★★☆☆    |
+| 10  | Scaling Laws         | C≈6ND(计算≈6×参数×数据)，指导模型规模决策                       | ★★★☆☆    |
 
 ---
 
@@ -39,12 +39,12 @@ RMSNorm 公式为：`γ · x / RMS(x)`，其中 `RMS(x) = √(1/n · Σ xᵢ²)`
 
 **主要差异：**
 
-| 维度 | LayerNorm | RMSNorm |
-|------|----------|---------|
-| 计算量 | 需要计算均值 + 方差 | 只需计算均方根 |
-| 参数量 | γ 和 β（两套可学习参数） | 只有 γ |
-| 计算节省 | 基准 | 约 7-15% |
-| 实验效果 | 稳定 | 同等效果 |
+| 维度     | LayerNorm                | RMSNorm        |
+| -------- | ------------------------ | -------------- |
+| 计算量   | 需要计算均值 + 方差      | 只需计算均方根 |
+| 参数量   | γ 和 β（两套可学习参数） | 只有 γ         |
+| 计算节省 | 基准                     | 约 7-15%       |
+| 实验效果 | 稳定                     | 同等效果       |
 
 LLaMA 选择 RMSNorm 的原因：在大规模实验中，去掉均值中心化对模型效果几乎无影响，但每层可节省约 15% 的归一化计算量，对于 32-80 层的深层模型累积效果可观。
 
@@ -78,6 +78,7 @@ RoPE（Rotary Position Embedding，旋转位置编码）的核心思想：**通�
 内积结果只含 `(m-n)`（相对位置），不含 m 或 n 的绝对值。
 
 **优势：**
+
 - 天然支持长度外推（Position Interpolation/NTK 等技术在此基础上进一步扩展）
 - 无需额外参数（与可学习位置编码不同）
 - 相对位置感知比绝对编码更泛化
@@ -94,11 +95,11 @@ RoPE（Rotary Position Embedding，旋转位置编码）的核心思想：**通�
 
 **对比表：**
 
-| 方案 | KV Cache | 推理内存 | 模型质量 | 代表模型 |
-|------|---------|--------|--------|---------|
-| MHA | H 份 K,V | 最大 | 最高 | GPT-3, BERT |
-| MQA | 1 份 K,V | 最小 | 略降 | PaLM, Falcon |
-| GQA | G 份 K,V | 中等 | 接近 MHA | LLaMA 3, Mistral |
+| 方案 | KV Cache | 推理内存 | 模型质量 | 代表模型         |
+| ---- | -------- | -------- | -------- | ---------------- |
+| MHA  | H 份 K,V | 最大     | 最高     | GPT-3, BERT      |
+| MQA  | 1 份 K,V | 最小     | 略降     | PaLM, Falcon     |
+| GQA  | G 份 K,V | 中等     | 接近 MHA | LLaMA 3, Mistral |
 
 LLaMA 3 70B 采用 GQA（H=64 Q-heads，G=8 KV-heads），KV Cache 体积缩小至 MHA 的 1/8。
 
@@ -118,9 +119,11 @@ LLaMA 3 70B 采用 GQA（H=64 Q-heads，G=8 KV-heads），KV Cache 体积缩小�
 **加速原因：** Decode 阶段每步只需做一次矩阵-向量乘法（而非矩阵-矩阵），计算量从 O(n) 降到 O(1)（每步），整体生成 n 个 token 的复杂度从 O(n³) 降为 O(n²)。
 
 **内存代价：**
+
 ```
 KV Cache 大小 = 2 × num_layers × num_kv_heads × seq_len × head_dim × bytes_per_element
 ```
+
 LLaMA 3 8B（BF16，8K 序列）的 KV Cache 约 1GB，70B 约 8GB。
 
 ---
@@ -132,6 +135,7 @@ LLaMA 3 8B（BF16，8K 序列）的 KV Cache 约 1GB，70B 约 8GB。
 **量化定义：** 将模型权重（或激活值）从高精度浮点数（FP32/BF16）映射到低位整数（INT8/INT4）的过程，通过牺牲少量精度换取内存节省和计算加速。
 
 **线性量化公式：**
+
 ```
 x_quant = round(x / scale) + zero_point
 x_dequant = (x_quant - zero_point) × scale
@@ -146,11 +150,11 @@ x_dequant = (x_quant - zero_point) × scale
 
 **对比各量化方案的误差控制：**
 
-| 方案 | 误差控制策略 |
-|------|------------|
-| LLM.int8() | 混合精度，离群值维度用 FP16 |
-| GPTQ | 二阶优化（Hessian），最小化逐层量化误差 |
-| AWQ | 保护高激活值对应的权重通道，等效缩放 |
+| 方案       | 误差控制策略                            |
+| ---------- | --------------------------------------- |
+| LLM.int8() | 混合精度，离群值维度用 FP16             |
+| GPTQ       | 二阶优化（Hessian），最小化逐层量化误差 |
+| AWQ        | 保护高激活值对应的权重通道，等效缩放    |
 
 ---
 
@@ -160,14 +164,14 @@ x_dequant = (x_quant - zero_point) × scale
 
 `pipeline` 是对底层 `tokenizer + model.generate()` 的便捷封装，适合快速原型验证。`model.generate()` 是底层 API，适合生产部署和精细控制。
 
-| 维度 | Pipeline | model.generate() |
-|------|---------|-----------------|
-| 易用性 | 高（一行代码） | 低（需手动处理） |
-| 灵活性 | 低 | 高 |
-| 隐式截断 | `truncation=True` 默认开启 | 显式控制 |
-| 批处理 | 自动但不透明 | 完全可控 |
-| 流式输出 | 支持（TextStreamer） | 支持（Streamer） |
-| 适用场景 | 原型/实验 | 生产推理 |
+| 维度     | Pipeline                   | model.generate() |
+| -------- | -------------------------- | ---------------- |
+| 易用性   | 高（一行代码）             | 低（需手动处理） |
+| 灵活性   | 低                         | 高               |
+| 隐式截断 | `truncation=True` 默认开启 | 显式控制         |
+| 批处理   | 自动但不透明               | 完全可控         |
+| 流式输出 | 支持（TextStreamer）       | 支持（Streamer） |
+| 适用场景 | 原型/实验                  | 生产推理         |
 
 **坑：** Pipeline 默认 `truncation=True`，超长输入会被**静默截断**，生产环境必须显式设置 `max_length` 并检查。
 
@@ -192,6 +196,7 @@ x_dequant = (x_quant - zero_point) × scale
 **标准 Attention 的瓶颈：** 不是计算量（FLOPs），而是 **内存带宽（Memory Bandwidth）**。
 
 标准 Softmax(QKᵀ/√d)V 需要：
+
 1. 将 Q(N×d)、K(N×d) 读入 → 写出 S(N×N)（注意力分数矩阵，N² 元素）
 2. 对 S 做 Softmax → 写回 P(N×N)
 3. 读 P 和 V → 写出 O(N×d)
@@ -201,6 +206,7 @@ x_dequant = (x_quant - zero_point) × scale
 **FlashAttention 的解法 — 分块（Tiling）：**
 
 将 Q、K、V 分成大小为 B 的块，循环加载到片上 SRAM（更快但更小）：
+
 - 外层循环 K, V 块（J 循环）
 - 内层循环 Q 块（I 循环）
 - 利用 **Online Softmax** 技巧，在不知道全局 max 的情况下增量计算 Softmax
@@ -208,11 +214,11 @@ x_dequant = (x_quant - zero_point) × scale
 
 **IO 复杂度改进：**
 
-| 版本 | HBM IO 复杂度 | 加速比（典型）|
-|------|-------------|------------|
-| 标准 Attention | O(N²d) | 1x |
-| FlashAttention v1 | O(N²d²/M)，M 为 SRAM 大小 | ~3x |
-| FlashAttention v2 | 相同复杂度，更好的并行化 | ~6x |
+| 版本              | HBM IO 复杂度             | 加速比（典型） |
+| ----------------- | ------------------------- | -------------- |
+| 标准 Attention    | O(N²d)                    | 1x             |
+| FlashAttention v1 | O(N²d²/M)，M 为 SRAM 大小 | ~3x            |
+| FlashAttention v2 | 相同复杂度，更好的并行化  | ~6x            |
 
 **反向传播：** 不存储 N×N 的注意力矩阵，反向时重新计算（Recompute），以计算换内存，整体内存从 O(N²) 降为 O(N)。
 
@@ -225,6 +231,7 @@ x_dequant = (x_quant - zero_point) × scale
 **核心思想：** 用小模型（Draft Model）快速生成 γ 个草稿 token，再用大模型（Target Model）一次**并行**验证全部草稿，接受正确的 token，拒绝错误的。
 
 **算法步骤（以 γ=4 为例）：**
+
 1. Draft Model 自回归生成 4 个 token：T₁, T₂, T₃, T₄（以各自的概率 q(·) 采样）
 2. Target Model 一次前向传播（并行处理所有 4 个 token），获得每步的目标分布 p(·)
 3. **接受/拒绝（Rejection Sampling）：** 对每个草稿 token x：
@@ -235,6 +242,7 @@ x_dequant = (x_quant - zero_point) × scale
 **正确性保证：** 上述接受概率公式（Rejection Sampling）确保最终输出分布与 Target Model 的输出分布**完全等价**——这不是近似，是精确的分布保持。
 
 **加速条件：** 草稿接受率 α 越高，γ 越大，加速越明显。
+
 - 理想情况（α=1）：γ 倍加速
 - 实际情况（α≈0.7）：2-3x 加速
 - α 依赖于 Draft 和 Target 模型的相似程度
@@ -248,11 +256,13 @@ x_dequant = (x_quant - zero_point) × scale
 **参考答案：**
 
 **传统静态批处理的问题：**
+
 - 一个 batch 内所有请求必须同时完成才能释放资源
 - 短请求完成后，其占用的 GPU slot 处于空闲状态，等待长请求结束
 - GPU 利用率低（典型值 20-40%）
 
 **连续批处理（Iteration-level Scheduling）：**
+
 - 在每个 decode 步骤（iteration）级别动态调整 batch
 - 某请求完成后，立即将等待队列中的新请求插入空出的 slot
 - GPU 始终处于满负载状态
@@ -269,6 +279,7 @@ KV Cache 的内存碎片化问题与连续批处理密切相关。PagedAttention
 **参考答案：**
 
 **SwiGLU 公式：**
+
 ```
 SwiGLU(x, W, V) = Swish(xW₁) ⊙ (xV)
 Swish(x) = x · σ(x)    （sigmoid 门控的平滑版 ReLU）
@@ -282,13 +293,13 @@ Swish(x) = x · σ(x)    （sigmoid 门控的平滑版 ReLU）
 
 **与 ReLU 的对比：**
 
-| 特性 | ReLU | SwiGLU |
-|------|------|--------|
-| 死区（Dead Neurons） | 有（x<0 梯度为0） | 无 |
-| 光滑性 | 不光滑（x=0 处不可导） | 光滑 |
-| 参数量 | 2 个矩阵 W₁, W₂ | 3 个矩阵 W₁, W₂, W₃ |
-| 表达能力 | 一般 | 更强（门控带来非线性组合） |
-| 计算量 | 低 | 高约 50%（多一个矩阵乘法） |
+| 特性                 | ReLU                   | SwiGLU                     |
+| -------------------- | ---------------------- | -------------------------- |
+| 死区（Dead Neurons） | 有（x<0 梯度为0）      | 无                         |
+| 光滑性               | 不光滑（x=0 处不可导） | 光滑                       |
+| 参数量               | 2 个矩阵 W₁, W₂        | 3 个矩阵 W₁, W₂, W₃        |
+| 表达能力             | 一般                   | 更强（门控带来非线性组合） |
+| 计算量               | 低                     | 高约 50%（多一个矩阵乘法） |
 
 在相同总参数量的限制下（通常将 hidden_dim 缩小 2/3 以补偿第三矩阵），SwiGLU 的效果显著优于 ReLU。
 
@@ -299,6 +310,7 @@ Swish(x) = x · σ(x)    （sigmoid 门控的平滑版 ReLU）
 **参考答案：**
 
 **Temperature（温度）：** 对 logits 进行缩放后再 Softmax：`p(x) ∝ exp(logit(x) / T)`
+
 - T < 1：分布更尖锐，输出更确定/重复
 - T > 1：分布更平均，输出更随机/多样
 - T = 0：等价于贪婪解码（选最高概率）
@@ -308,6 +320,7 @@ Swish(x) = x · σ(x)    （sigmoid 门控的平滑版 ReLU）
 **Top-p（Nucleus Sampling）：** 动态选择"概率累积和超过 p 的最小 token 集合"。高熵（不确定）时选更多 token，低熵（确定）时选更少 token，比 top-k 更自适应。
 
 **推荐组合：**
+
 ```python
 # 常用生产配置：先 top-k 缩小范围，再 top-p 进一步过滤，最后 temperature 控制随机性
 model.generate(
@@ -339,7 +352,7 @@ model.generate(
 1. 将 KV Cache 划分为固定大小的**物理块（Physical Block）**，每块存储若干 token 的 K,V
 2. 每个序列有一个**逻辑块表**，映射到物理块（类似虚拟地址→物理地址）
 3. **写时复制（Copy-on-Write）**：支持 Beam Search 时多条路径共享前缀 KV Cache，分叉时才复制
-4. 内存碎片接近零，GPU 内存利用率提升至 90%+ 
+4. 内存碎片接近零，GPU 内存利用率提升至 90%+
 
 **效果：** vLLM 相比 HuggingFace naive 实现，吞吐量提升 24x。
 
@@ -374,6 +387,7 @@ RoPE 的频率 `θᵢ = 1 / 10000^(2i/d)` 决定了不同维度对的旋转速�
 基于 OBQ（Optimal Brain Quantization）框架，使用二阶信息（Hessian 矩阵）逐列量化权重矩阵，每量化一列后，通过 Hessian 逆调整剩余列以补偿误差。
 
 关键公式（量化列 q 后更新列 j 的误差补偿）：
+
 ```
 δW_j = -w_q/[H⁻¹]_qq × [H⁻¹]_qj    （使用 Cholesky 分解求逆）
 ```
@@ -387,20 +401,21 @@ RoPE 的频率 `θᵢ = 1 / 10000^(2i/d)` 决定了不同维度对的旋转速�
 关键洞见：**只有约 1% 的权重通道（对应高激活值的通道）对模型性能至关重要**。
 
 AWQ 的策略：
+
 1. 分析激活值统计，找出"显著通道"
 2. 对显著通道进行**等效缩放**（激活除以 scale，权重乘以 scale），让重要权重值更大、更不容易被量化误差破坏
 3. 在缩放后的空间内进行普通 round-to-nearest 量化
 
 **对比：**
 
-| 维度 | GPTQ | AWQ |
-|------|------|-----|
-| 核心原理 | 二阶优化（Hessian） | 激活感知缩放 |
-| 量化方向 | 逐列量化权重 | 保护高激活通道 |
-| 校准数据 | 需要（约128条） | 需要（用于激活统计） |
-| 精度 | 高 | 极高（通常优于 GPTQ） |
-| 推理速度 | 快（专用 CUDA kernel） | 快（专用 CUDA kernel） |
-| 实现复杂度 | 高 | 中 |
+| 维度       | GPTQ                   | AWQ                    |
+| ---------- | ---------------------- | ---------------------- |
+| 核心原理   | 二阶优化（Hessian）    | 激活感知缩放           |
+| 量化方向   | 逐列量化权重           | 保护高激活通道         |
+| 校准数据   | 需要（约128条）        | 需要（用于激活统计）   |
+| 精度       | 高                     | 极高（通常优于 GPTQ）  |
+| 推理速度   | 快（专用 CUDA kernel） | 快（专用 CUDA kernel） |
+| 实现复杂度 | 高                     | 中                     |
 
 ---
 
@@ -450,12 +465,14 @@ d_new = d_old × exp(m_old - m_new) + exp(xᵢ - m_new)
 **参考答案：**
 
 **Prefill（预填充）阶段：**
+
 - 处理输入 prompt 的所有 token（并行）
 - 计算量大，IO 相对较小：**计算密集型（Compute-bound）**
 - 瓶颈：GPU 算力（FLOPS）
 - 优化方向：FlashAttention、Tensor Parallelism、更大的 batch（多个 prompt 并行）
 
 **Decode（解码）阶段：**
+
 - 每步只处理一个新生成的 token
 - 矩阵-向量乘法（不是矩阵-矩阵）：大量参数被激活，计算量极小但需要读取所有权重
 - 瓶颈：HBM 带宽（**IO 密集型，Memory-bound**）
@@ -558,6 +575,7 @@ KV Cache 计算（GQA，8 KV heads，128 KV dim，80 layers）：
 #### 3. 推理框架选型
 
 **vLLM** 是首选：
+
 - PagedAttention：消除 KV Cache 碎片化，最大化可调度请求数
 - Continuous Batching：GPU 利用率 > 90%
 - 内置 Tensor Parallelism（`tensor_parallel_size=4`）
@@ -578,6 +596,7 @@ llm = LLM(
 #### 4. 量化决策
 
 若 P99 < 5s 难以达到，可考虑 **AWQ INT4 量化**：
+
 - 权重降为 35 GB，4 卡显存绰绰有余
 - 释放更多 KV Cache 空间，支持更大并发
 - 精度损失 < 1%（AWQ 表现优异）
@@ -594,6 +613,7 @@ llm = LLM(
 ```
 
 超过延迟目标的优化手段：
+
 1. **投机解码**：用 7B 模型作为 Draft，70B 作为 Target，延迟降低 2-3x（但需要额外显存）
 2. **CUDA Graph**：固定 batch size 后消除 Python 调度开销，降低约 10-20% 延迟
 3. **Prefill-Decode 分离**：将 Prefill（compute-bound）和 Decode（memory-bound）调度到不同时间段，减少互相干扰
@@ -627,6 +647,7 @@ metrics = {
    - 测试多种 seed——若特定 seed 触发，可能是边缘情况
 
 2. **检查解码参数：**
+
    ```python
    # 最常见的原因：temperature=0 或极低，导致陷入重复循环
    model.generate(
@@ -645,12 +666,12 @@ metrics = {
 
 **系统性解决方案：**
 
-| 方案 | 适用场景 | 代价 |
-|------|---------|------|
-| `repetition_penalty=1.1-1.3` | 通用 | 可能影响合法重复（代码、列表）|
-| `no_repeat_ngram_size=3` | 通用文本生成 | 禁止合法 3-gram 重复 |
-| `temperature=0.7 + top_p=0.9` | 创意生成 | 引入随机性 |
-| 后处理检测 + 截断 | 生产安全网 | 增加延迟 |
+| 方案                          | 适用场景     | 代价                           |
+| ----------------------------- | ------------ | ------------------------------ |
+| `repetition_penalty=1.1-1.3`  | 通用         | 可能影响合法重复（代码、列表） |
+| `no_repeat_ngram_size=3`      | 通用文本生成 | 禁止合法 3-gram 重复           |
+| `temperature=0.7 + top_p=0.9` | 创意生成     | 引入随机性                     |
+| 后处理检测 + 截断             | 生产安全网   | 增加延迟                       |
 
 ---
 
@@ -663,6 +684,7 @@ metrics = {
 **调度维度：**
 
 1. **基于 SLA 的优先级队列：**
+
    ```
    Priority Queue:
    ├── P0（付费 Premium 用户）：最大等待 100ms
@@ -691,17 +713,18 @@ metrics = {
 
 **假设：** 2 × A100 80GB（160 GB 总显存）
 
-| 维度 | 70B INT4 | 2 × 7B BF16 |
-|------|---------|-------------|
-| 显存占用 | ~35 GB（权重）+ KV Cache | ~14 GB × 2 = 28 GB（可独立运行） |
-| 推理质量 | 更高（70B 能力） | 较低（7B 能力） |
-| 吞吐量 | 较低（单实例） | 较高（2 实例并行，各自 batch） |
-| 延迟（单请求） | 较高（更多参数） | 较低（参数少） |
-| 维护复杂度 | 低（单实例） | 高（负载均衡、一致性） |
-| 适用场景 | 高质量推理，QPS 不高 | 高并发，对质量要求稍低 |
-| 故障恢复 | 单点故障，恢复慢 | 单实例故障，另一实例继续服务 |
+| 维度           | 70B INT4                 | 2 × 7B BF16                      |
+| -------------- | ------------------------ | -------------------------------- |
+| 显存占用       | ~35 GB（权重）+ KV Cache | ~14 GB × 2 = 28 GB（可独立运行） |
+| 推理质量       | 更高（70B 能力）         | 较低（7B 能力）                  |
+| 吞吐量         | 较低（单实例）           | 较高（2 实例并行，各自 batch）   |
+| 延迟（单请求） | 较高（更多参数）         | 较低（参数少）                   |
+| 维护复杂度     | 低（单实例）             | 高（负载均衡、一致性）           |
+| 适用场景       | 高质量推理，QPS 不高     | 高并发，对质量要求稍低           |
+| 故障恢复       | 单点故障，恢复慢         | 单实例故障，另一实例继续服务     |
 
 **决策框架：**
+
 - 任务对质量敏感（代码生成、复杂推理）→ 70B INT4
 - 任务质量要求适中，高并发场景（客服问答）→ 2 × 7B BF16
 - 混合策略：用 7B 做路由分类，简单任务 7B 回答，复杂任务路由到 70B

@@ -21,18 +21,18 @@
 
 > 面试中最常被问到的 JavaScript 核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|----------|
-| 1 | 闭包 | 函数 + 词法环境，内层函数引用外层变量，即使外层已执行完毕 | ★★★★★ |
-| 2 | 原型链 | `__proto__` 链式查找，prototype 是构造函数模板，Object.prototype 为终点 | ★★★★★ |
-| 3 | Event Loop | 宏任务 → 清空所有微任务 → 渲染 → 下一宏任务；Promise 微任务优先 | ★★★★★ |
-| 4 | Promise / async-await | 三态不可逆，链式调用，async 是 Generator+Promise 语法糖 | ★★★★★ |
-| 5 | this 绑定 | new > call/apply/bind > obj.fn > 默认；箭头函数继承外层 this | ★★★★★ |
-| 6 | 作用域与变量提升 | var 函数作用域 + 提升；let/const 块级作用域 + TDZ 暂时性死区 | ★★★★☆ |
-| 7 | 深拷贝与浅拷贝 | structuredClone > JSON.parse > 递归；注意循环引用与特殊类型 | ★★★★☆ |
-| 8 | ES6+ 核心特性 | 解构/展开/Symbol/Iterator/Proxy/Reflect/WeakMap/ESM | ★★★★☆ |
-| 9 | 防抖与节流 | debounce 延迟执行（搜索框），throttle 固定频率（滚动） | ★★★☆☆ |
-| 10 | TypeScript 类型系统 | 结构化类型、泛型约束、条件类型、infer 推断、工具类型 | ★★★☆☆ |
+| #   | 考点                  | 核心要点（一句话）                                                      | 出题概率 |
+| --- | --------------------- | ----------------------------------------------------------------------- | -------- |
+| 1   | 闭包                  | 函数 + 词法环境，内层函数引用外层变量，即使外层已执行完毕               | ★★★★★    |
+| 2   | 原型链                | `__proto__` 链式查找，prototype 是构造函数模板，Object.prototype 为终点 | ★★★★★    |
+| 3   | Event Loop            | 宏任务 → 清空所有微任务 → 渲染 → 下一宏任务；Promise 微任务优先         | ★★★★★    |
+| 4   | Promise / async-await | 三态不可逆，链式调用，async 是 Generator+Promise 语法糖                 | ★★★★★    |
+| 5   | this 绑定             | new > call/apply/bind > obj.fn > 默认；箭头函数继承外层 this            | ★★★★★    |
+| 6   | 作用域与变量提升      | var 函数作用域 + 提升；let/const 块级作用域 + TDZ 暂时性死区            | ★★★★☆    |
+| 7   | 深拷贝与浅拷贝        | structuredClone > JSON.parse > 递归；注意循环引用与特殊类型             | ★★★★☆    |
+| 8   | ES6+ 核心特性         | 解构/展开/Symbol/Iterator/Proxy/Reflect/WeakMap/ESM                     | ★★★★☆    |
+| 9   | 防抖与节流            | debounce 延迟执行（搜索框），throttle 固定频率（滚动）                  | ★★★☆☆    |
+| 10  | TypeScript 类型系统   | 结构化类型、泛型约束、条件类型、infer 推断、工具类型                    | ★★★☆☆    |
 
 ---
 
@@ -42,15 +42,16 @@
 
 **参考答案：**
 
-| 特性 | var | let | const |
-|------|-----|-----|-------|
-| 作用域 | 函数作用域 | 块级作用域 | 块级作用域 |
-| 变量提升 | ✅ 提升并初始化为 `undefined` | ✅ 提升但不初始化（TDZ） | ✅ 提升但不初始化（TDZ） |
-| 重复声明 | ✅ 允许 | ❌ 报错 | ❌ 报错 |
-| 重新赋值 | ✅ 允许 | ✅ 允许 | ❌ 基本类型不允许 |
-| 挂载到 window | ✅ | ❌ | ❌ |
+| 特性          | var                           | let                      | const                    |
+| ------------- | ----------------------------- | ------------------------ | ------------------------ |
+| 作用域        | 函数作用域                    | 块级作用域               | 块级作用域               |
+| 变量提升      | ✅ 提升并初始化为 `undefined` | ✅ 提升但不初始化（TDZ） | ✅ 提升但不初始化（TDZ） |
+| 重复声明      | ✅ 允许                       | ❌ 报错                  | ❌ 报错                  |
+| 重新赋值      | ✅ 允许                       | ✅ 允许                  | ❌ 基本类型不允许        |
+| 挂载到 window | ✅                            | ❌                       | ❌                       |
 
 **TDZ（Temporal Dead Zone）示例：**
+
 ```js
 console.log(a); // undefined（var 提升）
 console.log(b); // ReferenceError: Cannot access 'b' before initialization
@@ -59,10 +60,11 @@ let b = 2;
 ```
 
 **const 注意：** `const` 只保证绑定不变，对象属性仍可修改：
+
 ```js
 const obj = { x: 1 };
 obj.x = 2; // ✅ 合法
-obj = {};   // ❌ TypeError
+obj = {}; // ❌ TypeError
 ```
 
 **关键知识点：** `let`/`const` 解决了 `var` 的变量提升和函数作用域导致的循环变量共享问题。
@@ -88,12 +90,13 @@ function makeCounter(initial = 0) {
 const counter = makeCounter(10);
 counter.increment(); // 11
 counter.increment(); // 12
-counter.value();     // 12
+counter.value(); // 12
 ```
 
 **实际应用场景：**
 
 1. **数据私有化（模块模式）：**
+
 ```js
 const bank = (() => {
   let balance = 0; // 私有变量，外部无法直接访问
@@ -106,6 +109,7 @@ const bank = (() => {
 ```
 
 2. **函数工厂 / 柯里化：**
+
 ```js
 const multiply = (factor) => (num) => num * factor;
 const double = multiply(2);
@@ -113,6 +117,7 @@ double(5); // 10
 ```
 
 3. **防抖 / 节流：**
+
 ```js
 function debounce(fn, delay) {
   let timer;
@@ -138,30 +143,37 @@ function debounce(fn, delay) {
 function Person(name) {
   this.name = name; // this → 新对象
 }
-const p = new Person('Alice');
+const p = new Person("Alice");
 
 // 2. 显式绑定 — call/apply/bind
-function greet() { return this.name; }
-greet.call({ name: 'Bob' }); // 'Bob'
-const boundGreet = greet.bind({ name: 'Carol' });
+function greet() {
+  return this.name;
+}
+greet.call({ name: "Bob" }); // 'Bob'
+const boundGreet = greet.bind({ name: "Carol" });
 boundGreet(); // 'Carol'
 
 // 3. 隐式绑定 — 方法调用，this 指向调用对象
 const obj = {
-  name: 'Dave',
-  greet() { return this.name; }
+  name: "Dave",
+  greet() {
+    return this.name;
+  },
 };
 obj.greet(); // 'Dave'
 
 // 4. 默认绑定 — 普通函数调用，严格模式 undefined，非严格模式 window
-function hello() { return this; }
+function hello() {
+  return this;
+}
 hello(); // window（非严格）/ undefined（严格）
 ```
 
 **箭头函数没有自己的 this：**
+
 ```js
 const obj = {
-  name: 'Eve',
+  name: "Eve",
   // 箭头函数捕获定义时的 this（此处为 obj 外的 this）
   greet: () => this.name, // undefined 或 window.name
   // 普通方法
@@ -175,6 +187,7 @@ obj.greetNormal(); // 'Eve'
 ```
 
 **隐式绑定丢失（常见坑）：**
+
 ```js
 const fn = obj.greet; // 赋值给变量，丢失隐式绑定
 fn(); // undefined（严格模式）
@@ -205,34 +218,37 @@ fn(); // undefined（严格模式）
 ```
 
 **经典题目：**
-```js
-console.log('1');
 
-setTimeout(() => console.log('2'), 0);
+```js
+console.log("1");
+
+setTimeout(() => console.log("2"), 0);
 
 Promise.resolve()
-  .then(() => console.log('3'))
-  .then(() => console.log('4'));
+  .then(() => console.log("3"))
+  .then(() => console.log("4"));
 
-console.log('5');
+console.log("5");
 
 // 输出顺序：1 → 5 → 3 → 4 → 2
 ```
 
 **解析：**
+
 1. 同步执行：打印 `1`、`5`
 2. Call Stack 空 → 清空微任务队列：打印 `3`（then 注册 `4`）→ 打印 `4`
 3. 取出一个宏任务（setTimeout callback）：打印 `2`
 
 **async/await 本质是 Promise 语法糖：**
+
 ```js
 async function foo() {
-  console.log('A');
+  console.log("A");
   await Promise.resolve();
-  console.log('B'); // 等同于 Promise.resolve().then(() => console.log('B'))
+  console.log("B"); // 等同于 Promise.resolve().then(() => console.log('B'))
 }
 foo();
-console.log('C');
+console.log("C");
 // 输出：A → C → B
 ```
 
@@ -246,6 +262,7 @@ console.log('C');
 - `==`（抽象相等）：类型不同时先进行类型转换再比较
 
 **`==` 类型转换规则（简化）：**
+
 ```js
 null == undefined  // true（特殊规则）
 null == 0          // false
@@ -291,11 +308,16 @@ Foo.__proto__ === Function.prototype         // true（函数也是对象）
 | `__proto__` | 所有对象 | 该对象的原型（即构造函数的 `prototype`） |
 
 **属性查找：**
-```js
-function Animal(name) { this.name = name; }
-Animal.prototype.speak = function() { return `${this.name} speaks`; };
 
-const dog = new Animal('Rex');
+```js
+function Animal(name) {
+  this.name = name;
+}
+Animal.prototype.speak = function () {
+  return `${this.name} speaks`;
+};
+
+const dog = new Animal("Rex");
 dog.speak(); // 'Rex speaks'（在 Animal.prototype 上找到）
 dog.toString(); // '[object Object]'（在 Object.prototype 上找到）
 ```
@@ -311,22 +333,23 @@ dog.toString(); // '[object Object]'（在 Object.prototype 上找到）
 ```js
 // 创建 Promise
 const p = new Promise((resolve, reject) => {
-  setTimeout(() => resolve('done'), 1000);
+  setTimeout(() => resolve("done"), 1000);
 });
 
 // 消费 Promise
-p.then(value => console.log(value))   // 'done'
- .catch(err => console.error(err))
- .finally(() => console.log('clean up'));
+p.then((value) => console.log(value)) // 'done'
+  .catch((err) => console.error(err))
+  .finally(() => console.log("clean up"));
 
 // Promise 静态方法
-Promise.all([p1, p2, p3])      // 全部成功才 resolve，一个失败立即 reject
-Promise.allSettled([p1, p2])   // 等全部完成，返回状态数组（不会 reject）
-Promise.race([p1, p2])         // 第一个完成（无论成功失败）
-Promise.any([p1, p2])          // 第一个成功，全部失败才 reject（AggregateError）
+Promise.all([p1, p2, p3]); // 全部成功才 resolve，一个失败立即 reject
+Promise.allSettled([p1, p2]); // 等全部完成，返回状态数组（不会 reject）
+Promise.race([p1, p2]); // 第一个完成（无论成功失败）
+Promise.any([p1, p2]); // 第一个成功，全部失败才 reject（AggregateError）
 ```
 
 **async/await：**
+
 ```js
 async function fetchUser(id) {
   try {
@@ -334,7 +357,7 @@ async function fetchUser(id) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
-    console.error('Failed:', err);
+    console.error("Failed:", err);
     throw err; // 重新抛出让调用者处理
   }
 }
@@ -346,24 +369,25 @@ async function fetchUser(id) {
 
 **参考答案：**
 
-| 特性 | ESM | CommonJS |
-|------|-----|----------|
-| 语法 | `import/export` | `require/module.exports` |
-| 加载时机 | 静态（编译时确定依赖） | 动态（运行时执行） |
-| 执行 | 异步加载（浏览器中） | 同步加载 |
-| this（顶层） | `undefined` | `module.exports` 对象 |
-| 循环依赖 | 支持（live binding） | 可能得到未初始化值 |
-| Tree Shaking | ✅ 支持（静态分析） | ❌ 不支持 |
-| 严格模式 | 默认开启 | 需手动声明 |
+| 特性         | ESM                    | CommonJS                 |
+| ------------ | ---------------------- | ------------------------ |
+| 语法         | `import/export`        | `require/module.exports` |
+| 加载时机     | 静态（编译时确定依赖） | 动态（运行时执行）       |
+| 执行         | 异步加载（浏览器中）   | 同步加载                 |
+| this（顶层） | `undefined`            | `module.exports` 对象    |
+| 循环依赖     | 支持（live binding）   | 可能得到未初始化值       |
+| Tree Shaking | ✅ 支持（静态分析）    | ❌ 不支持                |
+| 严格模式     | 默认开启               | 需手动声明               |
 
 **ESM 的 live binding：**
+
 ```js
 // counter.mjs
 export let count = 0;
 export const increment = () => count++;
 
 // main.mjs
-import { count, increment } from './counter.mjs';
+import { count, increment } from "./counter.mjs";
 console.log(count); // 0
 increment();
 console.log(count); // 1（live binding，反映最新值）
@@ -383,7 +407,7 @@ console.log(count); // 1（live binding，反映最新值）
 function promiseAll(promises) {
   return new Promise((resolve, reject) => {
     if (!Array.isArray(promises)) {
-      return reject(new TypeError('promises must be an array'));
+      return reject(new TypeError("promises must be an array"));
     }
 
     const results = [];
@@ -398,18 +422,16 @@ function promiseAll(promises) {
           results[index] = value;
           if (--remaining === 0) resolve(results);
         },
-        (reason) => reject(reason) // 任意一个 reject 立即 reject
+        (reason) => reject(reason), // 任意一个 reject 立即 reject
       );
     });
   });
 }
 
 // 测试
-promiseAll([
-  Promise.resolve(1),
-  Promise.resolve(2),
-  Promise.resolve(3),
-]).then(console.log); // [1, 2, 3]
+promiseAll([Promise.resolve(1), Promise.resolve(2), Promise.resolve(3)]).then(
+  console.log,
+); // [1, 2, 3]
 ```
 
 **关键点：** 用 `remaining` 计数器而非 `index === length - 1` 判断完成，因为异步操作完成顺序不确定。
@@ -423,7 +445,7 @@ promiseAll([
 ```js
 function deepClone(value, seen = new WeakMap()) {
   // 基本类型直接返回
-  if (value === null || typeof value !== 'object') return value;
+  if (value === null || typeof value !== "object") return value;
 
   // 处理循环引用
   if (seen.has(value)) return seen.get(value);
@@ -445,10 +467,15 @@ function deepClone(value, seen = new WeakMap()) {
   }
 
   // 处理数组和普通对象
-  const clone = Array.isArray(value) ? [] : Object.create(Object.getPrototypeOf(value));
+  const clone = Array.isArray(value)
+    ? []
+    : Object.create(Object.getPrototypeOf(value));
   seen.set(value, clone); // 先存入，再递归（处理循环引用）
 
-  for (const key of [...Object.keys(value), ...Object.getOwnPropertySymbols(value)]) {
+  for (const key of [
+    ...Object.keys(value),
+    ...Object.getOwnPropertySymbols(value),
+  ]) {
     clone[key] = deepClone(value[key], seen);
   }
 
@@ -494,15 +521,17 @@ function deepClone(value, seen = new WeakMap()) {
 ```
 
 **关键：**
+
 - `process.nextTick` 在当前操作完成后、进入下一阶段前执行（高于 Promise 微任务）
 - `setImmediate` 在 check 阶段执行，`setTimeout(fn, 0)` 在 timers 阶段执行
 
 **经典题目：**
+
 ```js
-setImmediate(() => console.log('setImmediate'));
-setTimeout(() => console.log('setTimeout'), 0);
-process.nextTick(() => console.log('nextTick'));
-Promise.resolve().then(() => console.log('promise'));
+setImmediate(() => console.log("setImmediate"));
+setTimeout(() => console.log("setTimeout"), 0);
+process.nextTick(() => console.log("nextTick"));
+Promise.resolve().then(() => console.log("promise"));
 
 // 输出：nextTick → promise → setTimeout/setImmediate（顺序不确定）
 ```
@@ -529,10 +558,10 @@ function curry(fn) {
 
 // 使用
 const add = curry((a, b, c) => a + b + c);
-add(1)(2)(3);   // 6
-add(1, 2)(3);   // 6
-add(1)(2, 3);   // 6
-add(1, 2, 3);   // 6
+add(1)(2)(3); // 6
+add(1, 2)(3); // 6
+add(1)(2, 3); // 6
+add(1, 2, 3); // 6
 
 // 实际应用：创建可复用的函数
 const multiply = curry((factor, num) => num * factor);
@@ -562,13 +591,14 @@ const handler = {
 };
 const proxy = new Proxy({}, handler);
 proxy.x = 1; // Setting x = 1
-proxy.x;     // Reading x
+proxy.x; // Reading x
 ```
 
 **Vue 3 响应式简化实现：**
+
 ```js
 const targetMap = new WeakMap(); // 存储依赖关系
-let activeEffect = null;          // 当前正在执行的 effect
+let activeEffect = null; // 当前正在执行的 effect
 
 function track(target, key) {
   if (!activeEffect) return;
@@ -624,7 +654,7 @@ gen.next(); // { value: undefined, done: true }
 
 // Generator 实现异步流程控制（async/await 的底层原理）
 function* asyncFlow() {
-  const user = yield fetch('/api/user');     // 暂停，等待 Promise
+  const user = yield fetch("/api/user"); // 暂停，等待 Promise
   const posts = yield fetch(`/api/posts/${user.id}`);
   return posts;
 }
@@ -649,24 +679,26 @@ function run(gen) {
 
 **参考答案：**
 
-| 特性 | Map/Set | WeakMap/WeakSet |
-|------|---------|-----------------|
-| 键类型 | 任意值 | 仅对象（WeakRef 支持 Symbol） |
-| 垃圾回收 | 强引用，阻止 GC | 弱引用，不阻止 GC |
-| 可迭代 | ✅ | ❌ |
-| size 属性 | ✅ | ❌ |
+| 特性      | Map/Set         | WeakMap/WeakSet               |
+| --------- | --------------- | ----------------------------- |
+| 键类型    | 任意值          | 仅对象（WeakRef 支持 Symbol） |
+| 垃圾回收  | 强引用，阻止 GC | 弱引用，不阻止 GC             |
+| 可迭代    | ✅              | ❌                            |
+| size 属性 | ✅              | ❌                            |
 
 **WeakMap 典型使用场景：**
 
 1. **存储 DOM 节点关联数据（节点删除后自动 GC）：**
+
 ```js
 const domData = new WeakMap();
-const button = document.querySelector('button');
+const button = document.querySelector("button");
 domData.set(button, { clickCount: 0 });
 // button 移除后，domData 中的数据自动被 GC，不会内存泄漏
 ```
 
 2. **私有数据（类的私有字段替代方案）：**
+
 ```js
 const _private = new WeakMap();
 class Person {
@@ -674,11 +706,14 @@ class Person {
     _private.set(this, { age }); // age 对外不可见
     this.name = name;
   }
-  getAge() { return _private.get(this).age; }
+  getAge() {
+    return _private.get(this).age;
+  }
 }
 ```
 
 3. **缓存计算结果（对象作为 key）：**
+
 ```js
 const cache = new WeakMap();
 function processData(obj) {
@@ -723,8 +758,8 @@ function throttle(fn, interval) {
 }
 
 // 使用场景
-window.addEventListener('resize', debounce(handleResize, 300)); // 防抖：窗口 resize 完毕后处理
-window.addEventListener('scroll', throttle(handleScroll, 100)); // 节流：滚动时每 100ms 处理一次
+window.addEventListener("resize", debounce(handleResize, 300)); // 防抖：窗口 resize 完毕后处理
+window.addEventListener("scroll", throttle(handleScroll, 100)); // 节流：滚动时每 100ms 处理一次
 ```
 
 ---
@@ -735,22 +770,24 @@ window.addEventListener('scroll', throttle(handleScroll, 100)); // 节流：滚�
 
 ```ts
 // 基础泛型
-function identity<T>(arg: T): T { return arg; }
+function identity<T>(arg: T): T {
+  return arg;
+}
 
 // extends 约束
 function getLength<T extends { length: number }>(arg: T): number {
   return arg.length; // 有了约束才能访问 .length
 }
-getLength('hello'); // 5
-getLength([1, 2]);  // 2
+getLength("hello"); // 5
+getLength([1, 2]); // 2
 
 // keyof 约束（常用于属性访问）
 function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
   return obj[key];
 }
-const user = { name: 'Alice', age: 30 };
-getProperty(user, 'name'); // string 类型
-getProperty(user, 'age');  // number 类型
+const user = { name: "Alice", age: 30 };
+getProperty(user, "name"); // string 类型
+getProperty(user, "age"); // number 类型
 // getProperty(user, 'email'); // ❌ 编译错误
 
 // 泛型工厂函数
@@ -774,6 +811,7 @@ type StringOnly<T> = T extends string ? T : never;
 每次调用函数时，JS 引擎创建一个**执行上下文（Execution Context）**，包含：
 
 **创建阶段（编译阶段）：**
+
 ```
 ExecutionContext = {
   VariableEnvironment: {     // 处理 var 声明和函数声明
@@ -790,11 +828,13 @@ ExecutionContext = {
 ```
 
 **执行阶段：**
+
 1. 按顺序执行代码
 2. 遇到 `let y = 1` → 初始化（TDZ 结束）
 3. 遇到函数调用 → 创建新的执行上下文，压栈
 
 **作用域链形成：**
+
 ```js
 function outer() {
   const x = 10;
@@ -814,6 +854,7 @@ function outer() {
 **参考答案：**
 
 **V8 引擎内存结构：**
+
 ```
 V8 堆内存
 ├── New Space（新生代，1-8MB）
@@ -827,6 +868,7 @@ V8 堆内存
 ```
 
 **新生代 GC（Scavenge / Minor GC）：**
+
 ```
 From Space 满时触发：
 1. 遍历 From Space 中存活的对象（根可达）
@@ -836,6 +878,7 @@ From Space 满时触发：
 ```
 
 **老生代 GC（Mark-Sweep-Compact / Major GC）：**
+
 ```
 1. Mark（标记）：从 GC Roots 开始，标记所有可达对象
 2. Sweep（清除）：清除未标记的死对象，释放内存
@@ -843,10 +886,11 @@ From Space 满时触发：
 ```
 
 **常见内存泄漏场景：**
+
 ```js
 // 1. 意外的全局变量
 function leak() {
-  forgotten = 'I am global'; // 没有 var/let/const
+  forgotten = "I am global"; // 没有 var/let/const
 }
 
 // 2. 被遗忘的定时器
@@ -866,8 +910,8 @@ function outer() {
 
 // 4. DOM 引用未清理
 const map = new Map();
-const el = document.getElementById('btn');
-map.set(el, 'data');
+const el = document.getElementById("btn");
+map.set(el, "data");
 document.body.removeChild(el); // DOM 已移除，但 Map 仍持有引用
 // 应使用 WeakMap 代替
 ```
@@ -881,8 +925,8 @@ document.body.removeChild(el); // DOM 已移除，但 Map 仍持有引用
 ```ts
 // 基础条件类型：T extends U ? X : Y
 type IsString<T> = T extends string ? true : false;
-type A = IsString<'hello'>; // true
-type B = IsString<42>;      // false
+type A = IsString<"hello">; // true
+type B = IsString<42>; // false
 
 // infer：在条件类型的 extends 子句中推断类型
 // 提取函数返回值类型（内置 ReturnType 的实现原理）
@@ -977,11 +1021,11 @@ class EventEmitter {
 // 测试
 const emitter = new EventEmitter();
 emitter
-  .on('data', (x) => console.log('Listener 1:', x))
-  .once('data', (x) => console.log('Once:', x));
+  .on("data", (x) => console.log("Listener 1:", x))
+  .once("data", (x) => console.log("Once:", x));
 
-emitter.emit('data', 42); // Listener 1: 42  |  Once: 42
-emitter.emit('data', 43); // Listener 1: 43  （once 已移除）
+emitter.emit("data", 42); // Listener 1: 42  |  Once: 42
+emitter.emit("data", 43); // Listener 1: 43  （once 已移除）
 ```
 
 ---
@@ -991,46 +1035,53 @@ emitter.emit('data', 43); // Listener 1: 43  （once 已移除）
 **参考答案：**
 
 **CommonJS 循环依赖（得到未完成的导出）：**
+
 ```js
 // a.js
-const b = require('./b');
-console.log('a gets b.value:', b.value); // undefined ← b 尚未执行完
-module.exports = { value: 'A' };
+const b = require("./b");
+console.log("a gets b.value:", b.value); // undefined ← b 尚未执行完
+module.exports = { value: "A" };
 
 // b.js
-const a = require('./a');
-console.log('b gets a.value:', a.value); // 'A' ← a 已缓存（部分）
-module.exports = { value: 'B' };
+const a = require("./a");
+console.log("b gets a.value:", a.value); // 'A' ← a 已缓存（部分）
+module.exports = { value: "B" };
 
 // main.js
-require('./a');
+require("./a");
 // 输出：b gets a.value: A → a gets b.value: undefined
 ```
 
 **ESM 循环依赖（live binding，但需注意初始化顺序）：**
+
 ```js
 // a.mjs
-import { b } from './b.mjs';
-export const a = 'A';
-console.log('a sees b:', b); // 取决于执行顺序
+import { b } from "./b.mjs";
+export const a = "A";
+console.log("a sees b:", b); // 取决于执行顺序
 
 // b.mjs
-import { a } from './a.mjs';
-export const b = 'B';
-console.log('b sees a:', a); // 取决于执行顺序
+import { a } from "./a.mjs";
+export const b = "B";
+console.log("b sees a:", a); // 取决于执行顺序
 ```
 
 **ESM 的解决方案：函数引用（惰性求值）：**
+
 ```js
 // a.mjs
-import { getB } from './b.mjs';
-export const a = 'A';
-export function getA() { return a; } // 函数在调用时才访问 b
+import { getB } from "./b.mjs";
+export const a = "A";
+export function getA() {
+  return a;
+} // 函数在调用时才访问 b
 
 // b.mjs
-import { getA } from './a.mjs';
-export const b = 'B';
-export function getB() { return b; }
+import { getA } from "./a.mjs";
+export const b = "B";
+export function getB() {
+  return b;
+}
 // 使用 getA() 而非直接访问 a，避免初始化顺序问题
 ```
 
@@ -1065,19 +1116,19 @@ function asyncToGenerator(generatorFn) {
 
         // 等待 yield 的 Promise，然后继续
         Promise.resolve(promise).then(
-          (val) => step('next', val),    // 成功 → 传入值继续
-          (err) => step('throw', err)    // 失败 → 抛入错误
+          (val) => step("next", val), // 成功 → 传入值继续
+          (err) => step("throw", err), // 失败 → 抛入错误
         );
       }
 
-      step('next', undefined); // 启动执行
+      step("next", undefined); // 启动执行
     });
   };
 }
 
 // 等价于 async function fetchData() { ... }
 const fetchData = asyncToGenerator(function* () {
-  const user = yield fetch('/api/user').then((r) => r.json());
+  const user = yield fetch("/api/user").then((r) => r.json());
   const posts = yield fetch(`/api/posts/${user.id}`).then((r) => r.json());
   return posts;
 });
@@ -1086,6 +1137,7 @@ fetchData().then(console.log).catch(console.error);
 ```
 
 **错误处理对应关系：**
+
 ```js
 // async/await
 async function fn() {
@@ -1113,6 +1165,7 @@ function* fn() {
 **参考答案：**
 
 **V8 编译流水线：**
+
 ```
 源代码
   ↓ 解析
@@ -1126,6 +1179,7 @@ function* fn() {
 ```
 
 **内联缓存（Inline Cache）：**
+
 ```js
 function add(obj) {
   return obj.x + obj.y; // V8 假设 obj 总是同一个"形状"（Hidden Class）
@@ -1141,11 +1195,12 @@ add(c); // ③ 形状不同 → 缓存 miss，退化为慢速查找（Megamorphi
 ```
 
 **触发反优化的常见原因：**
+
 ```js
 function badAdd(a, b) {
   return a + b; // V8 优化为整数加法
 }
-badAdd(1, 2);   // 整数，触发 JIT 优化
+badAdd(1, 2); // 整数，触发 JIT 优化
 badAdd(1.5, 2); // 浮点！违反假设 → 反优化
 
 // 对象形状变化导致反优化
@@ -1153,12 +1208,13 @@ function process(obj) {
   return obj.x;
 }
 const obj = {};
-obj.x = 1;       // 形状1：{x}
-process(obj);    // JIT 优化
-obj.y = 2;       // 形状2：{x, y}，已优化的代码需要反优化
+obj.x = 1; // 形状1：{x}
+process(obj); // JIT 优化
+obj.y = 2; // 形状2：{x, y}，已优化的代码需要反优化
 ```
 
 **编写 JIT 友好代码：**
+
 1. 保持对象形状一致（在构造函数中声明所有属性）
 2. 避免动态添加/删除属性（`delete obj.x` 触发形状变化）
 3. 保持数组元素类型一致（全整数 vs 混合浮点）
@@ -1191,7 +1247,7 @@ type StringOnly = PickByValue<{ a: string; b: number; c: string }, string>;
 
 // 模板字面量类型
 type EventName<T extends string> = `on${Capitalize<T>}`;
-type ClickEvent = EventName<'click'>; // 'onClick'
+type ClickEvent = EventName<"click">; // 'onClick'
 
 // 组合：从事件名映射到处理函数类型
 type EventMap = {

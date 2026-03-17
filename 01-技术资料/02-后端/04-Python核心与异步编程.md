@@ -3,10 +3,12 @@
 > 从 GIL 原理到 asyncio 事件循环，从内存模型到性能优化，深入理解 Python 运行时机制。AI Agent 全栈开发的基石语言。
 
 ## 相关链接
+
 - 对应面试题：[Python面试题](../../02-面试指南/02-后端面试/04-Python面试题.md)
 - 相关技术资料：[AI Agent全栈开发](../07-AI-Agent全栈开发/README.md)
 
 ## 目录
+
 1. [为什么深入理解 Python 运行时](#1-为什么深入理解-python-运行时)
 2. [Python 对象模型](#2-python-对象模型)
 3. [GIL（全局解释器锁）](#3-gil全局解释器锁)
@@ -37,6 +39,7 @@ Python 已经成为 AI 全栈开发的"通用语言"。从 PyTorch、TensorFlow 
 > **类比**：Python 像一位交响乐指挥家。指挥家自己不演奏任何乐器（计算不快），但他决定了整个乐团何时、以何种方式演奏（调度 C/CUDA 库高效执行）。一位优秀的指挥家可以让同一支乐团的表现天差地别——这就是为什么理解 Python 运行时如此重要。
 
 理解 Python 的运行时机制（GIL、内存管理、异步模型），可以帮助你：
+
 1. 在 AI 工程中做出正确的并发决策（何时用多进程、何时用 asyncio）
 2. 避免内存泄漏和性能陷阱
 3. 构建高吞吐的 AI 服务端应用
@@ -58,6 +61,7 @@ typedef struct {
 ```
 
 这意味着：
+
 - 每个对象都**自带引用计数**（`ob_refcnt`），用于垃圾回收
 - 每个对象都**知道自己的类型**（`ob_type`），支持运行时自省
 
@@ -79,12 +83,12 @@ print(type(type))          # <class 'type'>  — type 是自己的实例
 
 ### 2.2 可变 vs 不可变
 
-| 不可变 (Immutable) | 可变 (Mutable) |
-|-------------------|---------------|
+| 不可变 (Immutable)                                   | 可变 (Mutable)                     |
+| ---------------------------------------------------- | ---------------------------------- |
 | `int`, `float`, `str`, `tuple`, `frozenset`, `bytes` | `list`, `dict`, `set`, `bytearray` |
-| 修改 = 创建新对象 | 修改 = 原地修改 |
-| 可以作为 dict 的 key | 不能作为 dict 的 key |
-| 天然线程安全 | 需要加锁保护 |
+| 修改 = 创建新对象                                    | 修改 = 原地修改                    |
+| 可以作为 dict 的 key                                 | 不能作为 dict 的 key               |
+| 天然线程安全                                         | 需要加锁保护                       |
 
 ### 2.3 `is` vs `==`
 
@@ -164,6 +168,7 @@ print(sys.getsizeof(p1.__dict__))  # 104 字节（字典开销）
 根本原因：**引用计数的线程安全**。
 
 CPython 使用引用计数进行内存管理。每个对象的 `ob_refcnt` 需要在每次赋值、传参、删除时更新。如果多个线程同时修改同一个对象的引用计数，会导致：
+
 - 计数过低 → 提前释放 → 悬挂指针 → 段错误
 - 计数过高 → 内存泄漏
 
@@ -192,10 +197,10 @@ print(sys.getswitchinterval())  # 0.005 (5ms)
 
 ### 3.4 I/O 密集 vs CPU 密集
 
-| 场景 | GIL 影响 | 多线程效果 | 推荐方案 |
-|------|---------|-----------|---------|
-| **I/O 密集**（网络请求、文件读写、数据库） | 低——I/O 时释放 GIL | 有效加速 | threading / asyncio |
-| **CPU 密集**（数学计算、图像处理） | 高——GIL 串行化执行 | 无加速甚至更慢 | multiprocessing / C扩展 |
+| 场景                                       | GIL 影响           | 多线程效果     | 推荐方案                |
+| ------------------------------------------ | ------------------ | -------------- | ----------------------- |
+| **I/O 密集**（网络请求、文件读写、数据库） | 低——I/O 时释放 GIL | 有效加速       | threading / asyncio     |
+| **CPU 密集**（数学计算、图像处理）         | 高——GIL 串行化执行 | 无加速甚至更慢 | multiprocessing / C扩展 |
 
 ### 3.5 绕过 GIL 的方法
 
@@ -326,10 +331,10 @@ del a, b     # 引用计数仍为 1，无法回收！
 
 为此 Python 引入了**分代垃圾回收器** (Generational Garbage Collector)：
 
-| 代 | 触发频率 | 说明 |
-|----|---------|------|
-| Generation 0 | 最频繁 | 新创建的对象，存活后晋升到 Gen 1 |
-| Generation 1 | 较低频率 | 经过一次 Gen 0 回收后存活的对象 |
+| 代           | 触发频率 | 说明                               |
+| ------------ | -------- | ---------------------------------- |
+| Generation 0 | 最频繁   | 新创建的对象，存活后晋升到 Gen 1   |
+| Generation 1 | 较低频率 | 经过一次 Gen 0 回收后存活的对象    |
 | Generation 2 | 最低频率 | 长期存活的对象（如模块、全局变量） |
 
 > **类比**：引用计数 = 图书馆借阅卡（借完即还，实时回收）。分代 GC = 图书馆定期盘点（检查有没有借阅卡和实际数量对不上的"遗漏图书"，即循环引用）。新书区（Gen 0）每天盘点，老书区（Gen 2）每月盘点。
@@ -419,10 +424,10 @@ class Countdown:
     """手写迭代器：从 n 倒数到 1"""
     def __init__(self, n):
         self.n = n
-    
+
     def __iter__(self):
         return self
-    
+
     def __next__(self):
         if self.n <= 0:
             raise StopIteration
@@ -617,7 +622,7 @@ class CacheDecorator:
         self.func = func
         self.cache = {}
         functools.update_wrapper(self, func)
-    
+
     def __call__(self, *args):
         if args not in self.cache:
             self.cache[args] = self.func(*args)
@@ -642,15 +647,15 @@ class Validator:
     def __init__(self, min_val, max_val):
         self.min_val = min_val
         self.max_val = max_val
-    
+
     def __set_name__(self, owner, name):
         self.name = name
-    
+
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
         return getattr(obj, f'_{self.name}', None)
-    
+
     def __set__(self, obj, value):
         if not self.min_val <= value <= self.max_val:
             raise ValueError(f"{self.name} must be between {self.min_val} and {self.max_val}")
@@ -659,7 +664,7 @@ class Validator:
 class Product:
     price = Validator(0, 10000)
     quantity = Validator(0, 999)
-    
+
     def __init__(self, name, price, quantity):
         self.name = name
         self.price = price        # 触发 Validator.__set__
@@ -680,19 +685,19 @@ class MyProperty:
         self.fset = fset
         self.fdel = fdel
         self.__doc__ = doc
-    
+
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
         if self.fget is None:
             raise AttributeError("unreadable attribute")
         return self.fget(obj)
-    
+
     def __set__(self, obj, value):
         if self.fset is None:
             raise AttributeError("can't set attribute")
         self.fset(obj, value)
-    
+
     def setter(self, fset):
         return type(self)(self.fget, fset, self.fdel, self.__doc__)
 ```
@@ -738,11 +743,11 @@ while True:
 
 ### 7.3 核心概念：Coroutine / Task / Future
 
-| 概念 | 说明 | 创建方式 |
-|------|------|---------|
-| **Coroutine** | `async def` 定义的函数调用后返回协程对象 | `coro = async_func()` |
-| **Task** | 包装协程，让它在事件循环中调度执行 | `asyncio.create_task(coro)` |
-| **Future** | 表示一个尚未完成的异步操作的结果 | 通常由底层创建，用户很少直接用 |
+| 概念          | 说明                                     | 创建方式                       |
+| ------------- | ---------------------------------------- | ------------------------------ |
+| **Coroutine** | `async def` 定义的函数调用后返回协程对象 | `coro = async_func()`          |
+| **Task**      | 包装协程，让它在事件循环中调度执行       | `asyncio.create_task(coro)`    |
+| **Future**    | 表示一个尚未完成的异步操作的结果         | 通常由底层创建，用户很少直接用 |
 
 ```python
 import asyncio
@@ -757,7 +762,7 @@ async def main():
     # 创建 Task — 协程开始在事件循环中调度
     task1 = asyncio.create_task(say_hello("Alice", 2))
     task2 = asyncio.create_task(say_hello("Bob", 1))
-    
+
     # await 等待结果
     result1 = await task1  # "Alice"
     result2 = await task2  # "Bob"
@@ -793,13 +798,14 @@ async def main():
         task1 = tg.create_task(fetch("url1"))
         task2 = tg.create_task(fetch("url2"))
         task3 = tg.create_task(fetch("url3"))
-    
+
     # 所有任务完成后才退出 with 块
     # 任何任务异常 → 自动取消其他任务 → 抛出 ExceptionGroup
     results = [task1.result(), task2.result(), task3.result()]
 ```
 
 TaskGroup 的优势：
+
 - **结构化并发**：任务生命周期与 `with` 块绑定，不会"泄漏"
 - **异常安全**：一个任务失败会取消所有其他任务
 - **更好的错误追踪**：异常栈更清晰
@@ -818,18 +824,18 @@ async def fetch(session, url):
 
 async def main():
     urls = [f"https://api.example.com/item/{i}" for i in range(100)]
-    
+
     # 限制并发数为 10
     semaphore = asyncio.Semaphore(10)
-    
+
     async def bounded_fetch(session, url):
         async with semaphore:  # 最多 10 个协程同时进入
             return await fetch(session, url)
-    
+
     async with aiohttp.ClientSession() as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [tg.create_task(bounded_fetch(session, url)) for url in urls]
-        
+
         results = [t.result() for t in tasks]
         print(f"Fetched {len(results)} items")
 
@@ -844,7 +850,7 @@ class AsyncDBConnection:
     async def __aenter__(self):
         self.conn = await create_connection()
         return self.conn
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.conn.close()
 
@@ -855,10 +861,10 @@ async with AsyncDBConnection() as conn:
 class AsyncLineReader:
     def __init__(self, file_path):
         self.file_path = file_path
-    
+
     def __aiter__(self):
         return self
-    
+
     async def __anext__(self):
         line = await self.reader.readline()
         if not line:
@@ -901,15 +907,15 @@ async def another_good():
 
 ### 8.1 四种并发方案
 
-| 维度 | threading | multiprocessing | asyncio | concurrent.futures |
-|------|-----------|----------------|---------|-------------------|
-| **并发类型** | 多线程 | 多进程 | 协程 | 线程池/进程池 |
-| **GIL 影响** | 受限（CPU 密集无效） | 不受限（独立 GIL） | 无影响（单线程） | 取决于 Executor |
-| **内存开销** | 中（~8MB/线程栈） | 高（完整进程副本） | 极低（~KB/协程） | 中 |
-| **适合任务** | I/O 密集 | CPU 密集 | 大量 I/O 密集 | 混合型 |
-| **共享状态** | 容易（但需要锁） | 困难（需 Queue/Pipe） | 天然安全（单线程） | 隔离 |
-| **调试难度** | 高（死锁、竞争） | 中 | 低（确定性调度） | 中 |
-| **启动成本** | 低 | 高（fork/spawn） | 极低 | 中 |
+| 维度         | threading            | multiprocessing       | asyncio            | concurrent.futures |
+| ------------ | -------------------- | --------------------- | ------------------ | ------------------ |
+| **并发类型** | 多线程               | 多进程                | 协程               | 线程池/进程池      |
+| **GIL 影响** | 受限（CPU 密集无效） | 不受限（独立 GIL）    | 无影响（单线程）   | 取决于 Executor    |
+| **内存开销** | 中（~8MB/线程栈）    | 高（完整进程副本）    | 极低（~KB/协程）   | 中                 |
+| **适合任务** | I/O 密集             | CPU 密集              | 大量 I/O 密集      | 混合型             |
+| **共享状态** | 容易（但需要锁）     | 困难（需 Queue/Pipe） | 天然安全（单线程） | 隔离               |
+| **调试难度** | 高（死锁、竞争）     | 中                    | 低（确定性调度）   | 中                 |
+| **启动成本** | 低                   | 高（fork/spawn）      | 极低               | 中                 |
 
 ### 8.2 选择指南
 
@@ -938,7 +944,7 @@ def cpu_heavy(data):
 
 async def main():
     loop = asyncio.get_event_loop()
-    
+
     # 在异步代码中调用 CPU 密集函数 → 卸载到进程池
     with ProcessPoolExecutor() as pool:
         result = await loop.run_in_executor(
@@ -965,6 +971,7 @@ FastAPI
 ```
 
 **ASGI vs WSGI**：
+
 - WSGI (Flask/Django)：同步协议，一个请求占一个线程
 - ASGI (FastAPI/Starlette)：异步协议，一个线程处理数千请求
 
@@ -1054,6 +1061,7 @@ async def stream_response():
 ### 9.4 OpenAPI 自动文档
 
 FastAPI 根据类型注解自动生成 OpenAPI（Swagger）文档：
+
 - `/docs` — Swagger UI 交互式文档
 - `/redoc` — ReDoc 文档
 - `/openapi.json` — OpenAPI 规范 JSON
@@ -1066,11 +1074,11 @@ FastAPI 根据类型注解自动生成 OpenAPI（Swagger）文档：
 
 ### 10.1 版本特性对比
 
-| 版本 | 发布日期 | 关键特性 |
-|------|---------|---------|
-| **3.12** | 2023.10 | Per-interpreter GIL / f-string 嵌套 / `type` 语法 / 更快 15% |
-| **3.13** | 2024.10 | Free-threaded (no GIL) 实验 / JIT 编译器 (copy-and-patch) |
-| **3.14** | 2025.10 | 模板字符串 (PEP 750) / 更快的 JIT / 延迟注解 (PEP 649) |
+| 版本     | 发布日期 | 关键特性                                                     |
+| -------- | -------- | ------------------------------------------------------------ |
+| **3.12** | 2023.10  | Per-interpreter GIL / f-string 嵌套 / `type` 语法 / 更快 15% |
+| **3.13** | 2024.10  | Free-threaded (no GIL) 实验 / JIT 编译器 (copy-and-patch)    |
+| **3.14** | 2025.10  | 模板字符串 (PEP 750) / 更快的 JIT / 延迟注解 (PEP 649)       |
 
 ### 10.2 Python 3.12: Per-interpreter GIL
 
@@ -1100,11 +1108,13 @@ PYTHON_GIL=0 python3.13t script.py
 ```
 
 引用计数的线程安全通过以下技术替代 GIL：
+
 - **偏向引用计数 (Biased Reference Counting)**：本线程引用不加锁
 - **延迟引用计数 (Deferred Reference Counting)**：全局对象的引用计数推迟处理
 - **无锁数据结构**：dict、list 等内置类型使用细粒度锁
 
 影响：
+
 - C 扩展需要适配（numpy 等大库已在适配中）
 - 性能在单线程场景下略有退化（~5-10%）
 - 多线程 CPU 密集任务获得真正线性加速
@@ -1138,15 +1148,16 @@ class Node:
 
 ### 11.1 选择正确的数据结构
 
-| 操作 | list | deque | set | dict |
-|------|------|-------|-----|------|
-| 随机访问 `a[i]` | O(1) | O(n) | — | O(1) |
-| 头部插入/删除 | O(n) | **O(1)** | — | — |
-| 尾部插入/删除 | O(1) | O(1) | — | — |
-| 成员检测 `x in a` | O(n) | O(n) | **O(1)** | **O(1)** |
-| 排序 | O(n log n) | O(n log n) | — | — |
+| 操作              | list       | deque      | set      | dict     |
+| ----------------- | ---------- | ---------- | -------- | -------- |
+| 随机访问 `a[i]`   | O(1)       | O(n)       | —        | O(1)     |
+| 头部插入/删除     | O(n)       | **O(1)**   | —        | —        |
+| 尾部插入/删除     | O(1)       | O(1)       | —        | —        |
+| 成员检测 `x in a` | O(n)       | O(n)       | **O(1)** | **O(1)** |
+| 排序              | O(n log n) | O(n log n) | —        | —        |
 
 **规则**：
+
 - 需要频繁 `in` 检测 → 用 `set` 代替 `list`
 - 需要双端队列 → 用 `collections.deque`
 - 需要有序字典 → Python 3.7+ `dict` 已保持插入顺序
@@ -1230,13 +1241,13 @@ print(sys.getsizeof(s))                                # ~64 bytes
 
 ## 总结
 
-| 主题 | 核心要点 |
-|------|---------|
-| 对象模型 | 一切皆对象（PyObject），`is` 检查 identity，`==` 检查 equality |
-| GIL | 同一时刻只有一个线程执行字节码；绕过：multiprocessing/C扩展/asyncio |
-| 内存管理 | 引用计数(实时) + 分代GC(循环引用) + pymalloc(小对象池) |
-| 生成器 | yield 惰性求值，省内存，适合流式处理 |
-| 装饰器 | 闭包 + 高阶函数，@语法糖 = func(wrapper) |
-| asyncio | 事件循环 + 协程，单线程处理大量 I/O（AI 服务端首选） |
-| FastAPI | ASGI + Pydantic，现代 Python Web 框架 |
-| 3.13+ | Free-threaded(无 GIL) + JIT 编译器 |
+| 主题     | 核心要点                                                            |
+| -------- | ------------------------------------------------------------------- |
+| 对象模型 | 一切皆对象（PyObject），`is` 检查 identity，`==` 检查 equality      |
+| GIL      | 同一时刻只有一个线程执行字节码；绕过：multiprocessing/C扩展/asyncio |
+| 内存管理 | 引用计数(实时) + 分代GC(循环引用) + pymalloc(小对象池)              |
+| 生成器   | yield 惰性求值，省内存，适合流式处理                                |
+| 装饰器   | 闭包 + 高阶函数，@语法糖 = func(wrapper)                            |
+| asyncio  | 事件循环 + 协程，单线程处理大量 I/O（AI 服务端首选）                |
+| FastAPI  | ASGI + Pydantic，现代 Python Web 框架                               |
+| 3.13+    | Free-threaded(无 GIL) + JIT 编译器                                  |

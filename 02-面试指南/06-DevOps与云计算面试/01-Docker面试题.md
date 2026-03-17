@@ -21,18 +21,18 @@
 
 > 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|----------|
-| 1 | 容器 vs 虚拟机 | 容器共享内核(Namespace隔离)，VM独立内核(Hypervisor) | ★★★★★ |
-| 2 | Namespace 隔离 | PID/NET/MNT/UTS/IPC/USER 六种隔离 | ★★★★★ |
-| 3 | 镜像分层与缓存 | OverlayFS CoW，dockerfile 指令顺序影响缓存 | ★★★★☆ |
-| 4 | Cgroups 资源限制 | cpu/memory/pids 限制，v2统一层级 | ★★★★☆ |
-| 5 | 多阶段构建 | 减小镜像体积，编译环境与运行环境分离 | ★★★★☆ |
-| 6 | 网络模式 | bridge(默认)/host(共享网络)/overlay(跨主机)/macvlan | ★★★★☆ |
-| 7 | 容器安全 | 非root运行/Capabilities最小化/seccomp/AppArmor | ★★★☆☆ |
-| 8 | Docker Compose | 多容器编排，depends_on + healthcheck | ★★★★☆ |
-| 9 | 数据持久化 | volume(推荐)/bind mount/tmpfs | ★★★★☆ |
-| 10 | 镜像优化 | distroless/alpine/多阶段/.dockerignore/层合并 | ★★★☆☆ |
+| #   | 考点             | 核心要点（一句话）                                  | 出题概率 |
+| --- | ---------------- | --------------------------------------------------- | -------- |
+| 1   | 容器 vs 虚拟机   | 容器共享内核(Namespace隔离)，VM独立内核(Hypervisor) | ★★★★★    |
+| 2   | Namespace 隔离   | PID/NET/MNT/UTS/IPC/USER 六种隔离                   | ★★★★★    |
+| 3   | 镜像分层与缓存   | OverlayFS CoW，dockerfile 指令顺序影响缓存          | ★★★★☆    |
+| 4   | Cgroups 资源限制 | cpu/memory/pids 限制，v2统一层级                    | ★★★★☆    |
+| 5   | 多阶段构建       | 减小镜像体积，编译环境与运行环境分离                | ★★★★☆    |
+| 6   | 网络模式         | bridge(默认)/host(共享网络)/overlay(跨主机)/macvlan | ★★★★☆    |
+| 7   | 容器安全         | 非root运行/Capabilities最小化/seccomp/AppArmor      | ★★★☆☆    |
+| 8   | Docker Compose   | 多容器编排，depends_on + healthcheck                | ★★★★☆    |
+| 9   | 数据持久化       | volume(推荐)/bind mount/tmpfs                       | ★★★★☆    |
+| 10  | 镜像优化         | distroless/alpine/多阶段/.dockerignore/层合并       | ★★★☆☆    |
 
 ---
 
@@ -44,13 +44,13 @@
 
 **答**：
 
-| 维度       | 容器                       | 虚拟机                   |
-|------------|----------------------------|--------------------------|
-| 隔离机制   | Linux Namespace（进程级）  | Hypervisor（硬件级）     |
-| 内核       | 共享宿主机内核             | 独立 Guest OS 内核       |
-| 启动时间   | 毫秒级                     | 秒~分钟级                |
-| 资源开销   | MB 级（无 Guest OS）       | GB 级                    |
-| 安全隔离   | 较弱（共享内核）           | 强（完全隔离）           |
+| 维度     | 容器                      | 虚拟机               |
+| -------- | ------------------------- | -------------------- |
+| 隔离机制 | Linux Namespace（进程级） | Hypervisor（硬件级） |
+| 内核     | 共享宿主机内核            | 独立 Guest OS 内核   |
+| 启动时间 | 毫秒级                    | 秒~分钟级            |
+| 资源开销 | MB 级（无 Guest OS）      | GB 级                |
+| 安全隔离 | 较弱（共享内核）          | 强（完全隔离）       |
 
 容器本质是**宿主机上的一组被隔离的进程**，通过 Namespace 提供资源视图隔离，通过 Cgroups 提供资源限制，通过 OverlayFS 提供文件系统隔离。虚拟机则是在 Hypervisor 之上运行完整的操作系统。
 
@@ -78,10 +78,10 @@
 
 **答**：
 
-| 指令 | 功能                         | 推荐场景                   |
-|------|------------------------------|----------------------------|
-| COPY | 单纯复制文件/目录到镜像      | 绝大多数场景（推荐）        |
-| ADD  | 复制 + 支持 URL 下载 + 自动解压 tar | 仅在需要自动解压时使用  |
+| 指令 | 功能                                | 推荐场景               |
+| ---- | ----------------------------------- | ---------------------- |
+| COPY | 单纯复制文件/目录到镜像             | 绝大多数场景（推荐）   |
+| ADD  | 复制 + 支持 URL 下载 + 自动解压 tar | 仅在需要自动解压时使用 |
 
 **最佳实践**：优先用 `COPY`，因为行为透明可预期。`ADD` 的自动解压和 URL 下载功能容易产生意外行为，且不利于层缓存（URL 内容变化无法被缓存检测到）。
 
@@ -139,11 +139,11 @@ $ docker run -P nginx            # 自动映射所有 EXPOSE 端口
 
 Docker 提供三种数据持久化方式：
 
-| 类型           | 声明方式                     | 数据位置                              | 适用场景                   |
-|----------------|------------------------------|---------------------------------------|----------------------------|
-| Named Volume   | `-v pgdata:/var/lib/pgsql`   | `/var/lib/docker/volumes/pgdata/`     | 生产数据持久化（推荐）     |
-| Bind Mount     | `-v /host/path:/container`   | 宿主机任意路径                         | 开发热重载、配置文件注入   |
-| tmpfs Mount    | `--tmpfs /tmp`               | 内存（重启消失）                       | 敏感临时数据、提升性能     |
+| 类型         | 声明方式                   | 数据位置                          | 适用场景                 |
+| ------------ | -------------------------- | --------------------------------- | ------------------------ |
+| Named Volume | `-v pgdata:/var/lib/pgsql` | `/var/lib/docker/volumes/pgdata/` | 生产数据持久化（推荐）   |
+| Bind Mount   | `-v /host/path:/container` | 宿主机任意路径                    | 开发热重载、配置文件注入 |
+| tmpfs Mount  | `--tmpfs /tmp`             | 内存（重启消失）                  | 敏感临时数据、提升性能   |
 
 ```bash
 # Named Volume（Docker 管理，跨容器共享）
@@ -198,6 +198,7 @@ overlay2 基于 Linux OverlayFS 实现镜像分层存储，涉及四个关键目
 - **merged**：将 lowerdir + upperdir 合并后呈现给容器的统一视图。
 
 **写时复制（Copy-on-Write）流程**：
+
 1. **读文件**：从 merged 视图读取，内核按 upperdir → lowerdir 顺序查找，找到即返回。不实际复制文件，直接访问。
 2. **写文件**：
    - 若文件在 upperdir 中存在，直接修改。
@@ -243,6 +244,7 @@ $ docker run -d --name app --network appnet myapp
 **答**：
 
 **多阶段构建优势**：
+
 1. **镜像体积大幅减小**：编译器、测试框架、构建工具不进入生产镜像（Go 应用可从 800MB→8MB）。
 2. **安全攻击面减小**：生产镜像无 shell、无包管理器，大幅减少可利用的漏洞。
 3. **构建环境与运行环境分离**：可以使用包含完整工具链的构建镜像，同时保持生产镜像极简。
@@ -316,7 +318,7 @@ services:
   app:
     depends_on:
       db:
-        condition: service_healthy  # 等待 db 健康检查通过
+        condition: service_healthy # 等待 db 健康检查通过
 ```
 
 ---
@@ -329,14 +331,14 @@ BuildKit 是 Docker 18.09+ 引入的新一代构建引擎，Docker 23.0+ 已默�
 
 **核心优势**：
 
-| 特性                   | 传统 builder        | BuildKit                          |
-|------------------------|---------------------|-----------------------------------|
-| 并发构建               | 串行                | 并行（DAG 依赖分析）              |
-| 缓存挂载               | 不支持              | `--mount=type=cache`（持久缓存）  |
-| 跨平台构建             | 不支持              | `--platform linux/amd64,arm64`    |
-| Secret 传递            | 只能通过 ARG（不安全）| `--secret`（不进入镜像层）       |
-| SSH 转发               | 不支持              | `--ssh`（私有仓库克隆）           |
-| 构建缓存导出           | 不支持              | `--cache-to/from registry`        |
+| 特性         | 传统 builder           | BuildKit                         |
+| ------------ | ---------------------- | -------------------------------- |
+| 并发构建     | 串行                   | 并行（DAG 依赖分析）             |
+| 缓存挂载     | 不支持                 | `--mount=type=cache`（持久缓存） |
+| 跨平台构建   | 不支持                 | `--platform linux/amd64,arm64`   |
+| Secret 传递  | 只能通过 ARG（不安全） | `--secret`（不进入镜像层）       |
+| SSH 转发     | 不支持                 | `--ssh`（私有仓库克隆）          |
+| 构建缓存导出 | 不支持                 | `--cache-to/from registry`       |
 
 ```dockerfile
 # BuildKit 特性示例
@@ -362,16 +364,16 @@ $ DOCKER_BUILDKIT=1 docker build --secret id=npmrc,src=.npmrc .
 
 **答**：
 
-| Namespace | 隔离内容                                        | 内核版本 | Docker 使用 |
-|-----------|-------------------------------------------------|----------|-------------|
-| PID       | 进程 ID 空间，容器内 PID=1 与宿主机隔离         | 3.8      | ✅ 默认启用  |
-| NET       | 网络栈（网卡、IP、路由、iptables）               | 2.6.24   | ✅ 默认启用  |
-| MNT       | 文件系统挂载点视图                              | 2.4.19   | ✅ 默认启用  |
-| UTS       | hostname 和 domainname                          | 2.6.19   | ✅ 默认启用  |
-| IPC       | System V IPC 和 POSIX 消息队列                  | 2.6.19   | ✅ 默认启用  |
-| USER      | 用户 ID 和组 ID 映射（rootless 容器的基础）      | 3.8      | ⚠️ 需配置    |
-| Cgroup    | Cgroup 根目录视图（容器内看不到宿主机 cgroup 树）| 4.6      | ✅ 默认启用  |
-| Time      | 时钟偏移（CLOCK_MONOTONIC / BOOTTIME）          | 5.6      | ❌ 不使用    |
+| Namespace | 隔离内容                                          | 内核版本 | Docker 使用 |
+| --------- | ------------------------------------------------- | -------- | ----------- |
+| PID       | 进程 ID 空间，容器内 PID=1 与宿主机隔离           | 3.8      | ✅ 默认启用 |
+| NET       | 网络栈（网卡、IP、路由、iptables）                | 2.6.24   | ✅ 默认启用 |
+| MNT       | 文件系统挂载点视图                                | 2.4.19   | ✅ 默认启用 |
+| UTS       | hostname 和 domainname                            | 2.6.19   | ✅ 默认启用 |
+| IPC       | System V IPC 和 POSIX 消息队列                    | 2.6.19   | ✅ 默认启用 |
+| USER      | 用户 ID 和组 ID 映射（rootless 容器的基础）       | 3.8      | ⚠️ 需配置   |
+| Cgroup    | Cgroup 根目录视图（容器内看不到宿主机 cgroup 树） | 4.6      | ✅ 默认启用 |
+| Time      | 时钟偏移（CLOCK_MONOTONIC / BOOTTIME）            | 5.6      | ❌ 不使用   |
 
 **关键细节**：
 
@@ -415,16 +417,19 @@ $ docker info | grep "Cgroup Version"
 容器供应链安全需要覆盖镜像的**构建、存储、分发、运行**全链路：
 
 **1. 构建阶段**
+
 - 使用官方基础镜像，固定精确标签（`python:3.11.8-slim-bookworm`），不用 `latest`。
 - 启用 BuildKit `--secret` 避免密钥泄露到镜像层。
 - 在 CI 中集成 Trivy/Snyk 扫描，发现 CRITICAL 漏洞阻断流水线。
 - 使用多阶段构建 + distroless/scratch，最小化运行时攻击面。
 
 **2. 存储阶段**
+
 - 启用私有仓库（Harbor / ECR / GCR），避免使用未经审核的公共镜像。
 - 启用仓库镜像扫描（Harbor + Trivy 集成）。
 
 **3. 分发阶段（镜像签名）**
+
 ```bash
 # Cosign（Sigstore）对镜像进行无密钥签名
 $ cosign sign --key cosign.key myregistry/myapp:v1.0
@@ -436,11 +441,13 @@ $ notation sign myregistry/myapp:v1.0
 ```
 
 **4. 运行阶段**
+
 - Kubernetes 中配置 Admission Controller（Kyverno / OPA Gatekeeper）验证镜像签名。
 - 只允许来自受信任仓库的镜像（ImagePolicyWebhook）。
 - 启用 seccomp / AppArmor / Capabilities 限制运行时权限。
 
 **5. SBOM（软件物料清单）**
+
 ```bash
 # 生成 SBOM
 $ trivy image --format spdx-json --output sbom.json myapp:v1.0
@@ -457,6 +464,7 @@ $ syft myapp:v1.0 -o spdx-json > sbom.json
 **PID 1 的特殊性**：
 
 在 Linux 中，PID 1（init 进程）有以下特殊行为：
+
 1. **僵尸进程回收**：普通进程退出后父进程需调用 `wait()` 回收，否则成为僵尸。若父进程已退出，孤儿进程会被 reparent 到 PID 1，由 PID 1 负责回收。
 2. **信号处理**：Linux 内核对 PID 1 特殊对待 —— **未注册处理函数的信号会被忽略**（包括 `SIGTERM`）。这意味着 `docker stop` 发送的 `SIGTERM` 可能被容器内的 PID 1 进程忽略，导致等待 10s 超时后强制 `SIGKILL`。
 
@@ -487,10 +495,10 @@ $ docker run --init myapp
 **正确实现信号处理（Node.js 示例）**：
 
 ```javascript
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, graceful shutdown...');
-  await server.close();        // 停止接受新连接
-  await db.disconnect();       // 关闭数据库连接
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM received, graceful shutdown...");
+  await server.close(); // 停止接受新连接
+  await db.disconnect(); // 关闭数据库连接
   process.exit(0);
 });
 ```
@@ -607,7 +615,7 @@ jobs:
           image-ref: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
           format: sarif
           output: trivy-results.sarif
-          exit-code: 1               # CRITICAL 漏洞阻断流水线
+          exit-code: 1 # CRITICAL 漏洞阻断流水线
           severity: CRITICAL,HIGH
 
       # 7. 上传扫描结果到 GitHub Security
@@ -728,6 +736,7 @@ $ sudo iptables -t nat -L POSTROUTING -n
 ---
 
 > **延伸阅读**
+>
 > - 对应技术资料：[Docker 与容器化技术](../../01-技术资料/06-DevOps与云计算/01-Docker与容器化技术.md)
 > - [Linux Namespace 内核文档](https://www.kernel.org/doc/html/latest/admin-guide/namespaces/compatibility-list.html)
 > - [Cgroups v2 内核文档](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html)

@@ -3,24 +3,26 @@
 > 覆盖 Python 运行时机制、GIL、异步编程、内存管理的高频面试题。AI 工程师必备。
 
 ## 相关链接
+
 - 对应技术资料：[Python核心与异步编程](../../01-技术资料/02-后端/04-Python核心与异步编程.md)
 
 ## 🔥 高频考点速记
 
-| # | 考点 | 核心要点（一句话） | 出题概率 |
-|---|------|-------------------|---------|
-| 1 | GIL | 同一时刻只有一个线程执行字节码，绕过方法:多进程/C扩展/asyncio | ★★★★★ |
-| 2 | 装饰器 | 闭包+高阶函数，@语法糖=func(wrapper)，functools.wraps保留元信息 | ★★★★★ |
-| 3 | 生成器 | yield暂停/恢复执行上下文，惰性求值省内存 | ★★★★★ |
-| 4 | asyncio | 事件循环+协程调度，I/O密集的最佳方案 | ★★★★★ |
-| 5 | 深拷贝 vs 浅拷贝 | copy()=共享嵌套对象，deepcopy()=递归复制 | ★★★★☆ |
-| 6 | 可变参数 | *args(元组)/**kwargs(字典)，默认参数陷阱(可变默认值) | ★★★★☆ |
-| 7 | 内存管理 | 引用计数(实时)+分代GC(循环引用)，pymalloc小对象池 | ★★★★☆ |
-| 8 | 元类 | type是所有类的元类，__new__控制类创建过程 | ★★★☆☆ |
-| 9 | 上下文管理器 | __enter__/__exit__，with语句资源管理 | ★★★★☆ |
-| 10 | Python 3.12+ | Per-interpreter GIL / Free-threaded(3.13) / JIT编译器 | ★★★☆☆ |
+| #   | 考点             | 核心要点（一句话）                                              | 出题概率 |
+| --- | ---------------- | --------------------------------------------------------------- | -------- |
+| 1   | GIL              | 同一时刻只有一个线程执行字节码，绕过方法:多进程/C扩展/asyncio   | ★★★★★    |
+| 2   | 装饰器           | 闭包+高阶函数，@语法糖=func(wrapper)，functools.wraps保留元信息 | ★★★★★    |
+| 3   | 生成器           | yield暂停/恢复执行上下文，惰性求值省内存                        | ★★★★★    |
+| 4   | asyncio          | 事件循环+协程调度，I/O密集的最佳方案                            | ★★★★★    |
+| 5   | 深拷贝 vs 浅拷贝 | copy()=共享嵌套对象，deepcopy()=递归复制                        | ★★★★☆    |
+| 6   | 可变参数         | \*args(元组)/\*\*kwargs(字典)，默认参数陷阱(可变默认值)         | ★★★★☆    |
+| 7   | 内存管理         | 引用计数(实时)+分代GC(循环引用)，pymalloc小对象池               | ★★★★☆    |
+| 8   | 元类             | type是所有类的元类，**new**控制类创建过程                       | ★★★☆☆    |
+| 9   | 上下文管理器     | **enter**/**exit**，with语句资源管理                            | ★★★★☆    |
+| 10  | Python 3.12+     | Per-interpreter GIL / Free-threaded(3.13) / JIT编译器           | ★★★☆☆    |
 
 ## 目录
+
 - [⭐ 基础题 (Q1-Q10)](#-基础题-q1-q10)
 - [⭐⭐ 进阶题 (Q11-Q20)](#-进阶题-q11-q20)
 - [⭐⭐⭐ 高级题 (Q21-Q25)](#-高级题-q21-q25)
@@ -70,12 +72,12 @@ print(x is y)  # False — 超出缓存（交互模式下）
 
 **参考答案**：
 
-| 维度 | 列表推导式 `[...]` | 生成器表达式 `(...)` |
-|------|-------------------|---------------------|
-| 返回类型 | `list` | `generator` 对象 |
-| 内存占用 | 一次性分配全部元素 | 按需生成，内存恒定 |
-| 遍历次数 | 可多次遍历 | 只能遍历一次 |
-| 速度 | 单次使用略慢（分配内存） | 单次使用略快 |
+| 维度     | 列表推导式 `[...]`       | 生成器表达式 `(...)` |
+| -------- | ------------------------ | -------------------- |
+| 返回类型 | `list`                   | `generator` 对象     |
+| 内存占用 | 一次性分配全部元素       | 按需生成，内存恒定   |
+| 遍历次数 | 可多次遍历               | 只能遍历一次         |
+| 速度     | 单次使用略慢（分配内存） | 单次使用略快         |
 
 ```python
 import sys
@@ -195,12 +197,12 @@ e = copy.copy(a)   # copy 模块
 ```python
 def make_counter(start=0):
     count = start
-    
+
     def counter():
         nonlocal count  # 引用外部变量
         count += 1
         return count
-    
+
     return counter  # 外部函数返回，但 count 不会被回收
 
 c = make_counter(10)
@@ -213,6 +215,7 @@ print(c.__closure__[0].cell_contents)  # 13
 ```
 
 **闭包三要素**：
+
 1. 存在嵌套函数
 2. 内部函数引用了外部函数的变量（自由变量）
 3. 外部函数返回内部函数
@@ -243,23 +246,23 @@ print([f() for f in funcs])  # [0, 1, 2]
 
 Python 按照 **LEGB** 规则查找变量：
 
-| 缩写 | 作用域 | 说明 |
-|------|--------|------|
-| **L** | Local | 函数/方法内部 |
-| **E** | Enclosing | 外层嵌套函数（闭包） |
-| **G** | Global | 模块级别 |
-| **B** | Built-in | Python 内置（`print`, `len` 等） |
+| 缩写  | 作用域    | 说明                             |
+| ----- | --------- | -------------------------------- |
+| **L** | Local     | 函数/方法内部                    |
+| **E** | Enclosing | 外层嵌套函数（闭包）             |
+| **G** | Global    | 模块级别                         |
+| **B** | Built-in  | Python 内置（`print`, `len` 等） |
 
 ```python
 x = "global"  # G
 
 def outer():
     x = "enclosing"  # E
-    
+
     def inner():
         x = "local"  # L
         print(x)     # → "local"
-    
+
     inner()
 
 outer()
@@ -353,10 +356,10 @@ def call_api(url):                # decorator(call_api) 返回 wrapper
 
 **参考答案**：
 
-| 方法 | 调用时机 | 参数 | 返回值 | 作用 |
-|------|---------|------|--------|------|
-| `__new__` | **创建**实例 | `cls`（类） | 必须返回实例 | 分配内存，创建对象 |
-| `__init__` | **初始化**实例 | `self`（实例） | 返回 None | 设置属性值 |
+| 方法       | 调用时机       | 参数           | 返回值       | 作用               |
+| ---------- | -------------- | -------------- | ------------ | ------------------ |
+| `__new__`  | **创建**实例   | `cls`（类）    | 必须返回实例 | 分配内存，创建对象 |
+| `__init__` | **初始化**实例 | `self`（实例） | 返回 None    | 设置属性值         |
 
 调用顺序：`obj = MyClass()` → 先调用 `__new__` 创建实例 → 再调用 `__init__` 初始化实例。
 
@@ -364,12 +367,12 @@ def call_api(url):                # decorator(call_api) 返回 wrapper
 class Singleton:
     """单例模式：通过 __new__ 控制实例创建"""
     _instance = None
-    
+
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self, name):
         self.name = name
 
@@ -380,6 +383,7 @@ print(a.name)    # "Bob" — __init__ 被调用两次
 ```
 
 **关键区别**：
+
 - `__new__` 是**类方法**（虽然不用 @classmethod 修饰）
 - `__new__` 可以返回其他类的实例（不触发 `__init__`）
 - 不可变类型（int, str, tuple）必须用 `__new__` 自定义，因为它们在创建后不可修改
@@ -392,8 +396,8 @@ print(a.name)    # "Bob" — __init__ 被调用两次
 
 **参考答案**：
 
-| 不可变 (Immutable) | 可变 (Mutable) |
-|-------------------|---------------|
+| 不可变 (Immutable)                                           | 可变 (Mutable)                     |
+| ------------------------------------------------------------ | ---------------------------------- |
 | `int`, `float`, `bool`, `str`, `tuple`, `frozenset`, `bytes` | `list`, `dict`, `set`, `bytearray` |
 
 **影响**：
@@ -476,19 +480,20 @@ print(append_to(2))  # [2] ✅
 **为什么需要 GIL**：CPython 使用引用计数管理内存，每个对象都有 `ob_refcnt`。多线程同时修改引用计数会导致数据竞争——计数错误可能导致内存泄漏或悬挂指针。GIL 是最简单的保护方式。
 
 **GIL 的行为**：
+
 - Python 3.2+ 基于时间切换，默认每 5ms 释放一次（`sys.getswitchinterval()`）
 - I/O 操作时自动释放 GIL
 - C 扩展可以显式释放 GIL（`Py_BEGIN_ALLOW_THREADS`）
 
 **绕过方案**：
 
-| 方案 | 适用场景 | 原理 |
-|------|---------|------|
-| `multiprocessing` | CPU 密集 | 每个进程有独立 GIL |
-| C 扩展 (NumPy) | 数值计算 | C 层释放 GIL |
-| `asyncio` | I/O 密集 | 单线程协程，不涉及 GIL |
-| `concurrent.futures` | 混合场景 | ThreadPool / ProcessPool 统一接口 |
-| Free-threaded (3.13+) | 实验性 | 彻底移除 GIL |
+| 方案                  | 适用场景 | 原理                              |
+| --------------------- | -------- | --------------------------------- |
+| `multiprocessing`     | CPU 密集 | 每个进程有独立 GIL                |
+| C 扩展 (NumPy)        | 数值计算 | C 层释放 GIL                      |
+| `asyncio`             | I/O 密集 | 单线程协程，不涉及 GIL            |
+| `concurrent.futures`  | 混合场景 | ThreadPool / ProcessPool 统一接口 |
+| Free-threaded (3.13+) | 实验性   | 彻底移除 GIL                      |
 
 ```python
 # CPU 密集：多线程 ≈ 单线程（GIL 限制），多进程 ≈ 线性加速
@@ -527,6 +532,7 @@ print(f"4 processes: {time.time()-start:.2f}s")  # ≈ 单线程 × 0.25
 **参考答案**：
 
 **事件循环 (Event Loop)** 是 asyncio 的核心调度器，运行在单线程中，负责：
+
 1. 监听 I/O 事件（基于 epoll / kqueue / IOCP）
 2. 调度就绪的协程（Task）执行
 3. 管理定时器和回调
@@ -546,7 +552,7 @@ async def main():
     # create_task 将协程包装为 Task，注册到事件循环
     task1 = asyncio.create_task(fetch("api/a", 2))
     task2 = asyncio.create_task(fetch("api/b", 1))
-    
+
     # await 挂起当前协程，直到 task 完成
     r1 = await task1
     r2 = await task2
@@ -561,6 +567,7 @@ asyncio.run(main())
 ```
 
 **关键概念**：
+
 - `async def` 定义的函数调用后返回 `coroutine` 对象，**不会立即执行**
 - `await` 挂起当前协程，将控制权交还事件循环
 - `create_task()` 把协程注册到事件循环，使其开始调度
@@ -619,6 +626,7 @@ del a, b  # 引用计数仍为 1，但分代 GC 可以检测并回收
 描述符是实现了 `__get__`、`__set__`、`__delete__` 中**至少一个**方法的对象。当描述符作为类属性时，访问该属性会触发描述符的方法。
 
 **两种描述符**：
+
 - **数据描述符**：实现了 `__set__` 和/或 `__delete__`（优先级高于实例 `__dict__`）
 - **非数据描述符**：只实现了 `__get__`（优先级低于实例 `__dict__`）
 
@@ -631,17 +639,17 @@ class property:
         self.fget = fget
         self.fset = fset
         self.fdel = fdel
-    
+
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
         return self.fget(obj)
-    
+
     def __set__(self, obj, value):
         if self.fset is None:
             raise AttributeError("can't set attribute")
         self.fset(obj, value)
-    
+
     def setter(self, fset):
         return type(self)(self.fget, fset, self.fdel)
 ```
@@ -652,14 +660,14 @@ class property:
 class TypeChecked:
     def __init__(self, expected_type):
         self.expected_type = expected_type
-    
+
     def __set_name__(self, owner, name):
         self.name = name
-    
+
     def __get__(self, obj, objtype=None):
         if obj is None: return self
         return obj.__dict__.get(self.name)
-    
+
     def __set__(self, obj, value):
         if not isinstance(value, self.expected_type):
             raise TypeError(f"{self.name} must be {self.expected_type}")
@@ -704,7 +712,7 @@ MyClass = type('MyClass', (Base,), {'x': 1})
 ```python
 class PluginMeta(type):
     registry = {}
-    
+
     def __new__(mcs, name, bases, namespace):
         cls = super().__new__(mcs, name, bases, namespace)
         if bases:  # 不注册基类本身
@@ -725,6 +733,7 @@ print(PluginMeta.registry)
 ```
 
 **使用场景**：
+
 - ORM 框架（Django Model、SQLAlchemy）
 - API 框架（自动注册路由/序列化器）
 - 单例模式
@@ -743,6 +752,7 @@ print(PluginMeta.registry)
 上下文管理器通过 `with` 语句管理资源的获取和释放，确保异常时也能正确清理。
 
 **协议方法**：
+
 - `__enter__(self)` → 进入 `with` 块时调用，返回值赋给 `as` 变量
 - `__exit__(self, exc_type, exc_val, exc_tb)` → 退出 `with` 块时调用（无论是否异常）
 
@@ -751,7 +761,7 @@ class DatabaseConnection:
     def __enter__(self):
         self.conn = create_connection()
         return self.conn
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.conn.close()
         # 返回 True → 吞掉异常
@@ -790,7 +800,7 @@ class AsyncDB:
     async def __aenter__(self):
         self.conn = await aiosqlite.connect("db.sqlite")
         return self.conn
-    
+
     async def __aexit__(self, *exc):
         await self.conn.close()
 
@@ -874,6 +884,7 @@ print(sys.getsizeof(s))                                # ~56 bytes
 **原理**：`__slots__` 声明后，Python 在类型对象中为每个属性分配一个固定偏移量，直接通过指针访问而非字典查找。
 
 **限制**：
+
 - 不能动态添加新属性（除非 `__slots__` 包含 `__dict__`）
 - 继承时子类也必须声明 `__slots__`，否则效果失效
 - 不支持弱引用（除非包含 `__weakref__`）
@@ -914,6 +925,7 @@ D().method()  # → "B"  (按 MRO 顺序找到 B.method)
 ```
 
 **C3 算法核心规则**：
+
 1. 子类优先于父类
 2. 父类的先后顺序按声明顺序（`class D(B, C)` → B 先于 C）
 3. 保持单调性（如果 X 在某个类的 MRO 中先于 Y，那么在所有子类的 MRO 中也应如此）
@@ -951,13 +963,13 @@ D().method()  # D → B → C → A（按 MRO）
 
 **参考答案**：
 
-| 维度 | `asyncio.gather` | `asyncio.TaskGroup` (3.11+) |
-|------|-----------------|---------------------------|
-| 异常处理 | 默认取消所有任务；`return_exceptions=True` 时异常作为结果返回 | 自动取消所有其他任务，抛出 `ExceptionGroup` |
-| 任务生命周期 | 无明确边界，可能"泄漏"任务 | 任务与 `async with` 块绑定 |
-| 动态添加任务 | 不支持 | 支持 `tg.create_task()` |
-| 错误追踪 | 较差（异常栈可能不清晰） | 更好（结构化并发） |
-| 兼容性 | Python 3.4+ | Python 3.11+ |
+| 维度         | `asyncio.gather`                                              | `asyncio.TaskGroup` (3.11+)                 |
+| ------------ | ------------------------------------------------------------- | ------------------------------------------- |
+| 异常处理     | 默认取消所有任务；`return_exceptions=True` 时异常作为结果返回 | 自动取消所有其他任务，抛出 `ExceptionGroup` |
+| 任务生命周期 | 无明确边界，可能"泄漏"任务                                    | 任务与 `async with` 块绑定                  |
+| 动态添加任务 | 不支持                                                        | 支持 `tg.create_task()`                     |
+| 错误追踪     | 较差（异常栈可能不清晰）                                      | 更好（结构化并发）                          |
+| 兼容性       | Python 3.4+                                                   | Python 3.11+                                |
 
 ```python
 # gather — 兼容性好，但异常处理需注意
@@ -1031,6 +1043,7 @@ dis.dis(add)
 4. **Specializing Adaptive Interpreter**（3.11+）：在运行时将通用字节码替换为类型特化版本（`BINARY_ADD` → `BINARY_ADD_INT`），提升热路径性能
 
 **追问方向**：
+
 - `.pyc` 文件的格式和缓存策略（`__pycache__/`）
 - 3.11 的 Quickening / Specialization 机制
 - 3.13 的 JIT 编译器如何进一步优化
@@ -1050,6 +1063,7 @@ Python 3.13 引入了实验性的 **Free-threaded 模式**（PEP 703），通过
 **1. 偏向引用计数 (Biased Reference Counting)**
 
 每个对象维护两个引用计数：
+
 - **本地计数**：拥有该对象的线程修改时无需加锁（最常见的情况）
 - **共享计数**：其他线程修改时使用原子操作
 
@@ -1065,13 +1079,13 @@ dict、list 等内置类型使用**对象级锁**（per-object lock）替代 GIL
 
 **影响**：
 
-| 维度 | 影响 |
-|------|------|
-| 性能（单线程） | 降低 ~5-10%（额外的原子操作开销） |
-| 性能（多线程 CPU 密集） | 线性加速（终于能真正利用多核） |
-| C 扩展兼容性 | 需要适配（NumPy、Cython 等大库已在进行中） |
-| 现有代码 | 需要注意线程安全（之前被 GIL "保护"的代码可能不安全） |
-| 生态成熟度 | 实验阶段，预计 3.15-3.16 稳定 |
+| 维度                    | 影响                                                  |
+| ----------------------- | ----------------------------------------------------- |
+| 性能（单线程）          | 降低 ~5-10%（额外的原子操作开销）                     |
+| 性能（多线程 CPU 密集） | 线性加速（终于能真正利用多核）                        |
+| C 扩展兼容性            | 需要适配（NumPy、Cython 等大库已在进行中）            |
+| 现有代码                | 需要注意线程安全（之前被 GIL "保护"的代码可能不安全） |
+| 生态成熟度              | 实验阶段，预计 3.15-3.16 稳定                         |
 
 ```bash
 # 使用方式
@@ -1186,6 +1200,7 @@ py-spy record -o profile.svg -- python analyze.py
 ```
 
 火焰图显示 80% 时间花在两处：
+
 1. `json.loads()` 解析每行日志（40%）
 2. `if keyword in results_list` 去重检查（40%）
 
@@ -1222,13 +1237,14 @@ def process_log(file_path):
 
 **Step 4: 验证结果**
 
-| 阶段 | 耗时 | 改进 |
-|------|------|------|
-| 原始 | 15 min | - |
-| json → orjson | 8 min | -47% |
-| list → set | 2.5 min | -83% |
+| 阶段          | 耗时    | 改进 |
+| ------------- | ------- | ---- |
+| 原始          | 15 min  | -    |
+| json → orjson | 8 min   | -47% |
+| list → set    | 2.5 min | -83% |
 
 **核心经验**：
+
 1. **先 Profile，再优化**——不要凭感觉
 2. **算法复杂度优先**——O(n) → O(1) 比换库效果更大
 3. **用 C 扩展替代纯 Python 热点**——orjson/ujson/msgpack
@@ -1250,6 +1266,7 @@ uvloop 是用 **Cython 包装 libuv**（Node.js 的事件循环库）实现的�
 **2. libuv 的高效 I/O 模型**
 
 libuv 是 Node.js 久经考验的事件循环库：
+
 - 跨平台抽象：Linux 用 epoll，macOS 用 kqueue，Windows 用 IOCP
 - 高效的定时器管理（最小堆）
 - 优化的回调调度
@@ -1313,7 +1330,7 @@ class RateLimiterConfig:
 
 class AsyncRateLimitedClient:
     """基于令牌桶的异步 HTTP 客户端"""
-    
+
     def __init__(self, config: RateLimiterConfig = None):
         self.config = config or RateLimiterConfig()
         self._semaphore = asyncio.Semaphore(self.config.max_concurrent)
@@ -1321,7 +1338,7 @@ class AsyncRateLimitedClient:
         self._last_refill = time.monotonic()
         self._lock = asyncio.Lock()
         self._session: aiohttp.ClientSession | None = None
-    
+
     async def _acquire_token(self):
         """令牌桶：获取一个令牌"""
         while True:
@@ -1334,19 +1351,19 @@ class AsyncRateLimitedClient:
                     self._tokens + elapsed * self.config.max_per_second
                 )
                 self._last_refill = now
-                
+
                 if self._tokens >= 1:
                     self._tokens -= 1
                     return
-            
+
             # 没有可用令牌，等待一小段时间
             await asyncio.sleep(1.0 / self.config.max_per_second)
-    
+
     async def request(self, method: str, url: str, **kwargs) -> dict:
         """发送限速请求，含重试"""
         if self._session is None:
             self._session = aiohttp.ClientSession()
-        
+
         for attempt in range(self.config.max_retries):
             await self._acquire_token()
             async with self._semaphore:
@@ -1363,29 +1380,29 @@ class AsyncRateLimitedClient:
                     if attempt == self.config.max_retries - 1:
                         raise
                     await asyncio.sleep(2 ** attempt)  # 指数退避
-        
+
         raise RuntimeError("Max retries exceeded")
-    
+
     async def close(self):
         if self._session:
             await self._session.close()
-    
+
     async def __aenter__(self):
         return self
-    
+
     async def __aexit__(self, *exc):
         await self.close()
 
 # 使用示例
 async def main():
     config = RateLimiterConfig(max_per_second=50, max_concurrent=200)
-    
+
     async with AsyncRateLimitedClient(config) as client:
         urls = [f"https://api.example.com/item/{i}" for i in range(500)]
-        
+
         async with asyncio.TaskGroup() as tg:
             tasks = [tg.create_task(client.request("GET", url)) for url in urls]
-        
+
         results = [t.result() for t in tasks]
         print(f"Fetched {len(results)} items within rate limits")
 
@@ -1393,6 +1410,7 @@ asyncio.run(main())
 ```
 
 **设计要点**：
+
 1. **令牌桶算法**：平滑限速，允许突发（令牌累积）
 2. **Semaphore**：限制并发连接数，保护下游
 3. **指数退避重试**：防止雪崩效应
@@ -1428,14 +1446,14 @@ py-spy top --pid <pid>  # 实时查看热点函数
 
 **Step 3：分析常见原因**
 
-| 原因 | 表现 | 解决方案 |
-|------|------|---------|
-| **同步阻塞调用** | 火焰图中 `requests.get` 等同步调用占比高 | 替换为 aiohttp/httpx 异步调用 |
-| **CPU 密集计算在主线程** | JSON 解析/数据处理/正则匹配耗时高 | 用 orjson 替代 json；卸载到进程池 |
-| **GIL 竞争** | 多线程但 CPU 利用率只用一个核 | 改用 multiprocessing 或 asyncio |
-| **无限循环/死循环** | 某个函数 100% CPU | 代码 review + 添加超时 |
-| **日志过多** | 同步日志写入磁盘 | 异步日志 (aiologger) 或降低日志级别 |
-| **正则回溯** | `re.match` 耗时异常 | 优化正则表达式，避免灾难性回溯 |
+| 原因                     | 表现                                     | 解决方案                            |
+| ------------------------ | ---------------------------------------- | ----------------------------------- |
+| **同步阻塞调用**         | 火焰图中 `requests.get` 等同步调用占比高 | 替换为 aiohttp/httpx 异步调用       |
+| **CPU 密集计算在主线程** | JSON 解析/数据处理/正则匹配耗时高        | 用 orjson 替代 json；卸载到进程池   |
+| **GIL 竞争**             | 多线程但 CPU 利用率只用一个核            | 改用 multiprocessing 或 asyncio     |
+| **无限循环/死循环**      | 某个函数 100% CPU                        | 代码 review + 添加超时              |
+| **日志过多**             | 同步日志写入磁盘                         | 异步日志 (aiologger) 或降低日志级别 |
+| **正则回溯**             | `re.match` 耗时异常                      | 优化正则表达式，避免灾难性回溯      |
 
 **Step 4：验证修复**
 
@@ -1446,6 +1464,7 @@ py-spy record -o profile_after.svg --pid <new_pid>
 ```
 
 **实际案例**：
+
 - 某 AI 服务 CPU 100% 但 QPS 仅 10。py-spy 显示 60% 时间在 `json.dumps()` 序列化大响应。
 - 方案：`json.dumps` → `orjson.dumps`（快 10 倍），QPS 提升到 80+。
 
@@ -1461,13 +1480,13 @@ py-spy record -o profile_after.svg --pid <new_pid>
 
 **核心差异对比**：
 
-| 维度 | Flask | FastAPI |
-|------|-------|---------|
-| 协议 | WSGI（同步） | ASGI（异步） |
-| 数据验证 | 手动或 Marshmallow | 内置 Pydantic |
-| 类型注解 | 可选 | 核心依赖 |
-| API 文档 | 需要 Swagger 插件 | 内置自动生成 |
-| 性能 | 低（同步阻塞） | 高（异步非阻塞） |
+| 维度     | Flask              | FastAPI          |
+| -------- | ------------------ | ---------------- |
+| 协议     | WSGI（同步）       | ASGI（异步）     |
+| 数据验证 | 手动或 Marshmallow | 内置 Pydantic    |
+| 类型注解 | 可选               | 核心依赖         |
+| API 文档 | 需要 Swagger 插件  | 内置自动生成     |
+| 性能     | 低（同步阻塞）     | 高（异步非阻塞） |
 
 **迁移注意事项**：
 
@@ -1565,6 +1584,7 @@ async with AsyncClient(
 ```
 
 **迁移策略**：
+
 1. **渐进式迁移**：先把 Flask 挂载为 FastAPI 的子应用（`app.mount("/legacy", WSGIMiddleware(flask_app))`）
 2. **逐个路由迁移**：新功能用 FastAPI 写，旧路由逐步迁移
 3. **优先迁移 I/O 密集路由**——异步化收益最大
@@ -1574,9 +1594,9 @@ async with AsyncClient(
 
 ## 总结
 
-| 难度 | 核心考点 | 面试关键词 |
-|------|---------|-----------|
-| ⭐ 基础 | 对象模型、可变/不可变、LEGB、装饰器 | identity vs equality、闭包、语法糖 |
-| ⭐⭐ 进阶 | GIL、asyncio、内存管理、描述符、元类 | 引用计数、事件循环、分代GC、C3 |
-| ⭐⭐⭐ 高级 | CPython 内部、Free-threaded、性能优化 | 字节码、PEP 703、uvloop |
-| 🎯 场景 | 速率限制、CPU 排查、框架迁移 | 令牌桶、py-spy、WSGI→ASGI |
+| 难度        | 核心考点                              | 面试关键词                         |
+| ----------- | ------------------------------------- | ---------------------------------- |
+| ⭐ 基础     | 对象模型、可变/不可变、LEGB、装饰器   | identity vs equality、闭包、语法糖 |
+| ⭐⭐ 进阶   | GIL、asyncio、内存管理、描述符、元类  | 引用计数、事件循环、分代GC、C3     |
+| ⭐⭐⭐ 高级 | CPython 内部、Free-threaded、性能优化 | 字节码、PEP 703、uvloop            |
+| 🎯 场景     | 速率限制、CPU 排查、框架迁移          | 令牌桶、py-spy、WSGI→ASGI          |
