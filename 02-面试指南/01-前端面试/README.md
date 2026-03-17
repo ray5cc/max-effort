@@ -13,6 +13,9 @@
 | 01 | [01-React面试题.md](./01-React面试题.md) | React 核心面试题 35 道（Fiber/Hooks/并发渲染/虚拟 DOM/Compiler） | [React 核心原理](../../01-技术资料/01-前端/01-React核心原理.md) |
 | 02 | [02-JavaScript面试题.md](./02-JavaScript面试题.md) | 执行上下文/闭包/this绑定/Event Loop/原型链/Promise/Generator/Proxy/TypeScript 25道分层面试题 | [JavaScript核心与ES6+](../../01-技术资料/01-前端/02-JavaScript核心与ES6+.md) |
 | 03 | [03-前端工程化面试题.md](./03-前端工程化面试题.md) | Webpack/Vite 打包原理、Tree Shaking、代码分割、pnpm 机制、Monorepo、Git Hooks、微前端 21道分层面试题 | [前端工程化](../../01-技术资料/01-前端/03-前端工程化.md) |
+| 04 | [04-浏览器与性能面试题.md](./04-浏览器与性能面试题.md) | 渲染流水线/重排重绘/Event Loop/HTTP缓存/Core Web Vitals/V8 JIT/内存泄漏/跨域安全/图片优化 28道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景） | [浏览器原理与性能优化](../../01-技术资料/01-前端/04-浏览器原理与性能优化.md) |
+| 05 | [05-TypeScript面试题.md](./05-TypeScript面试题.md) | interface vs type/泛型/类型收窄/工具类型实现/协变逆变/条件类型/Branded Types/Builder Pattern/monorepo 配置 25道分层面试题 | [TypeScript高级编程](../../01-技术资料/01-前端/05-TypeScript高级编程.md) |
+| 06 | [06-Next.js面试题.md](./06-Next.js面试题.md) | SSR/SSG/ISR/CSR区别/App Router文件约定/RSC序列化协议/Server Actions/四层缓存机制/Streaming SSR/PPR/多租户SaaS/AI Streaming/性能优化 25道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景） | [Next.js与服务端渲染](../../01-技术资料/01-前端/06-Next.js与服务端渲染.md) |
 
 ## 高频考点方向
 

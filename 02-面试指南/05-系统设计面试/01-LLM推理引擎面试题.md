@@ -8,6 +8,25 @@
 
 ---
 
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|----------|
+| 1 | KV Cache | 缓存历史K/V避免重复计算，生成阶段内存主要消耗 | ★★★★★ |
+| 2 | PagedAttention | 操作系统分页思想管理KV Cache，解决内存碎片 | ★★★★★ |
+| 3 | Continuous Batching | 动态插入/移除请求，GPU利用率提升2-3x | ★★★★☆ |
+| 4 | 量化 (INT8/INT4) | 精度换速度+内存，GPTQ(权重)/AWQ(激活感知) | ★★★★★ |
+| 5 | Prefill vs Decode | Prefill=计算密集(并行)，Decode=内存密集(逐token) | ★★★★☆ |
+| 6 | vLLM 架构 | PagedAttention+Continuous Batching+Tensor Parallel | ★★★★☆ |
+| 7 | 推测解码 (Speculative) | 小模型草稿+大模型验证，保证分布一致 | ★★★☆☆ |
+| 8 | FlashAttention | IO感知算法，分块计算减少HBM访问，O(N)→O(N/M) | ★★★★☆ |
+| 9 | TensorRT-LLM | NVIDIA优化: kernel fusion+FP8+inflight batching | ★★★☆☆ |
+| 10 | llama.cpp 量化 | GGUF格式，Q4_K_M性价比最佳，CPU推理方案 | ★★★★☆ |
+
+---
+
 ## 基础概念（Q1-Q8）
 
 ### Q1：什么是 vLLM？它解决了什么核心问题？

@@ -39,6 +39,25 @@
 
 ---
 
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|----------|
+| 1 | K8s 架构 | API Server+etcd+Scheduler+Controller+kubelet | ★★★★★ |
+| 2 | Pod 生命周期 | Pending→Running→Succeeded/Failed，探针(liveness/readiness/startup) | ★★★★★ |
+| 3 | Deployment vs StatefulSet | Deployment无状态(滚动更新)，StatefulSet有状态(稳定标识) | ★★★★☆ |
+| 4 | Service 类型 | ClusterIP/NodePort/LoadBalancer/ExternalName | ★★★★★ |
+| 5 | 调度策略 | nodeAffinity/podAntiAffinity/Taints+Tolerations | ★★★★☆ |
+| 6 | 存储 PV/PVC | 动态供应(StorageClass)+CSI驱动 | ★★★☆☆ |
+| 7 | RBAC 权限 | Role/ClusterRole + RoleBinding/ClusterRoleBinding | ★★★★☆ |
+| 8 | HPA 自动伸缩 | 基于CPU/Memory/自定义指标自动扩缩Pod | ★★★★☆ |
+| 9 | 网络模型 | Pod间直连(CNI)，Service(kube-proxy iptables/ipvs) | ★★★☆☆ |
+| 10 | 故障排查 | kubectl describe/logs/exec，Pod Pending/CrashLoopBackOff | ★★★★★ |
+
+---
+
 ## ⭐ 基础题
 
 ### Q1：K8s 和 Docker 有什么关系？{#q1}

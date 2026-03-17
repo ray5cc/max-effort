@@ -7,6 +7,27 @@
 
 ## 题目列表
 
+---
+
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|----------|
+| 1 | MVCC 与可见性判断 | xmin/xmax + 快照比较，读写不阻塞 | ★★★★★ |
+| 2 | WAL 与持久性 | Write-Ahead Logging，先写日志再写数据 | ★★★★★ |
+| 3 | B-tree 索引实现 | Lehman & Yao 并发安全，High Key 优化 | ★★★★☆ |
+| 4 | VACUUM 与膨胀 | 清理死元组，autovacuum 调优，VACUUM FULL 重建 | ★★★★★ |
+| 5 | 事务隔离级别 | RC/RR/Serializable，SSI 代替 2PL | ★★★★☆ |
+| 6 | 执行计划分析 | EXPLAIN ANALYZE，Sequential vs Index Scan 决策 | ★★★★☆ |
+| 7 | 流式复制 | WAL Sender/Receiver，同步/异步模式 | ★★★☆☆ |
+| 8 | 堆表页面布局 | 8KB page，ItemId 数组+元组数据 | ★★★☆☆ |
+| 9 | HOT 更新 | 同页面更新免索引更新，减少膨胀 | ★★★☆☆ |
+| 10 | XID Wraparound | 42亿事务ID上限，aggressive VACUUM 防范 | ★★★☆☆ |
+
+---
+
 ### ⭐ 基础题
 
 ---

@@ -15,6 +15,25 @@
 
 ---
 
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|----------|
+| 1 | Fiber 架构 | 链表结构替代递归栈，实现可中断渲染与优先级调度 | ★★★★★ |
+| 2 | Hooks 原理与规则 | 链表存储状态，Dispatcher 切换 mount/update，不能条件调用 | ★★★★★ |
+| 3 | Virtual DOM 与 Diff | 同层比较 + key 优化，O(n) 复杂度，双端 Diff | ★★★★★ |
+| 4 | 并发渲染 (Concurrent) | Lane 优先级模型 + 时间切片，startTransition 降低优先级 | ★★★★☆ |
+| 5 | React 生命周期/Effect | useEffect 异步执行 (paint 后)，useLayoutEffect 同步 (paint 前) | ★★★★☆ |
+| 6 | 状态管理方案对比 | Context(简单) / Redux(复杂) / Zustand(轻量) / Jotai(原子) | ★★★★☆ |
+| 7 | 性能优化 | memo/useMemo/useCallback + 代码分割 + 虚拟列表 | ★★★★☆ |
+| 8 | React Server Components | 服务端渲染组件，零 JS bundle，减少客户端 hydration | ★★★☆☆ |
+| 9 | React 19 新特性 | use hook / Actions / useOptimistic / 文档元数据 | ★★★☆☆ |
+| 10 | React Compiler | 编译时自动 memoization，消除手动 useMemo/useCallback | ★★★☆☆ |
+
+---
+
 ## 基础题（⭐）
 
 **Q1. 描述 React 组件从 JSX 到真实 DOM 的完整渲染流程。**

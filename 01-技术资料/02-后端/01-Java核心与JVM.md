@@ -30,6 +30,11 @@
    - 5.1 [主内存与工作内存](#51-主内存与工作内存)
    - 5.2 [happens-before 规则](#52-happens-before-规则)
    - 5.3 [内存屏障](#53-内存屏障)
+6. [JDK 21+ 新特性（2026 更新）](#6-jdk-21-新特性2026-更新)
+   - 6.1 [Virtual Threads（虚拟线程）](#61-virtual-threads虚拟线程--project-loom)
+   - 6.2 [Pattern Matching 增强](#62-pattern-matching-增强)
+   - 6.3 [Sequenced Collections](#63-sequenced-collectionsjava-21)
+   - 6.4 [String Templates](#64-string-templatespreview)
 
 ---
 
@@ -668,6 +673,197 @@ volatile 读（int y = x）:
 ```
 
 **x86 平台特殊说明：** x86 是 TSO（Total Store Order）内存模型，天然保证写-写有序和读-读有序，StoreLoad 是唯一需要显式插入的屏障（对应 `lock; addl $0,0(%rsp)` 或 `mfence` 指令）。
+
+---
+
+## 6. JDK 21+ 新特性（2026 更新）
+
+> **为什么关注？** JDK 21 是继 JDK 17 之后的下一个 LTS（Long-Term Support）版本，2023 年 9 月正式发布。其中的**虚拟线程（Virtual Threads）**被认为是自 Java 8 Lambda 以来最大的变革——它彻底改变了 Java 的高并发编程范式。2025-2026 年的 Spring Boot 3.2+ 已经全面拥抱虚拟线程，正在成为生产标配。
+
+### 6.1 Virtual Threads（虚拟线程 / Project Loom）
+
+**类比：** 传统平台线程像**出租车**——每辆车需要一个专业司机（OS 线程），成本高，数量有限（通常几千个）。虚拟线程像**共享单车**——极其轻量，按需取用，可以同时投放百万辆而成本极低。
+
+**核心思想：** 将线程从操作系统资源解放为 JVM 管理的轻量级对象。虚拟线程运行在少量平台线程（载体线程）之上，当虚拟线程执行阻塞 I/O 时，JVM 自动将其从载体线程卸载，让载体线程执行其他虚拟线程。
+
+```java
+// 创建虚拟线程的三种方式
+
+// 1. Thread.ofVirtual()
+Thread vt = Thread.ofVirtual().name("worker-", 0).start(() -> {
+    System.out.println("Running on: " + Thread.currentThread());
+});
+
+// 2. Executors.newVirtualThreadPerTaskExecutor()
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    // 提交 100,000 个任务，每个任务一个虚拟线程
+    IntStream.range(0, 100_000).forEach(i -> {
+        executor.submit(() -> {
+            Thread.sleep(Duration.ofSeconds(1)); // 模拟 I/O 阻塞
+            return i;
+        });
+    });
+} // try-with-resources 自动等待所有任务完成
+
+// 3. Thread.startVirtualThread() 快捷方式
+Thread.startVirtualThread(() -> System.out.println("Hello from virtual thread!"));
+```
+
+**Structured Concurrency（结构化并发，Preview）：** 用 `StructuredTaskScope` 管理子任务生命周期，确保父任务结束时所有子任务都已完成或取消：
+
+```java
+// JDK 21 Preview: 结构化并发
+try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+    // 并发执行两个子任务
+    Subtask<String> user  = scope.fork(() -> fetchUser(userId));
+    Subtask<Order>  order = scope.fork(() -> fetchOrder(orderId));
+
+    scope.join();           // 等待所有子任务完成
+    scope.throwIfFailed();  // 任一子任务失败则抛异常
+
+    // 两个任务都成功，安全获取结果
+    return new UserOrder(user.get(), order.get());
+}
+// scope 关闭时，未完成的子任务自动取消
+```
+
+**Spring Boot 3.2+ 集成：**
+
+```yaml
+# application.yml —— 一行配置开启虚拟线程
+spring:
+  threads:
+    virtual:
+      enabled: true
+# Tomcat 将为每个请求分配虚拟线程，而非平台线程池
+# 不再需要调整 server.tomcat.threads.max
+```
+
+**⚠️ 不适用场景：**
+
+| 场景 | 原因 |
+|------|------|
+| CPU 密集型计算 | 虚拟线程优势在于 I/O 等待时释放载体线程，CPU 密集任务无等待可释放 |
+| `synchronized` 代码块 | 虚拟线程进入 `synchronized` 时会**"钉住"（pin）**载体线程，无法卸载。应改用 `ReentrantLock` |
+| 大量线程局部变量（ThreadLocal） | 百万虚拟线程 × 每线程 ThreadLocal 数据 = 巨大内存开销。应改用 Scoped Values（Preview） |
+
+**完整示例：虚拟线程 HTTP 服务器处理 10 万并发连接**
+
+```java
+// 虚拟线程驱动的高并发 HTTP 服务器
+public class VirtualThreadHttpServer {
+    public static void main(String[] args) throws Exception {
+        var server = HttpServer.create(new InetSocketAddress(8080), 0);
+        // 关键：使用虚拟线程执行器替代默认线程池
+        server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+        server.createContext("/api", exchange -> {
+            // 每个请求一个虚拟线程，阻塞 I/O 不影响吞吐
+            String result = callExternalService(); // 模拟 100ms 网络 I/O
+            byte[] response = result.getBytes();
+            exchange.sendResponseHeaders(200, response.length);
+            exchange.getResponseBody().write(response);
+            exchange.close();
+        });
+        server.start();
+        System.out.println("Server started on :8080 with virtual threads");
+    }
+}
+```
+
+**性能对比：Virtual Threads vs Platform Threads**
+
+| 指标 | Platform Threads（200 线程池） | Virtual Threads |
+|------|-------------------------------|----------------|
+| 最大并发连接 | ~200（受线程池限制） | 100,000+（受内存限制） |
+| 每连接内存开销 | ~1MB（线程栈） | ~几 KB |
+| 100ms I/O 的吞吐 | ~2,000 req/s | ~100,000+ req/s |
+| 上下文切换 | 内核态，~1-10μs | 用户态，~100ns 级 |
+| 适用场景 | CPU 密集 / 遗留代码 | I/O 密集（HTTP、DB、RPC） |
+
+### 6.2 Pattern Matching 增强
+
+**switch 模式匹配（Java 21 正式特性）：**
+
+```java
+// 传统写法：类型检查 + 强转 + 条件判断
+Object obj = getResult();
+
+// Java 21: switch 模式匹配 + guard clause (when)
+String formatted = switch (obj) {
+    case Integer i when i > 0  -> "正整数: " + i;
+    case Integer i             -> "非正整数: " + i;
+    case String s when s.length() > 10 -> "长字符串: " + s.substring(0, 10) + "...";
+    case String s              -> "字符串: " + s;
+    case null                  -> "空值";
+    default                    -> "未知类型: " + obj.getClass();
+};
+```
+
+**Record 模式（Java 21 正式特性）：**
+
+```java
+record Point(int x, int y) {}
+record Circle(Point center, int radius) {}
+
+// 嵌套 Record 解构
+static String describe(Object shape) {
+    return switch (shape) {
+        case Circle(Point(int x, int y), int r) when r > 100
+            -> "大圆，圆心: (" + x + "," + y + ")";
+        case Circle(Point(int x, int y), int r)
+            -> "圆，半径=" + r;
+        default -> "未知形状";
+    };
+}
+```
+
+### 6.3 Sequenced Collections（Java 21）
+
+Java 21 引入了 `SequencedCollection`、`SequencedSet`、`SequencedMap` 接口，解决了长期以来集合"无法统一访问首尾元素"的痛点。
+
+```java
+// 之前：不同集合访问首尾元素方式不一致
+list.get(0);              // List
+set.iterator().next();     // SortedSet
+deque.getFirst();          // Deque
+
+// Java 21: 统一的 SequencedCollection 接口
+SequencedCollection<String> seq = new ArrayList<>(List.of("A", "B", "C"));
+seq.getFirst();  // "A"
+seq.getLast();   // "C"
+seq.reversed();  // [C, B, A]（返回反转视图，不复制数据）
+
+seq.addFirst("Z");  // [Z, A, B, C]
+seq.addLast("D");   // [Z, A, B, C, D]
+
+// SequencedMap
+SequencedMap<String, Integer> map = new LinkedHashMap<>();
+map.put("one", 1); map.put("two", 2); map.put("three", 3);
+map.firstEntry();  // one=1
+map.lastEntry();   // three=3
+map.pollLastEntry(); // 移除并返回 three=3
+```
+
+### 6.4 String Templates（Preview）
+
+```java
+// JDK 21 Preview: 字符串模板（替代字符串拼接 / String.format）
+String name = "World";
+int year = 2026;
+
+// STR 模板处理器（自动调用 toString）
+String msg = STR."Hello \{name}, year=\{year}";
+// → "Hello World, year=2026"
+
+// 支持任意表达式
+String info = STR."2 + 3 = \{2 + 3}, upper = \{name.toUpperCase()}";
+
+// FMT 模板处理器（支持格式化）
+double price = 19.99;
+String formatted = FMT."价格: ¥%.2f\{price}";  // → "价格: ¥19.99"
+```
+
+> **注意：** String Templates 在 JDK 21 是 Preview 特性，JDK 23 中被撤回重新设计。生产代码暂不推荐直接依赖，但其设计理念（防注入的模板化字符串）值得关注。
 
 ---
 

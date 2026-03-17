@@ -17,6 +17,25 @@
 
 ---
 
+## 🔥 高频考点速记
+
+> 面试中最常被问到的核心知识点，按出现频率排序。建议优先掌握前 5 项。
+
+| # | 考点 | 核心要点（一句话） | 出题概率 |
+|---|------|-------------------|----------|
+| 1 | 容器 vs 虚拟机 | 容器共享内核(Namespace隔离)，VM独立内核(Hypervisor) | ★★★★★ |
+| 2 | Namespace 隔离 | PID/NET/MNT/UTS/IPC/USER 六种隔离 | ★★★★★ |
+| 3 | 镜像分层与缓存 | OverlayFS CoW，dockerfile 指令顺序影响缓存 | ★★★★☆ |
+| 4 | Cgroups 资源限制 | cpu/memory/pids 限制，v2统一层级 | ★★★★☆ |
+| 5 | 多阶段构建 | 减小镜像体积，编译环境与运行环境分离 | ★★★★☆ |
+| 6 | 网络模式 | bridge(默认)/host(共享网络)/overlay(跨主机)/macvlan | ★★★★☆ |
+| 7 | 容器安全 | 非root运行/Capabilities最小化/seccomp/AppArmor | ★★★☆☆ |
+| 8 | Docker Compose | 多容器编排，depends_on + healthcheck | ★★★★☆ |
+| 9 | 数据持久化 | volume(推荐)/bind mount/tmpfs | ★★★★☆ |
+| 10 | 镜像优化 | distroless/alpine/多阶段/.dockerignore/层合并 | ★★★☆☆ |
+
+---
+
 ## 1. ⭐ 基础题（必会）
 
 ### Q1：容器与虚拟机的核心区别是什么？

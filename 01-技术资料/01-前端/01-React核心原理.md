@@ -13,6 +13,7 @@
 3. [Hooks 实现原理](#3-hooks-实现原理)
 4. [虚拟 DOM 与渲染流程](#4-虚拟-dom-与渲染流程)
 5. [React Compiler（React Forget）](#5-react-compilerreact-forget)
+6. [React 19 与未来趋势](#6-react-19-与未来趋势)
 
 ---
 
@@ -847,6 +848,209 @@ function useMemoCache(size) {
   return data;
 }
 ```
+
+---
+
+## 6. React 19 与未来趋势
+
+### 为什么关注这个
+
+React 18 引入了并发渲染的基础设施，但许多开发者的日常体验变化有限——你仍然在手写 `useEffect` 处理数据获取，用 `<Helmet>` 管理 `<title>`，用第三方库做乐观更新。**React 19（2024 年底正式发布，2025-2026 年生态全面适配）** 是自 Hooks 以来最大的 API 变革，它把这些"本该是框架职责"的事情收归核心。
+
+> **类比**：如果 React 18 是给高速公路铺好了路基（并发能力），React 19 就是在路基上架好了收费站、服务区和导航系统，让司机（开发者）不再需要自备这些设施。
+
+### 6.1 `use` Hook——在渲染中读取 Promise 和 Context
+
+`use` 是 React 19 唯一"可以在条件语句中调用"的 Hook，它能直接读取 Promise 或 Context。
+
+```jsx
+import { use, Suspense } from 'react';
+
+// 在组件外创建 Promise（通常来自框架或缓存层）
+const userPromise = fetchUser(userId);
+
+function UserProfile() {
+  // use 会在 Promise 未 resolve 时抛出，触发最近的 <Suspense> fallback
+  const user = use(userPromise);
+
+  // 条件读取 Context——以前 useContext 做不到
+  if (user.isAdmin) {
+    const theme = use(ThemeContext);
+    return <AdminPanel theme={theme} user={user} />;
+  }
+  return <UserDashboard user={user} />;
+}
+
+// 使用
+<Suspense fallback={<Skeleton />}>
+  <UserProfile />
+</Suspense>
+```
+
+**与 useEffect + useState 数据获取模式对比**：
+
+| 方面 | React 18（useEffect 模式） | React 19（use + Suspense） |
+|------|---------------------------|---------------------------|
+| 代码量 | 需要 loading/error/data 三个状态 | 一行 `use(promise)` |
+| 瀑布流问题 | 父组件 useEffect → 子组件 useEffect，串行请求 | Promise 在渲染前创建，并行获取 |
+| 服务端渲染 | 需要 useEffect 在客户端重新获取 | Suspense 与 SSR 深度集成 |
+| 错误处理 | try-catch 或 .catch() | ErrorBoundary 自动捕获 |
+
+### 6.2 Actions 与 `useActionState`——表单处理的终极方案
+
+React 19 引入 **Actions** 概念：任何使用 `async` 转换（transition）的函数都是 Action。配合 `useActionState`，表单处理变得极其简洁。
+
+```jsx
+import { useActionState } from 'react';
+
+async function submitOrder(prevState, formData) {
+  const name = formData.get('name');
+  const address = formData.get('address');
+
+  // 服务端校验
+  const result = await createOrder({ name, address });
+  if (result.error) {
+    return { error: result.error, success: false };
+  }
+  return { error: null, success: true, orderId: result.id };
+}
+
+function OrderForm() {
+  const [state, formAction, isPending] = useActionState(submitOrder, {
+    error: null,
+    success: false,
+  });
+
+  return (
+    <form action={formAction}>
+      <input name="name" required />
+      <input name="address" required />
+      <button disabled={isPending}>
+        {isPending ? '提交中...' : '下单'}
+      </button>
+      {state.error && <p className="error">{state.error}</p>}
+      {state.success && <p>订单 {state.orderId} 已创建！</p>}
+    </form>
+  );
+}
+```
+
+> **关键**：`<form action={formAction}>` 是 React 19 对 HTML `<form>` 的增强——action 可以是 async 函数，React 自动管理 pending 状态。
+
+### 6.3 `useOptimistic`——乐观更新
+
+在社交应用中点赞、购物车修改数量等场景，用户不想等服务端响应才看到 UI 变化。`useOptimistic` 让你在请求发出的同时立即显示预期结果，失败时自动回滚。
+
+```jsx
+import { useOptimistic } from 'react';
+
+function MessageList({ messages, sendMessage }) {
+  const [optimisticMessages, addOptimistic] = useOptimistic(
+    messages,
+    // 乐观更新函数：描述"如果成功了 UI 应该长什么样"
+    (currentMessages, newMessage) => [
+      ...currentMessages,
+      { text: newMessage, sending: true },
+    ]
+  );
+
+  async function handleSend(formData) {
+    const text = formData.get('message');
+    addOptimistic(text);           // 立即显示（乐观）
+    await sendMessage(text);       // 实际请求
+    // 成功后 messages prop 更新，sending: true 消失
+    // 失败则自动回滚到 messages
+  }
+
+  return (
+    <>
+      {optimisticMessages.map((msg, i) => (
+        <div key={i} style={{ opacity: msg.sending ? 0.6 : 1 }}>
+          {msg.text} {msg.sending && '⏳'}
+        </div>
+      ))}
+      <form action={handleSend}>
+        <input name="message" />
+        <button>发送</button>
+      </form>
+    </>
+  );
+}
+```
+
+### 6.4 文档元数据——组件内管理 `<title>` / `<meta>` / `<link>`
+
+以前需要 `react-helmet` 或框架特定方案管理 `<head>` 内容。React 19 原生支持在组件内渲染 `<title>`、`<meta>`、`<link>`，React 自动提升（hoist）到 `<head>` 中。
+
+```jsx
+function BlogPost({ post }) {
+  return (
+    <article>
+      {/* React 19 自动提升到 <head> */}
+      <title>{post.title} - My Blog</title>
+      <meta name="description" content={post.excerpt} />
+      <link rel="canonical" href={`https://blog.com/${post.slug}`} />
+
+      <h1>{post.title}</h1>
+      <p>{post.content}</p>
+    </article>
+  );
+}
+```
+
+### 6.5 资源预加载——组件内声明 `<link rel="preload">`
+
+```jsx
+import { prefetchDNS, preconnect, preload, preinit } from 'react-dom';
+
+function CriticalPage() {
+  // 这些调用会提升到 <head>，在页面加载早期执行
+  preinit('/critical.js', { as: 'script' });      // 预加载 + 执行
+  preload('/hero.webp', { as: 'image' });          // 预加载（不执行）
+  preconnect('https://api.example.com');            // DNS + TCP + TLS
+  prefetchDNS('https://cdn.example.com');           // 仅 DNS
+
+  return <div>...</div>;
+}
+```
+
+### 6.6 React Server Components 成熟度（2026）
+
+| 维度 | 2024 状态 | 2026 状态 |
+|------|-----------|-----------|
+| 框架支持 | Next.js App Router（实验性） | Next.js / Remix / Waku 全面支持 |
+| 打包工具 | 仅 Next.js 自带打包 | Rspack / Turbopack / Vite 均支持 RSC 协议 |
+| 数据库直连 | 可行但生态不成熟 | Drizzle / Prisma 有官方 RSC 适配层 |
+| 流式渲染 | 支持但边界情况多 | 稳定、错误恢复机制完善 |
+| 开发者体验 | `'use client'` / `'use server'` 边界容易混淆 | IDE 插件自动标注、编译器报错更友好 |
+
+### 6.7 React Compiler 进展
+
+React Compiler（已在[第 5 节](#5-react-compilerreact-forget)详细介绍）在 2025-2026 年进入稳定阶段：
+- Meta 内部已在 Instagram Web 全面部署
+- 与 React 19 配合后，`useMemo`、`useCallback`、`React.memo` 基本可以移除
+- 支持 Vite / Rspack / Next.js 等主流构建工具的 Babel 插件集成
+
+### 6.8 React 18 vs 19 关键变化对照表
+
+| 特性 | React 18 | React 19 |
+|------|----------|----------|
+| 数据获取 | useEffect + useState 手动管理 | `use(promise)` + Suspense |
+| 表单处理 | onChange + onSubmit + 手动 pending 状态 | `<form action>` + `useActionState` |
+| 乐观更新 | 手动实现回滚逻辑 | `useOptimistic` 内置 |
+| 文档元数据 | react-helmet / next/head | 原生 `<title>` `<meta>` `<link>` |
+| 资源预加载 | 手动在 HTML 中添加 | `preload` / `preinit` API |
+| `ref` 传递 | 需要 `forwardRef` 包裹 | props 直接传 `ref`（forwardRef 不再需要） |
+| Context 使用 | `<Context.Provider>` | `<Context>` 直接作为 Provider |
+| 错误处理 | 有限的 ErrorBoundary | 改进的错误报告 + 重试机制 |
+| Compiler | 实验性 | 稳定，Meta 生产部署 |
+
+### 6.9 常见陷阱与最佳实践
+
+1. **不要在渲染中创建新 Promise 传给 `use`**——每次渲染都会创建新 Promise，导致无限请求。应在组件外部或通过缓存层创建。
+2. **Actions 与 Server Actions 的区别**——Actions 是客户端概念（async transition），Server Actions 是 RSC 框架的概念（`'use server'` 标记的函数）。
+3. **`useOptimistic` 的回滚时机**——当传入的"真实数据"（第一个参数）更新时自动回滚，不是 Promise reject 触发的。
+4. **渐进式迁移**——React 19 向后兼容 React 18 的 API，无需一次性重写。优先在新功能中采用新 API。
 
 ---
 
