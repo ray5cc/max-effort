@@ -50,6 +50,7 @@
 - [Docker 与容器化技术](./01-技术资料/06-DevOps与云计算/01-Docker与容器化技术.md): Linux Namespace(PID/NET/MNT/UTS/IPC/USER) / Cgroups v1-v2 / OverlayFS 分层存储 / OCI 标准 / Docker 架构(dockerd/containerd/runc) / 多阶段构建 / 网络模式(bridge/host/overlay/macvlan) / Docker Compose / 容器安全(seccomp/AppArmor/Trivy/distroless)
 - [Kubernetes 核心技术](./01-技术资料/06-DevOps与云计算/02-Kubernetes核心技术.md): K8s 架构(kube-apiserver/etcd/kube-scheduler/controller-manager/kubelet) / Pod生命周期与设计模式 / Deployment/StatefulSet/DaemonSet/Job/CronJob / Service(ClusterIP/NodePort/LoadBalancer) / Ingress / 调度(Affinity/Taints/QoS) / 存储(PV/PVC/StorageClass/CSI) / 网络(CNI/NetworkPolicy) / 生产运维(RBAC/HPA/Helm/蓝绿/金丝雀)
 - [CI/CD 与 GitOps](./01-技术资料/06-DevOps与云计算/03-CICD与GitOps.md): CI/CD核心概念(持续集成/持续交付/持续部署) / Pipeline设计原则 / 代码质量门禁 / GitHub Actions(Workflow/Job/Step/矩阵策略/复合Action/OIDC) / GitOps原则 / ArgoCD(Application/AppProject/ApplicationSet/同步策略) / Flux CD / 多架构镜像(buildx/QEMU) / 镜像签名(cosign/Sigstore)
+- [可观测性与 SRE](./01-技术资料/06-DevOps与云计算/04-可观测性与SRE.md): Observability三支柱(Metrics/Logs/Traces) / SLI-SLO-Error Budget / Burn Rate 告警 / OTel Collector 观测栈 / Runbook 与无责 Postmortem / K8s 观测实战
 - [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md): AI Agent全栈开发文档目录（LLM原理→前端渲染全链路）
 - [01-LLM原理](./01-技术资料/07-AI-Agent全栈开发/01-LLM原理.md): Transformer架构深度解析/Self-Attention数学推导/位置编码演进(RoPE/ALiBi)/预训练范式(CLM/MLM/Seq2Seq)/BPE/Scaling Laws/解码策略
 - [02-Prompt工程](./01-技术资料/07-AI-Agent全栈开发/02-Prompt工程.md): PromptTemplate/ChatPromptTemplate源码/CoT/ReAct/ToT/Self-Consistency/Reflexion/结构化输出/Pydantic OutputParser/Prompt Injection攻防
@@ -100,6 +101,7 @@
 - [Docker 面试题](./02-面试指南/06-DevOps与云计算面试/01-Docker面试题.md): 容器原理/镜像架构/网络存储/Compose/容器安全 21道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
 - [Kubernetes 面试题](./02-面试指南/06-DevOps与云计算面试/02-Kubernetes面试题.md): K8s架构/调度/存储/网络/RBAC/HPA/部署策略 25道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
 - [CI/CD 面试题](./02-面试指南/06-DevOps与云计算面试/03-CICD面试题.md): CI/CD核心概念/GitHub Actions/GitOps/ArgoCD/Flux/多架构镜像/cosign镜像签名 分层面试题
+- [可观测性与 SRE 面试题](./02-面试指南/06-DevOps与云计算面试/04-可观测性与SRE面试题.md): SLI/SLO/Error Budget / Golden Signals & RED / 多窗口多燃耗告警 / OTel 采样策略 / Runbook 与 Postmortem 场景题
 - [07-AI-Agent全栈开发面试](./02-面试指南/07-AI-Agent全栈开发面试/README.md): AI Agent全栈开发高频面试题
 - [01-LLM原理面试题](./02-面试指南/07-AI-Agent全栈开发面试/01-LLM原理面试题.md): Transformer/Self-Attention/KV Cache/RoPE/Flash Attention/投机解码/PagedAttention 25道分层面试题
 - [02-Prompt工程面试题](./02-面试指南/07-AI-Agent全栈开发面试/02-Prompt工程面试题.md): CoT/ReAct/ToT/Self-Consistency/Reflexion/LangChain源码/Prompt Injection防护 25道分层面试题
