@@ -46,6 +46,7 @@
 - [分布式训练技术](./01-技术资料/05-系统设计/02-分布式训练技术.md): ZeRO Stage 1/2/3/张量并行/流水线并行/3D并行（DeepSpeed/Megatron-LM）
 - [分布式系统基础](./01-技术资料/05-系统设计/03-分布式系统基础.md): CAP定理/Raft共识/分布式事务(2PC/Saga/TCC)/一致性哈希/缓存策略/容错模式/分布式锁(Redis/Redlock/ZooKeeper)/逻辑时钟(Lamport/向量时钟)/CRDT/Gossip协议
 - [消息队列与流处理](./01-技术资料/05-系统设计/04-消息队列与流处理.md): Kafka深度(日志段/ISR/HW/LEO/Producer/Consumer/KRaft)/RabbitMQ(Exchange/Publisher Confirm/DLQ/Quorum Queue)/Flink(DataStream/Checkpoint)/Kafka Streams/幂等与事务/消息可靠性模式
+- [高可用与容灾架构](./01-技术资料/05-系统设计/05-高可用与容灾架构.md): SLO/RTO/RPO / 主备与多活拓扑 / 同步-异步-多数派复制 / GeoDNS+GTM 调度 / 熔断限流隔离 / 故障切换演练与数据校验
 - [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md): DevOps与云计算文档目录
 - [Docker 与容器化技术](./01-技术资料/06-DevOps与云计算/01-Docker与容器化技术.md): Linux Namespace(PID/NET/MNT/UTS/IPC/USER) / Cgroups v1-v2 / OverlayFS 分层存储 / OCI 标准 / Docker 架构(dockerd/containerd/runc) / 多阶段构建 / 网络模式(bridge/host/overlay/macvlan) / Docker Compose / 容器安全(seccomp/AppArmor/Trivy/distroless)
 - [Kubernetes 核心技术](./01-技术资料/06-DevOps与云计算/02-Kubernetes核心技术.md): K8s 架构(kube-apiserver/etcd/kube-scheduler/controller-manager/kubelet) / Pod生命周期与设计模式 / Deployment/StatefulSet/DaemonSet/Job/CronJob / Service(ClusterIP/NodePort/LoadBalancer) / Ingress / 调度(Affinity/Taints/QoS) / 存储(PV/PVC/StorageClass/CSI) / 网络(CNI/NetworkPolicy) / 生产运维(RBAC/HPA/Helm/蓝绿/金丝雀)
@@ -97,6 +98,9 @@
 - [LLM推理引擎面试题](./02-面试指南/05-系统设计面试/01-LLM推理引擎面试题.md): KV Cache/PagedAttention/Continuous Batching/vLLM/TensorRT-LLM/llama.cpp 30道面试题
 - [分布式训练面试题](./02-面试指南/05-系统设计面试/02-分布式训练面试题.md): ZeRO原理/通信原语/DeepSpeed工程实践/性能调优 25道分层面试题
 - [llama.cpp面试题](./02-面试指南/05-系统设计面试/03-llama.cpp面试题.md): GGUF格式/CPU量化推理/Metal/本地部署
+- [分布式系统面试题](./02-面试指南/05-系统设计面试/04-分布式系统面试题.md): CAP定理/Raft/分布式事务/一致性哈希/缓存/容错模式/逻辑时钟 25道分层面试题
+- [消息队列面试题](./02-面试指南/05-系统设计面试/05-消息队列面试题.md): Kafka/RabbitMQ/Pulsar/消息可靠性/流处理 25道分层面试题
+- [高可用与容灾面试题](./02-面试指南/05-系统设计面试/06-高可用与容灾面试题.md): SLO-RTO-RPO / 主备与多活 / 复制策略 / 流量调度 / 雪崩防护 / Split-Brain 防护 / 故障演练 场景题
 - [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md): DevOps与云计算面试题目与解析
 - [Docker 面试题](./02-面试指南/06-DevOps与云计算面试/01-Docker面试题.md): 容器原理/镜像架构/网络存储/Compose/容器安全 21道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
 - [Kubernetes 面试题](./02-面试指南/06-DevOps与云计算面试/02-Kubernetes面试题.md): K8s架构/调度/存储/网络/RBAC/HPA/部署策略 25道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
