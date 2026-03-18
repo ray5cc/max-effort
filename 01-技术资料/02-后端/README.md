@@ -15,6 +15,7 @@
 | 03   | [03-网络协议与HTTP.md](./03-网络协议与HTTP.md)             | TCP 三次握手/四次挥手/拥塞控制/滑动窗口 / HTTP/1.1/2/3 演进 / QUIC 协议 / TLS 1.2/1.3 握手与密钥派生 / WebSocket 帧格式                                                         | [面试题](../../02-面试指南/02-后端面试/03-网络协议面试题.md)   |
 | 04   | [04-Python核心与异步编程.md](./04-Python核心与异步编程.md) | GIL 原理与绕过 / PyObject 对象模型 / 引用计数与分代 GC / 生成器与迭代器 / 装饰器与描述符 / asyncio 事件循环 / TaskGroup / FastAPI ASGI / Python 3.13 Free-threaded / JIT 编译器 | [面试题](../../02-面试指南/02-后端面试/04-Python面试题.md)     |
 | 05   | [05-微服务架构.md](./05-微服务架构.md)                     | 单体→微服务演进 / DDD 服务拆分 / gRPC vs REST / API 网关 / 服务发现 / Saga 分布式事务 / 断路器与限流 / 可观测性(OTel) / Service Mesh(Istio/Envoy) / 云原生实践(Dapr/Serverless) | [面试题](../../02-面试指南/02-后端面试/05-微服务架构面试题.md) |
+| 06   | [06-服务端安全与鉴权.md](./06-服务端安全与鉴权.md)         | 认证/授权模型（RBAC/ABAC/OPA）、OIDC/JWT/Refresh 旋转、CSRF/XSS/注入防护、速率限制与熔断、零信任与多租户隔离、审计与应急响应                                                    | [面试题](../../02-面试指南/02-后端面试/06-安全与鉴权面试题.md) |
 
 ## 主要内容方向
 
