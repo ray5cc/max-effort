@@ -16,6 +16,7 @@
 | 04   | [04-浏览器与性能面试题.md](./04-浏览器与性能面试题.md) | 渲染流水线/重排重绘/Event Loop/HTTP缓存/Core Web Vitals/V8 JIT/内存泄漏/跨域安全/图片优化 28道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景）                                           | [浏览器原理与性能优化](../../01-技术资料/01-前端/04-浏览器原理与性能优化.md) |
 | 05   | [05-TypeScript面试题.md](./05-TypeScript面试题.md)     | interface vs type/泛型/类型收窄/工具类型实现/协变逆变/条件类型/Branded Types/Builder Pattern/monorepo 配置 25道分层面试题                                                               | [TypeScript高级编程](../../01-技术资料/01-前端/05-TypeScript高级编程.md)     |
 | 06   | [06-Next.js面试题.md](./06-Next.js面试题.md)           | SSR/SSG/ISR/CSR区别/App Router文件约定/RSC序列化协议/Server Actions/四层缓存机制/Streaming SSR/PPR/多租户SaaS/AI Streaming/性能优化 25道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景） | [Next.js与服务端渲染](../../01-技术资料/01-前端/06-Next.js与服务端渲染.md)   |
+| 07   | [07-状态管理面试题.md](./07-状态管理面试题.md)         | Redux/RTK/RTK Query/Zustand/Jotai/Recoil/MobX/Context API优化/XState状态机/状态选型 30+道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景） | [状态管理与数据流](../../01-技术资料/01-前端/07-状态管理与数据流.md)   |
 
 ## 高频考点方向
 

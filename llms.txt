@@ -40,11 +40,10 @@
 - [MongoDB 核心技术](./01-技术资料/03-数据库/05-MongoDB核心技术.md): 文档模型与 BSON / WiredTiger 存储引擎 / 查询规划器 / 复制集与 oplog / 分片与 Chunk Balancer / Read/Write Concern / 事务 / Embedding vs Referencing / 聚合管道 / 索引设计 / 性能调优
 - [Elasticsearch 核心技术](./01-技术资料/03-数据库/06-Elasticsearch核心技术.md): 倒排索引原理 / Analyzer与分词(IK中文分词) / Mapping映射设计 / Query DSL / Aggregation聚合框架 / 分布式架构 / 副本与故障恢复 / 性能优化 / Dense Vector与kNN搜索 / Hybrid Search / RAG系统集成 / ELK Stack
 - [04-算法与数据结构](./01-技术资料/04-算法与数据结构/README.md): 算法与数据结构文档目录
-- [深度学习框架与计算图](./01-技术资料/04-算法与数据结构/01-深度学习框架与计算图.md): 计算图/自动微分/Eager vs 图执行/TensorFlow工程实践(tf.data/分布式/TF Serving)/PyTorch深度解析(Autograd/torch.nn/torch.compile/DDP/FSDP)/TF vs PyTorch选型
-- [排序与搜索算法](./01-技术资料/04-算法与数据结构/02-排序与搜索算法.md): Big O/冒泡/选择/插入排序/归并/快排/堆排序/二分搜索变体/DFS/BFS/TimSort
-- [动态规划](./01-技术资料/04-算法与数据结构/03-动态规划.md): DP五步法/背包问题/LCS/编辑距离/区间DP/状态压缩/空间优化
-- [基础数据结构](./01-技术资料/04-算法与数据结构/04-基础数据结构.md): 数组(动态扩容/双指针/滑动窗口)/链表(翻转/Floyd环检测/快慢指针)/栈与队列(单调栈/单调队列)/哈希表(链地址法/开放寻址/负载因子扩容/手写HashMap)/树(BST/AVL vs 红黑树/Trie前缀树)/堆(sift_up/sift_down/TopK)/图(邻接表/BFS/DFS)/数据结构选型指南
-- [图算法与贪心策略](./01-技术资料/04-算法与数据结构/05-图算法与贪心.md): BFS/DFS深度解析/Dijkstra/Bellman-Ford/Floyd-Warshall/拓扑排序(Kahn/DFS)/并查集(路径压缩+按秩合并)/最小生成树(Kruskal/Prim)/贪心算法(区间调度/跳跃游戏/分发糖果)/回溯算法(子集/排列/组合/N皇后)
+- [排序与搜索算法](./01-技术资料/04-算法与数据结构/01-排序与搜索算法.md): Big O/冒泡/选择/插入排序/归并/快排/堆排序/二分搜索变体/DFS/BFS/TimSort
+- [动态规划](./01-技术资料/04-算法与数据结构/02-动态规划.md): DP五步法/背包问题/LCS/编辑距离/区间DP/状态压缩/空间优化
+- [基础数据结构](./01-技术资料/04-算法与数据结构/03-基础数据结构.md): 数组(动态扩容/双指针/滑动窗口)/链表(翻转/Floyd环检测/快慢指针)/栈与队列(单调栈/单调队列)/哈希表(链地址法/开放寻址/负载因子扩容/手写HashMap)/树(BST/AVL vs 红黑树/Trie前缀树)/堆(sift_up/sift_down/TopK)/图(邻接表/BFS/DFS)/数据结构选型指南
+- [图算法与贪心策略](./01-技术资料/04-算法与数据结构/04-图算法与贪心.md): BFS/DFS深度解析/Dijkstra/Bellman-Ford/Floyd-Warshall/拓扑排序(Kahn/DFS)/并查集(路径压缩+按秩合并)/最小生成树(Kruskal/Prim)/贪心算法(区间调度/跳跃游戏/分发糖果)/回溯算法(子集/排列/组合/N皇后)
 - [05-系统设计](./01-技术资料/05-系统设计/README.md): 系统设计文档目录（LLM推理优化/分布式训练）
 - [LLM推理引擎优化](./01-技术资料/05-系统设计/01-LLM推理引擎优化.md): KV Cache/PagedAttention/Continuous Batching/量化/CPU推理（vLLM/TensorRT-LLM/llama.cpp）
 - [分布式训练技术](./01-技术资料/05-系统设计/02-分布式训练技术.md): ZeRO Stage 1/2/3/张量并行/流水线并行/3D并行（DeepSpeed/Megatron-LM）
@@ -68,6 +67,7 @@
 - [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理
 - [12-参数高效微调PEFT](./01-技术资料/07-AI-Agent全栈开发/12-参数高效微调PEFT.md): LoRA数学原理/QLoRA/Adapter Tuning/Prefix Tuning/HuggingFace PEFT生态
 - [13-对齐训练技术TRL](./01-技术资料/07-AI-Agent全栈开发/13-对齐训练技术TRL.md): RLHF/PPO/DPO/GRPO/SFT/奖励模型/TRL参考实现
+- [14-深度学习框架与计算图](./01-技术资料/07-AI-Agent全栈开发/14-深度学习框架与计算图.md): 计算图/自动微分/Eager vs 图执行/TensorFlow工程实践(tf.data/分布式/TF Serving)/PyTorch深度解析(Autograd/torch.compile/DDP/FSDP)/TF vs PyTorch选型
 - [08-编码题](./01-技术资料/08-编码题/README.md): 手写代码方法论与解题策略
 - [编码技巧与解题策略](./01-技术资料/08-编码题/01-编码技巧与解题策略.md): 四步解题法/常见代码模式(双指针/哈希表/栈/递归/动态规划/二分/位运算)/代码规范/时间管理/调试技巧/实战案例
 
@@ -81,12 +81,14 @@
 - [浏览器与性能优化面试题](./02-面试指南/01-前端面试/04-浏览器与性能面试题.md): 渲染流水线/重排重绘合成/Event Loop与渲染时机/HTTP缓存(强缓存+协商缓存)/Core Web Vitals(LCP/INP/CLS)/V8执行管道与JIT/内存泄漏排查(DevTools Memory)/跨域与安全(CORS/XSS/CSRF)/Service Worker/合成器架构/Hidden Class与IC/性能监控方案/大列表渲染/SPA白屏优化 28道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景)
 - [TypeScript面试题](./02-面试指南/01-前端面试/05-TypeScript面试题.md): interface vs type/泛型约束与infer/类型收窄/工具类型手写(Partial/Pick/ReturnType)/any vs unknown vs never/条件类型分布特性/协变与逆变/Branded Types/Builder Pattern/monorepo Project References 25道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级)
 - [Next.js面试题](./02-面试指南/01-前端面试/06-Next.js面试题.md): SSR/SSG/ISR/CSR渲染策略对比/App Router文件约定/Server vs Client Component/RSC序列化协议/Server Actions与Progressive Enhancement/四层缓存详解/Streaming SSR与Suspense/Middleware/Parallel Routes/Edge vs Node.js Runtime/多租户SaaS架构/AI Streaming(Vercel AI SDK)/大规模ISR策略/PPR原理/自托管架构/LCP优化/电商渲染策略选型/实时协作编辑/首屏性能优化 25道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景)
+- [状态管理面试题](./02-面试指南/01-前端面试/07-状态管理面试题.md): Redux/RTK/RTK Query/Zustand/Jotai/Recoil/MobX/Context API优化/XState状态机/服务端状态vs客户端状态/状态选型决策 30+道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景）
 - [02-后端面试](./02-面试指南/02-后端面试/README.md): 后端面试题目与解析
 - [Java 核心面试题](./02-面试指南/02-后端面试/01-Java核心面试题.md): JVM内存区域/GC算法与收集器(G1/ZGC)/类加载/synchronized锁升级/AQS/volatile/JMM/OOM排查 20道分层面试题
 - [Go 核心面试题](./02-面试指南/02-后端面试/02-Go核心面试题.md): GMP调度/Goroutine泄漏/Channel底层实现/工作窃取/内存分配器/混合写屏障/接口实现/pprof优化 18道分层面试题
 - [网络协议面试题](./02-面试指南/02-后端面试/03-网络协议面试题.md): TCP三次握手/四次挥手/拥塞控制/HTTP/1.1/2/3/QUIC/TLS握手/CORS/DNS/WebSocket/Nagle算法 20道分层面试题
 - [Python面试题](./02-面试指南/02-后端面试/04-Python面试题.md): GIL/装饰器/生成器/asyncio事件循环/深拷贝浅拷贝/内存管理/元类/描述符/MRO/Free-threaded/uvloop/FastAPI迁移 28道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景）
 - [微服务架构面试题](./02-面试指南/02-后端面试/05-微服务架构面试题.md): 微服务vs单体/DDD拆分/gRPC vs REST/Saga编排型与协调型/断路器状态机/限流算法/Service Mesh(Istio/Envoy)/分布式追踪(OTel)/金丝雀发布/Contract Test/电商下单流程/服务雪崩排查/百万级架构设计 28道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景）
+- [Node.js面试题](./02-面试指南/02-后端面试/06-Node.js面试题.md): 事件循环六阶段/nextTick vs Promise微任务/libuv线程池(UV_THREADPOOL_SIZE)/V8 JIT管线(Ignition→Sparkplug→Maglev→TurboFan)/隐藏类与内联缓存/Stream四种类型与背压/Express vs Koa中间件模型/NestJS依赖注入与请求生命周期/Worker Threads SharedArrayBuffer+Atomics/Cluster多进程负载均衡/GC(Scavenger/Mark-Compact)/原型链污染/ReDoS/内存泄漏排查/优雅停机/实时通知系统设计 38道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景）
 - [03-数据库面试](./02-面试指南/03-数据库面试/README.md): 数据库面试题目与解析
 - [向量数据库面试题](./02-面试指南/03-数据库面试/01-向量数据库面试题.md): 向量嵌入/ANN搜索/HNSW/IVF/PQ/pgvector/Chroma/Milvus架构/混合搜索/Reranking/生产扩展 30道分层面试题（含🔥高频考点速记）
 - [Redis 面试题](./02-面试指南/03-数据库面试/02-Redis面试题.md): Redis数据结构/持久化/内存管理/网络模型/集群/事务 22道分层面试题
@@ -95,11 +97,10 @@
 - [MongoDB 面试题](./02-面试指南/03-数据库面试/05-MongoDB面试题.md): BSON vs JSON / Embedding vs Referencing / 复合索引设计 / Covered Query / Replica Set / Read/Write Concern / 事务限制 / Shard Key / Aggregation Pipeline / 慢查询排查 30道分层面试题（含🔥高频考点速记）
 - [Elasticsearch 面试题](./02-面试指南/03-数据库面试/06-Elasticsearch面试题.md): 倒排索引 / 分词器 / Query DSL(match vs term/bool查询) / 聚合分析(Bucket/Metric) / 分布式架构(Primary/Replica Shard) / Mapping设计(text vs keyword/nested) / BM25评分算法 / 深分页优化(search_after) / Filter Context缓存 / ILM生命周期管理 / 性能调优与监控 24道分层面试题（含🔥高频考点速记）
 - [04-算法与数据结构面试](./02-面试指南/04-算法与数据结构面试/README.md): 算法面试题目与解析
-- [深度学习框架面试题](./02-面试指南/04-算法与数据结构面试/01-深度学习框架面试题.md): 计算图/自动微分/TF vs PyTorch/分布式训练 30+道面试题
-- [排序与搜索面试题](./02-面试指南/04-算法与数据结构面试/02-排序与搜索面试题.md): 排序算法对比/二分搜索变体/Top-K/DFS/BFS/外部排序 25道分层题
-- [动态规划面试题](./02-面试指南/04-算法与数据结构面试/03-动态规划面试题.md): 背包/LCS/编辑距离/股票买卖/状态压缩 25道分层题
-- [基础数据结构面试题](./02-面试指南/04-算法与数据结构面试/04-基础数据结构面试题.md): 链表翻转/哈希表原理(扩容+冲突)/二叉树遍历/LRU Cache(HashMap+双向链表)/单调栈/BST/堆TopK/Trie前缀树/红黑树vs AVL/跳表/O(1)随机数据结构 25道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景)
-- [图算法与贪心面试题](./02-面试指南/04-算法与数据结构面试/05-图算法与贪心面试题.md): BFS/DFS/岛屿问题/Dijkstra/拓扑排序(课程表)/并查集/最大路径和/N皇后/贪心(区间调度/跳跃游戏)/回溯(排列组合/单词搜索)/社交推荐/任务调度/地图导航 25道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景)
+- [排序与搜索面试题](./02-面试指南/04-算法与数据结构面试/01-排序与搜索面试题.md): 排序算法对比/二分搜索变体/Top-K/DFS/BFS/外部排序 25道分层题
+- [动态规划面试题](./02-面试指南/04-算法与数据结构面试/02-动态规划面试题.md): 背包/LCS/编辑距离/股票买卖/状态压缩 25道分层题
+- [基础数据结构面试题](./02-面试指南/04-算法与数据结构面试/03-基础数据结构面试题.md): 链表翻转/哈希表原理(扩容+冲突)/二叉树遍历/LRU Cache(HashMap+双向链表)/单调栈/BST/堆TopK/Trie前缀树/红黑树vs AVL/跳表/O(1)随机数据结构 25道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景)
+- [图算法与贪心面试题](./02-面试指南/04-算法与数据结构面试/04-图算法与贪心面试题.md): BFS/DFS/岛屿问题/Dijkstra/拓扑排序(课程表)/并查集/最大路径和/N皇后/贪心(区间调度/跳跃游戏)/回溯(排列组合/单词搜索)/社交推荐/任务调度/地图导航 25道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景)
 - [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md): 系统设计面试题目与解析
 - [LLM推理引擎面试题](./02-面试指南/05-系统设计面试/01-LLM推理引擎面试题.md): KV Cache/PagedAttention/Continuous Batching/vLLM/TensorRT-LLM/llama.cpp 30道面试题
 - [分布式训练面试题](./02-面试指南/05-系统设计面试/02-分布式训练面试题.md): ZeRO原理/通信原语/DeepSpeed工程实践/性能调优 25道分层面试题
@@ -122,6 +123,7 @@
 - [11-Transformers与模型架构面试题](./02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md): RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码/70B推理系统设计 22道分层面试题
 - [12-PEFT面试题](./02-面试指南/07-AI-Agent全栈开发面试/12-PEFT面试题.md): LoRA/QLoRA/Adapter/Prefix Tuning/PEFT工程实践 26道分层面试题
 - [13-TRL面试题](./02-面试指南/07-AI-Agent全栈开发面试/13-TRL面试题.md): RLHF/DPO/PPO/GRPO/KL散度/对齐工程实践 26道分层面试题
+- [14-深度学习框架面试题](./02-面试指南/07-AI-Agent全栈开发面试/14-深度学习框架面试题.md): 计算图/自动微分/TF vs PyTorch/分布式训练 30+道面试题
 - [08-编码题面试](./02-面试指南/08-编码题面试/README.md): 各领域手写代码题目集合
 - [前端编码题](./02-面试指南/08-编码题面试/01-前端编码题.md): JavaScript/DOM操作/异步编程/设计模式 16+题(map/debounce/throttle/deepClone/Promise.all/EventEmitter/curry/instanceof/new/async-await/虚拟DOM diff/LazyMan/懒加载/无限滚动/拖拽排序)
 - [后端编码题](./02-面试指南/08-编码题面试/02-后端编码题.md): 多线程/网络编程/设计模式/并发控制 20+题(单例/线程安全计数器/LRU/生产者消费者/HTTP服务器/线程池/Snowflake ID/限流器/分布式锁/对象池/秒杀库存/分布式事务)

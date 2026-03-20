@@ -23,6 +23,7 @@
 | 11 | [11-Transformers与模型架构.md](./11-Transformers与模型架构.md) | RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md) |
 | 12 | [12-参数高效微调PEFT.md](./12-参数高效微调PEFT.md) | LoRA 数学原理/QLoRA/Adapter/Prefix Tuning/PEFT 生态 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/12-PEFT面试题.md) |
 | 13 | [13-对齐训练技术TRL.md](./13-对齐训练技术TRL.md) | RLHF/PPO/DPO/GRPO/SFT/奖励模型/TRL 参考实现 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/13-TRL面试题.md) |
+| 14 | [14-深度学习框架与计算图.md](./14-深度学习框架与计算图.md) | 计算图/自动微分/Eager vs 图执行/TensorFlow工程实践/PyTorch深度解析(Autograd/torch.compile/DDP/FSDP)/TF vs PyTorch选型 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/14-深度学习框架面试题.md) |
 
 ## 说明
 
