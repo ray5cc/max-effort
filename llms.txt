@@ -106,8 +106,10 @@
 - [图算法与贪心面试题](./02-面试指南/04-算法与数据结构面试/04-图算法与贪心面试题.md): BFS/DFS/岛屿问题/Dijkstra/拓扑排序(课程表)/并查集/最大路径和/N皇后/贪心(区间调度/跳跃游戏)/回溯(排列组合/单词搜索)/社交推荐/任务调度/地图导航 25道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景)
 - [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md): 系统设计面试题目与解析
 - [LLM推理引擎面试题](./02-面试指南/05-系统设计面试/01-LLM推理引擎面试题.md): KV Cache/PagedAttention/Continuous Batching/vLLM/TensorRT-LLM/llama.cpp 30道面试题
-- [分布式训练面试题](./02-面试指南/05-系统设计面试/02-分布式训练面试题.md): ZeRO原理/通信原语/DeepSpeed工程实践/性能调优 25道分层面试题
+- [分布式训练面试题](./02-面试指南/05-系统设计面试/02-分布式训练面试题.md): ZeRO Stage 1/2/3 深度(显存公式/通信量分析)/3D并行(TP+PP+DP组合/Megatron-LM策略)/通信原语(Ring vs Tree AllReduce/NCCL)/Pipeline调度(GPipe/PipeDream/1F1B/气泡率)/混合精度(BF16/FP16/FP8/Loss Scaling)/故障恢复(Checkpoint/Elastic Training)/DeepSpeed·Megatron-LM工程实践/MFU指标 30道分层面试题
 - [llama.cpp面试题](./02-面试指南/05-系统设计面试/03-llama.cpp面试题.md): GGUF格式/CPU量化推理/Metal/本地部署
+- [分布式系统面试题](./02-面试指南/05-系统设计面试/04-分布式系统面试题.md): CAP/PACELC定理/Raft共识深度(Leader Election/Log Replication/Safety/Multi-Raft)/分布式事务(2PC/3PC/Saga/TCC/Temporal)/一致性哈希/缓存(Cache-Aside/延迟双删/热点Key/雪崩穿透击穿)/分布式锁(Redlock争议/fencing token)/服务发现(etcd/Consul/Nacos)/可观测性(OpenTelemetry/SLO)/容错模式(Circuit Breaker/Bulkhead/Rate Limiting/Backoff+Jitter)/CRDTs 30道分层面试题
+- [消息队列面试题](./02-面试指南/05-系统设计面试/05-消息队列面试题.md): Kafka深度(ISR/HW/LEO/Controller选举/Rebalance/Exactly-Once/事务/epoch fencing)/Pulsar架构(BookKeeper存算分离/分层存储/Schema Registry)/消息可靠性(幂等消费者)/顺序消息/消息积压/流处理(Flink窗口/水位线/状态/Checkpoint)/延迟消息(时间轮)/实时数据管道设计 30道分层面试题
 - [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md): DevOps与云计算面试题目与解析
 - [Docker 面试题](./02-面试指南/06-DevOps与云计算面试/01-Docker面试题.md): 容器原理/镜像架构/网络存储/Compose/容器安全 21道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
 - [Kubernetes 面试题](./02-面试指南/06-DevOps与云计算面试/02-Kubernetes面试题.md): K8s架构/调度/存储/网络/RBAC/HPA/部署策略 25道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
