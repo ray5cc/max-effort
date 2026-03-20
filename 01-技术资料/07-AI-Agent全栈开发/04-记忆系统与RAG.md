@@ -1,6 +1,6 @@
 # 04-记忆系统与RAG — 技术资料
 
-> 从四种记忆类型到 RAG 全链路，系统拆解向量嵌入、ANN 搜索（HNSW 内核）、Chunking 策略、LlamaIndex/Haystack 源码，以及 HyDE/Self-RAG/Graph RAG 等高级检索增强技术。
+> 从四种记忆类型到 RAG 全链路，系统拆解向量嵌入、ANN 搜索（HNSW 内核）、Chunking 策略、LlamaIndex/Haystack 源码，以及 HyDE/Self-RAG/Graph RAG 等高级检索增强技术。进阶覆盖混合搜索（BM25+向量 RRF 融合）、知识图谱与 Graph RAG（Neo4j/Microsoft GraphRAG）、Cross-Encoder/ColBERT 重排序、查询优化（Query Rewriting/Routing/Contextual Retrieval）及生产级最佳实践。
 
 ## 相关链接
 
@@ -52,6 +52,31 @@
 8. [RAGAS 评估框架](#8-ragas-评估框架)
    - 8.1 四大核心指标
    - 8.2 评估代码示例
+9. [混合搜索与多路召回](#9-混合搜索与多路召回)
+   - 9.1 为什么单路检索不够？
+   - 9.2 BM25 稀疏检索原理
+   - 9.3 BM25 + Dense 向量融合架构
+   - 9.4 RRF（Reciprocal Rank Fusion）算法
+   - 9.5 Elasticsearch/OpenSearch 混合搜索
+   - 9.6 多路召回实战：三路融合架构
+10. [知识图谱与 Graph RAG](#10-知识图谱与-graph-rag)
+    - 10.1 为什么需要知识图谱
+    - 10.2 属性图 vs RDF
+    - 10.3 Neo4j 在 RAG 中的应用
+    - 10.4 Graph RAG 架构详解
+    - 10.5 Microsoft GraphRAG 深度解析
+    - 10.6 图 + 向量混合检索
+11. [高级重排序与精排策略](#11-高级重排序与精排策略)
+    - 11.1 为什么需要重排序
+    - 11.2 Cross-Encoder 重排原理
+    - 11.3 ColBERT 晚期交互模型
+    - 11.4 Cohere Rerank vs 开源方案
+    - 11.5 重排序在生产中的位置
+12. [查询优化技术](#12-查询优化技术)
+    - 12.1 Query Rewriting 五种策略
+    - 12.2 Query Routing
+    - 12.3 Contextual Retrieval
+13. [常见陷阱与最佳实践](#13-常见陷阱与最佳实践)
 
 ---
 
@@ -1492,6 +1517,1476 @@ def evaluate_rag_pipeline(query_engine, test_cases: list) -> dict:
         
         return scores
 ```
+
+---
+
+## 9. 混合搜索与多路召回
+
+> **生活类比**：想象你在找一本遗失的书。如果只派一个人去图书馆按书名查（精确匹配），他可能漏掉那些书名不完全匹配但内容正是你需要的书。如果同时派三个"侦探"——一个按书名关键词搜（BM25）、一个按内容语义搜（向量检索）、一个查阅图书馆的推荐关系网（知识图谱）——然后把三个人的线索汇总排序，找到目标的概率就大幅提升。这就是**多路召回**的核心思想。
+
+### 9.1 为什么单路检索不够？
+
+单一检索方式存在固有盲区：
+
+```
+❌ 只用向量检索的问题：
+
+  用户 Query: "Python 3.12 match 语句性能基准测试"
+  
+  向量检索结果（语义相近但不精确）：
+    1. "Python 模式匹配入门教程"          ← 语义相关，但不是性能测试
+    2. "Python 3.11 新特性概览"           ← 版本不对
+    3. "正则表达式性能优化"               ← 主题偏差
+
+  问题：向量嵌入会"模糊化"关键词信息，
+        "3.12" "match" "基准测试" 这些精确词项被稀释
+
+❌ 只用关键词检索的问题：
+
+  用户 Query: "如何让 AI 应用的回答更可靠"
+  
+  BM25 检索结果（关键词匹配但不理解语义）：
+    1. "AI 安全合规手册"                  ← 包含"AI""可靠"但不相关
+    2. 无匹配结果                         ← "可靠"的同义词"准确""忠实"未匹配
+    
+  问题：BM25 无法理解同义词、上下位词、语义意图
+
+✅ 混合检索的优势：
+
+  BM25 擅长：精确关键词、专有名词、代码标识符、版本号
+  向量擅长：语义理解、同义词、跨语言、模糊意图
+  两者互补 → 覆盖面更广、精度更高
+```
+
+### 9.2 BM25 稀疏检索原理
+
+BM25（Best Matching 25）是信息检索领域使用最广泛的排序函数，从 TF-IDF 演进而来。
+
+**从 TF-IDF 到 BM25 的演进**：
+
+```
+TF-IDF 的问题：
+
+  TF（词频）= 词在文档中出现的次数
+  IDF（逆文档频率）= log(文档总数 / 包含该词的文档数)
+  
+  score = TF × IDF
+  
+  ❌ 问题 1：TF 线性增长 — 一个词出现 100 次的得分是出现 1 次的 100 倍？
+             现实中，出现 3 次和 30 次的相关性差距远没那么大
+  ❌ 问题 2：不考虑文档长度 — 10000 字的文档出现 5 次和 100 字的文档出现 5 次等价？
+
+BM25 的改进：
+
+  ✅ 引入饱和函数：TF 增长到一定程度后边际递减（类似经济学的边际效用递减）
+  ✅ 引入文档长度归一化：长文档的词频要打折扣
+```
+
+**BM25 公式拆解**：
+
+```
+BM25(q, d) = Σ IDF(qi) × [f(qi,d) × (k1 + 1)] / [f(qi,d) + k1 × (1 - b + b × |d|/avgdl)]
+
+各部分含义：
+┌────────────────────────────────────────────────────────────┐
+│ IDF(qi) = log[(N - n(qi) + 0.5) / (n(qi) + 0.5) + 1]     │
+│   N     = 文档总数                                         │
+│   n(qi) = 包含词 qi 的文档数                               │
+│   作用：罕见词得分更高（"Transformer" > "的"）              │
+├────────────────────────────────────────────────────────────┤
+│ f(qi,d) = 词 qi 在文档 d 中的出现次数（原始词频）           │
+│ k1      = 词频饱和参数（通常 1.2~2.0）                      │
+│   作用：控制 TF 饱和速度，k1 越大饱和越慢                    │
+├────────────────────────────────────────────────────────────┤
+│ b       = 文档长度归一化参数（通常 0.75）                    │
+│ |d|     = 当前文档长度（词数）                              │
+│ avgdl   = 所有文档的平均长度                                │
+│   作用：b=0 不考虑长度，b=1 完全归一化                      │
+└────────────────────────────────────────────────────────────┘
+
+直觉理解：
+  k1=1.5, b=0.75 时
+  - 短文档（|d| < avgdl）：分母变小 → 得分偏高（短文档天然精炼）
+  - 长文档（|d| > avgdl）：分母变大 → 得分偏低（词频被长度稀释）
+  - 词频 f 增加时：分子增长逐渐饱和（log-like 曲线）
+```
+
+```python
+import math
+from collections import Counter
+
+class BM25:
+    """从零实现 BM25，理解每个步骤"""
+    
+    def __init__(self, corpus: list[list[str]], k1: float = 1.5, b: float = 0.75):
+        self.k1 = k1
+        self.b = b
+        self.corpus = corpus
+        self.doc_count = len(corpus)
+        self.avgdl = sum(len(doc) for doc in corpus) / self.doc_count
+        
+        # 构建倒排索引：词 → 包含该词的文档编号集合
+        self.doc_freqs: dict[str, int] = {}  # 文档频率
+        self.term_freqs: list[Counter] = []  # 每个文档的词频
+        
+        for doc in corpus:
+            tf = Counter(doc)
+            self.term_freqs.append(tf)
+            for term in set(doc):
+                self.doc_freqs[term] = self.doc_freqs.get(term, 0) + 1
+    
+    def _idf(self, term: str) -> float:
+        """IDF：罕见词得分更高"""
+        n = self.doc_freqs.get(term, 0)
+        return math.log((self.doc_count - n + 0.5) / (n + 0.5) + 1)
+    
+    def _score(self, query_terms: list[str], doc_idx: int) -> float:
+        """计算单个文档的 BM25 分数"""
+        doc_len = len(self.corpus[doc_idx])
+        tf = self.term_freqs[doc_idx]
+        
+        score = 0.0
+        for term in query_terms:
+            if term not in tf:
+                continue
+            f = tf[term]  # 词在文档中的频率
+            # BM25 核心公式
+            numerator = f * (self.k1 + 1)
+            denominator = f + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)
+            score += self._idf(term) * numerator / denominator
+        
+        return score
+    
+    def search(self, query: list[str], top_k: int = 5) -> list[tuple[int, float]]:
+        """检索并排序"""
+        scores = [(i, self._score(query, i)) for i in range(self.doc_count)]
+        scores.sort(key=lambda x: x[1], reverse=True)
+        return scores[:top_k]
+
+# 使用示例
+corpus = [
+    ["python", "match", "语句", "性能", "基准测试", "3.12"],
+    ["python", "模式", "匹配", "入门", "教程"],
+    ["python", "3.11", "新", "特性", "概览"],
+]
+bm25 = BM25(corpus)
+results = bm25.search(["python", "3.12", "match", "性能"])
+# 文档 0 得分最高（精确命中 "3.12" 和 "match"）
+```
+
+### 9.3 BM25 + Dense 向量融合架构
+
+将 BM25 和向量检索的结果融合，有两种主流策略：
+
+```
+┌──────────────────────────────────────────────────────────┐
+│            混合检索架构（Hybrid Search）                   │
+│                                                          │
+│                    用户 Query                             │
+│                       │                                  │
+│            ┌──────────┴──────────┐                       │
+│            ▼                     ▼                       │
+│    ┌──────────────┐     ┌──────────────┐                │
+│    │  BM25 稀疏    │     │ Dense 向量    │                │
+│    │  检索管道     │     │ 检索管道      │                │
+│    │              │     │              │                │
+│    │ 倒排索引      │     │ HNSW/IVF     │                │
+│    │ 关键词匹配    │     │ 语义相似度    │                │
+│    └──────┬───────┘     └──────┬───────┘                │
+│           │ Top-K₁             │ Top-K₂                  │
+│           └──────────┬─────────┘                         │
+│                      ▼                                   │
+│            ┌──────────────────┐                          │
+│            │  Score Fusion    │                          │
+│            │  (加权 / RRF)    │                          │
+│            └────────┬─────────┘                          │
+│                     ▼                                    │
+│              Top-K 最终结果                               │
+└──────────────────────────────────────────────────────────┘
+```
+
+**两种融合策略对比**：
+
+```
+策略 1：加权线性融合（Weighted Sum）
+
+  final_score = α × normalize(bm25_score) + (1 - α) × normalize(vector_score)
+  
+  ⚠️ 问题：BM25 和向量的分数分布不同，归一化方式影响大
+  常用归一化：Min-Max → [0, 1]
+  推荐 α：0.3~0.7（需要在验证集上调参）
+
+策略 2：RRF（Reciprocal Rank Fusion）— 推荐
+
+  只用排名，不用分数 → 避免归一化问题
+  详见下节
+```
+
+### 9.4 RRF（Reciprocal Rank Fusion）算法
+
+RRF 是一种只基于**排名**（而非分数）的融合算法，简单、鲁棒、不需要参数调优。
+
+> **类比**：多个评委各自给选手打分排名。RRF 不关心每个评委的打分标准（分数量纲不同），只关心排名顺序——排名越靠前的选手，贡献越大。
+
+**公式推导**：
+
+```
+RRF(d) = Σ  1 / (k + rank_i(d))
+         i∈检索管道
+
+其中：
+  d         = 某个文档
+  rank_i(d) = 文档 d 在第 i 个检索管道中的排名（从 1 开始）
+  k         = 平滑常数（防止排名第 1 的权重过大）
+
+k = 60 的由来：
+  Cormack et al. (2009) 实验发现 k=60 在多个数据集上表现稳定
+  直觉：k=60 意味着排名第 1 的分数 = 1/61 ≈ 0.016
+                     排名第 60 的分数 = 1/120 ≈ 0.008
+        前 60 名的权重梯度比较平缓，不会过度偏向头部结果
+
+数值示例：
+  BM25 结果:    [文档A(rank1), 文档B(rank2), 文档C(rank3)]
+  向量检索结果: [文档C(rank1), 文档A(rank2), 文档D(rank3)]
+  
+  RRF(A) = 1/(60+1) + 1/(60+2) = 0.0164 + 0.0161 = 0.0325 ← 最高
+  RRF(B) = 1/(60+2) + 0         = 0.0161              = 0.0161
+  RRF(C) = 1/(60+3) + 1/(60+1) = 0.0159 + 0.0164 = 0.0323
+  RRF(D) = 0         + 1/(60+3) = 0.0159              = 0.0159
+  
+  最终排序：A > C > B > D
+  注意：文档 A 在两路都靠前 → 融合后第一
+```
+
+```python
+from collections import defaultdict
+
+def reciprocal_rank_fusion(
+    ranked_lists: list[list[str]],
+    k: int = 60
+) -> list[tuple[str, float]]:
+    """
+    RRF 融合多路检索结果
+    
+    Args:
+        ranked_lists: 多路检索结果，每路是文档 ID 的有序列表
+        k: 平滑常数，默认 60
+    
+    Returns:
+        融合后的 (doc_id, rrf_score) 列表，按分数降序
+    """
+    rrf_scores: dict[str, float] = defaultdict(float)
+    
+    for ranked_list in ranked_lists:
+        for rank, doc_id in enumerate(ranked_list, start=1):
+            rrf_scores[doc_id] += 1.0 / (k + rank)
+    
+    sorted_results = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+    return sorted_results
+
+# 使用示例
+bm25_results = ["doc_a", "doc_b", "doc_c", "doc_d"]
+vector_results = ["doc_c", "doc_a", "doc_e", "doc_b"]
+kg_results = ["doc_e", "doc_c", "doc_a"]  # 知识图谱结果
+
+fused = reciprocal_rank_fusion([bm25_results, vector_results, kg_results])
+# [('doc_a', 0.0487), ('doc_c', 0.0484), ('doc_b', 0.0322), ...]
+```
+
+### 9.5 Elasticsearch/OpenSearch 混合搜索
+
+Elasticsearch 8.x+ 原生支持向量检索和混合搜索，以下以其为例说明混合搜索在生产系统中的实现方式：
+
+```python
+# Elasticsearch 8.x 混合搜索配置示例
+# 说明：这里展示的是混合检索的工程配置模式，非 ES 教程
+
+# 1. 索引映射：同时包含文本字段和向量字段
+index_mapping = {
+    "mappings": {
+        "properties": {
+            "content": {
+                "type": "text",
+                "analyzer": "ik_max_word"  # 中文分词器
+            },
+            "embedding": {
+                "type": "dense_vector",
+                "dims": 1536,
+                "index": True,
+                "similarity": "cosine"     # HNSW 索引
+            },
+            "metadata": {
+                "type": "object",
+                "properties": {
+                    "source": {"type": "keyword"},
+                    "chunk_id": {"type": "keyword"}
+                }
+            }
+        }
+    }
+}
+
+# 2. 混合搜索查询：BM25 + kNN 向量检索
+hybrid_query = {
+    "query": {
+        "bool": {
+            "should": [
+                # 路径 1：BM25 文本检索
+                {
+                    "match": {
+                        "content": {
+                            "query": "Python match 语句性能",
+                            "boost": 0.3    # BM25 权重
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    # 路径 2：kNN 向量检索
+    "knn": {
+        "field": "embedding",
+        "query_vector": query_embedding,  # 1536 维
+        "k": 20,
+        "num_candidates": 100,
+        "boost": 0.7                      # 向量权重
+    },
+    "size": 10
+}
+
+# 3. ES 8.x 的 RRF 融合（原生支持）
+rrf_query = {
+    "retriever": {
+        "rrf": {
+            "retrievers": [
+                {
+                    "standard": {
+                        "query": {
+                            "match": {"content": "Python match 语句性能"}
+                        }
+                    }
+                },
+                {
+                    "knn": {
+                        "field": "embedding",
+                        "query_vector": query_embedding,
+                        "k": 20,
+                        "num_candidates": 100
+                    }
+                }
+            ],
+            "rank_constant": 60,    # RRF 的 k 参数
+            "rank_window_size": 100 # 融合时考虑的候选数
+        }
+    }
+}
+```
+
+### 9.6 多路召回实战：三路融合架构
+
+生产级 RAG 系统通常采用**向量 + BM25 + 知识图谱**三路融合：
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│              三路融合检索架构                                  │
+│                                                              │
+│                      用户 Query                              │
+│                         │                                    │
+│         ┌───────────────┼───────────────┐                    │
+│         ▼               ▼               ▼                    │
+│   ┌───────────┐  ┌───────────┐  ┌───────────────┐           │
+│   │ 向量检索   │  │ BM25 检索  │  │ 知识图谱检索   │           │
+│   │           │  │           │  │               │           │
+│   │ Milvus/   │  │ ES/Open-  │  │ Neo4j 图遍历  │           │
+│   │ Qdrant    │  │ Search    │  │ + Cypher 查询  │           │
+│   │           │  │           │  │               │           │
+│   │ 语义相似度 │  │ 精确关键词 │  │ 结构化关系    │           │
+│   └─────┬─────┘  └─────┬─────┘  └──────┬────────┘           │
+│         │ Top-50        │ Top-50        │ Top-20             │
+│         └───────────────┼───────────────┘                    │
+│                         ▼                                    │
+│               ┌──────────────────┐                           │
+│               │   RRF 融合排序    │                           │
+│               └────────┬─────────┘                           │
+│                        ▼                                     │
+│                    Top-100 候选                               │
+│                        │                                     │
+│                        ▼                                     │
+│               ┌──────────────────┐                           │
+│               │ Cross-Encoder    │                           │
+│               │ 重排序（精排）    │                           │
+│               └────────┬─────────┘                           │
+│                        ▼                                     │
+│                    Top-10 → LLM 生成                         │
+└──────────────────────────────────────────────────────────────┘
+```
+
+```python
+from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
+
+@dataclass
+class RetrievedDoc:
+    doc_id: str
+    content: str
+    score: float
+    source: str  # "vector" | "bm25" | "graph"
+
+class MultiPathRetriever:
+    """三路融合检索器"""
+    
+    def __init__(self, vector_store, bm25_index, graph_store, reranker):
+        self.vector_store = vector_store
+        self.bm25_index = bm25_index
+        self.graph_store = graph_store
+        self.reranker = reranker
+    
+    def retrieve(self, query: str, top_k: int = 10) -> list[RetrievedDoc]:
+        # 1. 并行执行三路检索
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            vector_future = executor.submit(
+                self.vector_store.search, query, top_k=50
+            )
+            bm25_future = executor.submit(
+                self.bm25_index.search, query, top_k=50
+            )
+            graph_future = executor.submit(
+                self.graph_store.search, query, top_k=20
+            )
+            
+            vector_results = vector_future.result()
+            bm25_results = bm25_future.result()
+            graph_results = graph_future.result()
+        
+        # 2. RRF 融合
+        ranked_lists = [
+            [doc.doc_id for doc in vector_results],
+            [doc.doc_id for doc in bm25_results],
+            [doc.doc_id for doc in graph_results],
+        ]
+        fused_ranking = reciprocal_rank_fusion(ranked_lists, k=60)
+        
+        # 3. 取 Top-100 候选，用 Cross-Encoder 重排序
+        all_docs = {d.doc_id: d for d in vector_results + bm25_results + graph_results}
+        candidates = [all_docs[doc_id] for doc_id, _ in fused_ranking[:100]
+                      if doc_id in all_docs]
+        
+        reranked = self.reranker.rerank(query, candidates, top_k=top_k)
+        return reranked
+```
+
+---
+
+## 10. 知识图谱与 Graph RAG
+
+> 第 7.5 节介绍了 Graph RAG 的基本概念和 LlamaIndex 快速上手。本节深入展开知识图谱的底层原理、Neo4j 图数据库的核心用法，以及 Microsoft GraphRAG 的架构细节。
+
+### 10.1 为什么需要知识图谱
+
+> **类比**：向量检索就像出租车——告诉司机"我要去一个有好咖啡的安静地方"，他根据"语义理解"直接把你带到目的地，但他不知道沿途的道路结构。知识图谱就像城市地铁图——它明确知道"A 站连接 B 站，B 站换乘到 C 站"，你可以精确规划路线、查看多跳关系。**最强的导航系统同时使用两者**：语义理解选大方向，结构化路径保证精确性。
+
+向量检索的三个根本局限：
+
+```
+局限 1：缺乏结构化关系
+
+  Query: "张三的导师的研究方向是什么？"
+  
+  向量检索：在嵌入空间找语义相近的文本段
+    → 可能找到"张三在 XX 实验室工作"
+    → 可能找到"李四教授研究 NLP"
+    → 但无法建立 "张三 → 导师是 → 李四 → 研究 → NLP" 的链式推理
+  
+  知识图谱：(张三)─[导师是]→(李四)─[研究方向]→(NLP)
+    → 图遍历直接得到答案
+
+局限 2：无法处理多跳推理
+
+  Query: "LangChain 使用了哪些向量数据库，这些数据库各支持什么索引类型？"
+  
+  这需要两跳：LangChain → 支持的向量数据库 → 各数据库的索引类型
+  向量检索只能找到"与 query 语义相近的段落"，无法系统遍历
+
+局限 3：全局总结能力不足
+
+  Query: "这个代码仓库中所有模块之间的依赖关系是什么？"
+  
+  向量检索只能找到局部相关片段
+  知识图谱可以遍历整个依赖图，生成全局视图
+```
+
+### 10.2 属性图 vs RDF
+
+知识图谱有两种主流数据模型：
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    属性图（Property Graph）                     │
+│                                                                │
+│  节点和边都可以携带属性（key-value 对）                          │
+│                                                                │
+│    (Person: 张三)──[WORKS_AT {since: 2020}]──▶(Company: OpenAI)│
+│         │                                                      │
+│    name: "张三"                                                │
+│    age: 30                                                     │
+│                                                                │
+│  代表实现：Neo4j、Amazon Neptune、TigerGraph                    │
+│  查询语言：Cypher（Neo4j）/ Gremlin（Apache TinkerPop）         │
+│  特点：直观、灵活、工程友好                                      │
+├────────────────────────────────────────────────────────────────┤
+│                    RDF（Resource Description Framework）        │
+│                                                                │
+│  所有知识表达为三元组（Subject, Predicate, Object）              │
+│                                                                │
+│    <张三>  <worksAt>  <OpenAI>                                 │
+│    <张三>  <age>      "30"^^xsd:integer                        │
+│                                                                │
+│  代表实现：Apache Jena、Virtuoso、Stardog                       │
+│  查询语言：SPARQL                                              │
+│  特点：标准化（W3C）、适合学术/开放知识库（Wikidata）             │
+└────────────────────────────────────────────────────────────────┘
+
+RAG 场景选型建议：
+  ✅ 属性图（Neo4j）：大多数工程项目首选
+     - Cypher 语法直观，学习曲线低
+     - 属性可以直接附加在节点/边上，不需要额外三元组
+     - 生态成熟，与 LangChain/LlamaIndex 集成良好
+  
+  ✅ RDF（SPARQL）：适合需要对接已有知识库的场景
+     - 如 Wikidata、DBpedia 等公共知识图谱
+     - 强类型推理能力（OWL 本体）
+```
+
+### 10.3 Neo4j 在 RAG 中的应用
+
+**Cypher 查询语言核心语法**：
+
+```cypher
+-- 创建节点
+CREATE (p:Person {name: "张三", role: "Engineer"})
+CREATE (c:Company {name: "OpenAI"})
+
+-- 创建关系
+MATCH (p:Person {name: "张三"}), (c:Company {name: "OpenAI"})
+CREATE (p)-[:WORKS_AT {since: 2020}]->(c)
+
+-- 图遍历查询（RAG 检索的核心操作）
+-- 一跳查询：张三在哪工作？
+MATCH (p:Person {name: "张三"})-[:WORKS_AT]->(c:Company)
+RETURN c.name
+
+-- 两跳查询：张三的同事有谁？
+MATCH (p:Person {name: "张三"})-[:WORKS_AT]->(c:Company)<-[:WORKS_AT]-(colleague:Person)
+RETURN colleague.name
+
+-- 变长路径查询：张三到 GPT-4 之间的所有关系路径（最多 5 跳）
+MATCH path = (p:Person {name: "张三"})-[*1..5]->(t:Technology {name: "GPT-4"})
+RETURN path
+
+-- 带条件的图模式匹配
+MATCH (p:Person)-[:RESEARCHES]->(topic:Topic)
+WHERE topic.domain = "NLP" AND p.h_index > 20
+RETURN p.name, topic.name
+ORDER BY p.h_index DESC
+LIMIT 10
+```
+
+**Neo4j 与 RAG 管道集成**：
+
+```python
+from neo4j import GraphDatabase
+
+class GraphRAGRetriever:
+    """基于 Neo4j 的图检索器"""
+    
+    def __init__(self, uri: str, auth: tuple):
+        self.driver = GraphDatabase.driver(uri, auth=auth)
+    
+    def retrieve_by_entity(self, entity: str, depth: int = 2) -> list[dict]:
+        """从实体出发进行图遍历检索"""
+        query = """
+        MATCH path = (start {name: $entity})-[*1..$depth]-(connected)
+        WITH connected, relationships(path) AS rels, length(path) AS dist
+        RETURN connected.name AS name,
+               connected.description AS description,
+               [r IN rels | type(r)] AS relationship_types,
+               dist AS distance
+        ORDER BY dist ASC
+        LIMIT 20
+        """
+        with self.driver.session() as session:
+            result = session.run(query, entity=entity, depth=depth)
+            return [dict(record) for record in result]
+    
+    def retrieve_subgraph_context(self, entities: list[str]) -> str:
+        """提取实体子图作为 LLM 上下文"""
+        query = """
+        MATCH (a)-[r]->(b)
+        WHERE a.name IN $entities OR b.name IN $entities
+        RETURN a.name AS source, type(r) AS relation, b.name AS target
+        """
+        with self.driver.session() as session:
+            result = session.run(query, entities=entities)
+            triples = [f"({r['source']})-[{r['relation']}]->({r['target']})"
+                       for r in result]
+            return "\n".join(triples)
+```
+
+### 10.4 Graph RAG 架构详解
+
+Graph RAG 的完整流水线分为离线构建和在线查询两个阶段：
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    Graph RAG 完整流水线                           │
+│                                                                  │
+│  ══════════════ 离线阶段（Indexing Pipeline）══════════════       │
+│                                                                  │
+│  原始文档                                                        │
+│     │                                                            │
+│     ▼                                                            │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
+│  │  文本分块     │ →  │  实体抽取     │ →  │  关系抽取     │       │
+│  │  Chunking    │    │  NER/LLM     │    │  RE/LLM      │       │
+│  └──────────────┘    └──────────────┘    └──────────────┘       │
+│                                                │                 │
+│                                                ▼                 │
+│                                    ┌──────────────────┐         │
+│                                    │  知识图谱构建      │         │
+│                                    │  实体去重/合并     │         │
+│                                    │  → Neo4j 写入     │         │
+│                                    └──────────────────┘         │
+│                                                │                 │
+│                              ┌──────────────────┤                │
+│                              ▼                  ▼                │
+│                   ┌──────────────┐    ┌──────────────┐          │
+│                   │ 社区检测      │    │ 向量索引构建   │          │
+│                   │ (Leiden)     │    │ (嵌入实体描述)  │          │
+│                   └──────┬───────┘    └──────────────┘          │
+│                          ▼                                      │
+│                   ┌──────────────┐                               │
+│                   │ 社区摘要生成   │                               │
+│                   │ (LLM 总结)   │                               │
+│                   └──────────────┘                               │
+│                                                                  │
+│  ══════════════ 在线阶段（Query Pipeline）══════════════         │
+│                                                                  │
+│  用户 Query                                                      │
+│     │                                                            │
+│     ├── 实体识别 → 图遍历（局部搜索）                              │
+│     │                                                            │
+│     └── 社区摘要检索 → Map-Reduce 聚合（全局搜索）                 │
+│                                                                  │
+│     → 合并上下文 → LLM 生成答案                                   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**实体与关系抽取**（核心步骤）：
+
+```python
+from pydantic import BaseModel, Field
+
+class Entity(BaseModel):
+    name: str = Field(description="实体名称")
+    type: str = Field(description="实体类型：Person/Organization/Technology/Concept")
+    description: str = Field(description="实体的简短描述")
+
+class Relationship(BaseModel):
+    source: str = Field(description="源实体名称")
+    target: str = Field(description="目标实体名称")
+    relation: str = Field(description="关系类型")
+    description: str = Field(description="关系描述")
+
+class ExtractionResult(BaseModel):
+    entities: list[Entity]
+    relationships: list[Relationship]
+
+EXTRACTION_PROMPT = """
+从以下文本中抽取实体和关系。
+
+实体类型：Person, Organization, Technology, Concept, Event
+关系类型：USES, CREATED_BY, PART_OF, RELATED_TO, DEPENDS_ON
+
+文本：
+{text}
+
+要求：
+1. 实体名称标准化（如 "LangChain" 而非 "langchain framework"）
+2. 关系必须在已抽取的实体之间建立
+3. 每个实体提供简短描述
+"""
+
+def extract_knowledge(text: str, llm) -> ExtractionResult:
+    """使用 LLM 抽取结构化知识"""
+    response = llm.predict(
+        EXTRACTION_PROMPT.format(text=text),
+        response_format=ExtractionResult,  # 结构化输出
+    )
+    return response
+
+def build_knowledge_graph(documents: list[str], llm, graph_db):
+    """批量构建知识图谱"""
+    all_entities = {}
+    all_relationships = []
+    
+    for doc in documents:
+        result = extract_knowledge(doc, llm)
+        
+        # 实体去重（基于名称归一化）
+        for entity in result.entities:
+            key = entity.name.lower().strip()
+            if key not in all_entities:
+                all_entities[key] = entity
+            else:
+                # 合并描述（保留更详细的）
+                existing = all_entities[key]
+                if len(entity.description) > len(existing.description):
+                    all_entities[key] = entity
+        
+        all_relationships.extend(result.relationships)
+    
+    # 写入 Neo4j
+    for entity in all_entities.values():
+        graph_db.create_node(entity.type, entity.name, entity.description)
+    
+    for rel in all_relationships:
+        graph_db.create_relationship(rel.source, rel.target, rel.relation)
+```
+
+### 10.5 Microsoft GraphRAG 深度解析
+
+Microsoft GraphRAG 的核心创新在于**社区检测 + 分层摘要**，解决了传统 RAG 无法回答"全局性问题"的短板。
+
+```
+传统 RAG 的盲区（全局性问题）：
+
+  Query: "这个代码仓库的整体架构是什么？主要模块之间如何协作？"
+  
+  传统 RAG：检索到几个语义相关的代码文件片段，无法给出全局视图
+  GraphRAG：通过社区摘要，预先总结了"认证模块""数据层""API 层"等社区的功能和关系
+            → 可以系统回答全局问题
+```
+
+**社区检测（Leiden 算法）**：
+
+```
+社区检测将知识图谱中紧密连接的节点聚类为"社区"：
+
+  整个知识图谱（数千节点）
+         │
+         ▼ Leiden 算法（比 Louvain 更稳定）
+  ┌──────────────────────────────────────┐
+  │  社区 1: "前端技术"                   │
+  │    React ─ Next.js ─ Vercel ─ SSR    │
+  │                                      │
+  │  社区 2: "LLM 推理"                   │
+  │    Transformer ─ KV Cache ─ vLLM     │
+  │                                      │
+  │  社区 3: "向量存储"                   │
+  │    Milvus ─ HNSW ─ Chroma ─ Qdrant  │
+  └──────────────────────────────────────┘
+         │
+         ▼ LLM 为每个社区生成摘要
+  ┌──────────────────────────────────────┐
+  │  社区 1 摘要: "前端技术社区包含       │
+  │    React/Next.js 等框架，主要用于     │
+  │    SSR 渲染和 AI 应用的 UI 层..."     │
+  └──────────────────────────────────────┘
+```
+
+**全局搜索 vs 局部搜索**：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                Microsoft GraphRAG 双模式                     │
+├────────────────────────────┬────────────────────────────────┤
+│      局部搜索（Local）      │      全局搜索（Global）        │
+├────────────────────────────┼────────────────────────────────┤
+│ 入口：查询中的实体           │ 入口：所有社区摘要             │
+│                            │                                │
+│ 流程：                      │ 流程：                        │
+│ 1. 识别查询实体             │ 1. 将 query 发给所有社区摘要   │
+│ 2. 从实体出发图遍历         │ 2. 每个社区独立评估相关性      │
+│ 3. 收集邻域节点+文本块      │    并生成部分答案（Map）       │
+│ 4. 拼接上下文 → LLM 生成   │ 3. 汇总所有部分答案（Reduce） │
+│                            │ 4. LLM 生成最终全局答案        │
+│                            │                                │
+│ 适合：具体问题              │ 适合：全局/总结性问题          │
+│ "React 的 SSR 如何工作？"   │ "这个项目用了哪些技术栈？"    │
+│                            │                                │
+│ 成本：低（只遍历局部图）     │ 成本：高（遍历所有社区摘要）   │
+└────────────────────────────┴────────────────────────────────┘
+```
+
+### 10.6 图 + 向量混合检索
+
+最强大的检索架构是将图遍历（结构化路径）和向量检索（语义相似度）结合：
+
+```python
+class HybridGraphVectorRetriever:
+    """图 + 向量双重召回检索器"""
+    
+    def __init__(self, graph_db, vector_store, llm):
+        self.graph_db = graph_db
+        self.vector_store = vector_store
+        self.llm = llm
+    
+    def retrieve(self, query: str, top_k: int = 10) -> str:
+        # 路径 1：向量语义检索
+        vector_results = self.vector_store.similarity_search(query, k=top_k)
+        vector_context = "\n".join([doc.page_content for doc in vector_results])
+        
+        # 路径 2：实体提取 → 图遍历
+        entities = self._extract_entities(query)
+        graph_context = ""
+        for entity in entities:
+            # 获取实体的邻域子图
+            subgraph = self.graph_db.retrieve_by_entity(entity, depth=2)
+            triples = [f"({r['name']})-[{'/'.join(r['relationship_types'])}]"
+                       for r in subgraph]
+            graph_context += "\n".join(triples) + "\n"
+        
+        # 合并两路上下文
+        combined_context = f"""
+        === 语义检索结果 ===
+        {vector_context}
+        
+        === 知识图谱关系 ===
+        {graph_context}
+        """
+        return combined_context
+    
+    def _extract_entities(self, query: str) -> list[str]:
+        """从查询中提取实体名称"""
+        response = self.llm.predict(
+            f"从以下查询中提取关键实体名称，用逗号分隔：\n{query}"
+        )
+        return [e.strip() for e in response.split(",")]
+```
+
+---
+
+## 11. 高级重排序与精排策略
+
+### 11.1 为什么需要重排序
+
+> **类比**：选秀比赛分为海选、复赛、决赛三个阶段。海选（召回）用简单标准快速筛出 1000 人，追求覆盖面——宁可多选，不能遗漏好苗子。复赛（粗排）用更精细的标准筛到 100 人。决赛（精排/重排序）让评委逐一仔细评判，选出 Top 10——追求精度，每个决定都很慎重。RAG 中的重排序就是"决赛"环节。
+
+```
+为什么不直接用精排做全量检索？
+
+  ❌ 精排模型（Cross-Encoder）逐对比较 Query 和每个文档
+     对 100 万文档做 Cross-Encoder：100 万次前向传播 → 几十分钟
+  
+  ✅ 两阶段架构：
+     第一阶段（召回）：向量 ANN / BM25 → 毫秒级筛出 Top-100
+     第二阶段（精排）：Cross-Encoder 对 100 个候选精确打分 → 秒级
+     
+  成本对比：
+     全量精排 100 万文档：~100 万次推理
+     两阶段：ANN 检索（1 次）+ 精排 100 个（100 次推理）→ 节省 ~10000 倍
+```
+
+### 11.2 Cross-Encoder 重排原理
+
+Cross-Encoder 和 Bi-Encoder 是两种根本不同的文本匹配架构：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Bi-Encoder（用于召回阶段）                                  │
+│                                                             │
+│    Query ──▶ [Encoder A] ──▶ 向量 q                        │
+│    Doc   ──▶ [Encoder B] ──▶ 向量 d     独立编码            │
+│                                                             │
+│    相似度 = cosine(q, d)                                    │
+│                                                             │
+│    ✅ 文档向量可离线预计算 → 检索快                           │
+│    ❌ Query 和 Doc 独立编码，无法交互 → 精度有上限            │
+├─────────────────────────────────────────────────────────────┤
+│  Cross-Encoder（用于精排阶段）                               │
+│                                                             │
+│    [CLS] Query [SEP] Doc [SEP]                              │
+│              │                                              │
+│         [Transformer]       联合编码                        │
+│              │                                              │
+│         相关性分数                                           │
+│                                                             │
+│    ✅ Query 和 Doc 在 Attention 层充分交互 → 精度更高         │
+│    ❌ 每个 (Query, Doc) 对都要完整前向传播 → 速度慢           │
+│    ❌ 无法预计算文档表示 → 不适合全量检索                     │
+└─────────────────────────────────────────────────────────────┘
+
+精度差距（MS MARCO 排行榜参考）：
+  Bi-Encoder (e5-large):      MRR@10 ≈ 0.38
+  Cross-Encoder (deberta-v3): MRR@10 ≈ 0.44
+  差距约 ~15%，在 Top-10 精度要求高的 RAG 场景中影响显著
+```
+
+```python
+from sentence_transformers import CrossEncoder
+
+# 加载 Cross-Encoder 重排模型
+reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
+
+def rerank_documents(query: str, documents: list[str], top_k: int = 10) -> list:
+    """Cross-Encoder 重排序"""
+    # 构建 (query, document) 对
+    pairs = [(query, doc) for doc in documents]
+    
+    # 批量打分（内部：每对拼接后过 Transformer）
+    scores = reranker.predict(pairs)
+    
+    # 按分数降序排列
+    scored_docs = sorted(
+        zip(documents, scores), key=lambda x: x[1], reverse=True
+    )
+    return scored_docs[:top_k]
+
+# 使用示例
+query = "HNSW 算法的时间复杂度"
+candidates = [
+    "HNSW 的搜索时间复杂度为 O(log N)，构建复杂度为 O(N log N)",
+    "向量数据库支持多种索引类型",
+    "分层可导航小世界图是一种近似最近邻搜索数据结构",
+    "Milvus 支持 HNSW、IVF_FLAT、IVF_PQ 等索引",
+]
+reranked = rerank_documents(query, candidates, top_k=2)
+# 结果：第 1 个文档（精确匹配时间复杂度）排到最前
+```
+
+### 11.3 ColBERT 晚期交互模型
+
+ColBERT（Contextualized Late Interaction over BERT）是 Bi-Encoder 和 Cross-Encoder 的**折中方案**——兼顾速度和精度。
+
+> **类比**：Bi-Encoder 像"只看简历照片选人"（各自独立表示），Cross-Encoder 像"面对面深度面谈"（联合分析）。ColBERT 像"先各自准备详细简历的每一条，然后逐条对比匹配"——比只看照片精确，比面谈高效。
+
+```
+ColBERT 的核心思想：晚期交互（Late Interaction）
+
+  1. 独立编码阶段（与 Bi-Encoder 相同，可预计算）：
+     Query  → [BERT] → token 级向量序列 [q₁, q₂, ..., qₘ]
+     Doc    → [BERT] → token 级向量序列 [d₁, d₂, ..., dₙ]
+  
+  2. 晚期交互阶段（轻量级，不需要 Transformer 计算）：
+     对 Query 的每个 token qᵢ，找到 Doc 中最相似的 token：
+       MaxSim(qᵢ, D) = max(cosine(qᵢ, dⱼ))  for j = 1..n
+     
+     总分 = Σ MaxSim(qᵢ, D)  for i = 1..m
+
+  为什么 MaxSim 有效？
+     Query: "HNSW 时间复杂度"
+     Doc: "分层可导航小世界图的查询时间为 O(log N)"
+     
+     "HNSW" 的 token 向量 → 与 "分层可导航小世界图" 的某个 token 高度匹配
+     "时间" 的 token 向量 → 与 "查询时间" 的 token 高度匹配
+     "复杂度" 的 token 向量 → 与 "O(log N)" 的 token 匹配
+     
+     每个 query token 找到最佳匹配 → 累加得到高分
+```
+
+```
+三种模型对比：
+
+┌──────────────┬─────────────┬──────────────┬───────────────┐
+│              │ Bi-Encoder  │   ColBERT    │ Cross-Encoder │
+├──────────────┼─────────────┼──────────────┼───────────────┤
+│ 交互方式      │ 无交互      │ token 级交互  │ 全注意力交互   │
+│ 文档预计算    │ ✅ 可以      │ ✅ 可以       │ ❌ 不可以     │
+│ 检索速度      │ ⚡ 最快      │ 🔶 较快       │ 🐢 最慢      │
+│ 精度          │ 🔶 中等     │ ✅ 较高       │ ✅ 最高       │
+│ 存储开销      │ 低（1向量）  │ 高（N个向量） │ 无            │
+│ 适合阶段      │ 召回        │ 精排/召回     │ 精排          │
+│ 代表模型      │ e5, BGE     │ ColBERTv2    │ ms-marco      │
+└──────────────┴─────────────┴──────────────┴───────────────┘
+```
+
+### 11.4 Cohere Rerank vs 开源方案
+
+生产环境中重排序方案的选型：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     重排序方案对比                            │
+├──────────────────┬─────────────────┬────────────────────────┤
+│                  │   Cohere Rerank  │   开源自部署           │
+├──────────────────┼─────────────────┼────────────────────────┤
+│ 部署方式          │ API 调用        │ 自托管 GPU 服务         │
+│ 延迟（100 文档）  │ ~200ms          │ ~100-500ms（视 GPU）   │
+│ 成本模型          │ 按调用次数计费   │ GPU 服务器固定成本      │
+│ 模型              │ rerank-v3.5     │ bge-reranker-v2-m3    │
+│                  │ (闭源)          │ cross-encoder/ms-marco │
+│                  │                 │ ColBERTv2              │
+│ 多语言支持        │ ✅ 100+ 语言    │ 取决于模型训练数据      │
+│ 数据隐私          │ ⚠️ 数据经第三方  │ ✅ 数据不出本地         │
+│ 调优              │ ❌ 不可微调      │ ✅ 可在领域数据上微调   │
+├──────────────────┴─────────────────┴────────────────────────┤
+│ 选型建议：                                                   │
+│   • 原型/小规模 → Cohere API（快速上线，无需运维）            │
+│   • 大规模/数据敏感 → 开源自部署（bge-reranker 推荐）        │
+│   • 中文场景 → bge-reranker-v2-m3（BAAI，中英双语优化）      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+```python
+# 方案 1：Cohere Rerank API
+import cohere
+
+co = cohere.Client("your-api-key")
+
+def cohere_rerank(query: str, documents: list[str], top_k: int = 10):
+    response = co.rerank(
+        model="rerank-v3.5",
+        query=query,
+        documents=documents,
+        top_n=top_k,
+    )
+    return [(r.document.text, r.relevance_score) for r in response.results]
+
+# 方案 2：开源 bge-reranker 自部署
+from sentence_transformers import CrossEncoder
+
+reranker = CrossEncoder("BAAI/bge-reranker-v2-m3", max_length=512)
+
+def bge_rerank(query: str, documents: list[str], top_k: int = 10):
+    pairs = [(query, doc) for doc in documents]
+    scores = reranker.predict(pairs, show_progress_bar=False)
+    ranked = sorted(zip(documents, scores), key=lambda x: x[1], reverse=True)
+    return ranked[:top_k]
+```
+
+### 11.5 重排序在生产中的位置
+
+完整的生产级检索-排序流水线：
+
+```
+┌──────────────────────────────────────────────────────────┐
+│              生产级 Retrieve-Rerank Pipeline              │
+│                                                          │
+│  用户 Query                                              │
+│     │                                                    │
+│     ▼                                                    │
+│  ┌──────────────────┐                                    │
+│  │  Query 预处理     │  改写 / 扩展 / HyDE                │
+│  └────────┬─────────┘                                    │
+│           ▼                                              │
+│  ┌──────────────────┐                                    │
+│  │  多路召回（粗筛）  │  向量 + BM25 → RRF                │
+│  │  Top-100 候选     │  延迟: ~50ms                      │
+│  └────────┬─────────┘                                    │
+│           ▼                                              │
+│  ┌──────────────────┐                                    │
+│  │  重排序（精排）    │  Cross-Encoder / ColBERT           │
+│  │  Top-100 → Top-10│  延迟: ~200ms                     │
+│  └────────┬─────────┘                                    │
+│           ▼                                              │
+│  ┌──────────────────┐                                    │
+│  │  后处理           │  去重 / 多样性过滤 / 上下文压缩      │
+│  │  Top-10 → Top-5  │                                    │
+│  └────────┬─────────┘                                    │
+│           ▼                                              │
+│  ┌──────────────────┐                                    │
+│  │  LLM 生成         │  拼接上下文 → 生成最终答案           │
+│  │                  │  延迟: ~1-3s                       │
+│  └──────────────────┘                                    │
+│                                                          │
+│  端到端延迟: ~1.5-4s                                      │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 12. 查询优化技术
+
+> 检索质量不仅取决于索引和排序算法，**查询本身的质量**同样至关重要。用户的原始查询往往模糊、不完整或表述不当，直接用原始查询检索的效果常常不理想。
+
+> **类比**：你去图书馆找一本关于"如何让代码跑得快"的书。图书管理员不会直接用"如何让代码跑得快"去检索，而是先将其改写为更专业的关键词——"性能优化""算法复杂度""缓存策略"——再去检索。查询优化技术就是让 RAG 系统拥有这种"图书管理员"能力。
+
+### 12.1 Query Rewriting 五种策略
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│              Query Rewriting 五种策略                          │
+├─────────────┬────────────────────────────────────────────────┤
+│ 策略         │ 说明                                          │
+├─────────────┼────────────────────────────────────────────────┤
+│ 1. 查询扩展  │ 添加同义词/相关术语，扩大召回面                  │
+│ (Expansion) │ "React 性能" → "React 性能 优化 渲染 虚拟DOM   │
+│             │ memo useMemo useCallback"                     │
+├─────────────┼────────────────────────────────────────────────┤
+│ 2. 查询分解  │ 将复杂查询拆解为多个子查询，分别检索后合并        │
+│ (Decompose) │ "对比 React 和 Vue 的状态管理"                 │
+│             │ → "React 状态管理方案" + "Vue 状态管理方案"      │
+├─────────────┼────────────────────────────────────────────────┤
+│ 3. 回译      │ 先生成答案，再从答案反推更好的查询                │
+│ (Back-      │ Query → LLM 生成答案 → 从答案提取关键词         │
+│  translate) │ → 用关键词重新检索                              │
+├─────────────┼────────────────────────────────────────────────┤
+│ 4. 假设文档  │ HyDE：生成假设答案文档，用其嵌入替代查询嵌入     │
+│ (HyDE)      │ 详见 7.1 节                                   │
+├─────────────┼────────────────────────────────────────────────┤
+│ 5. Step-back│ 将具体问题抽象为更高层次的问题                   │
+│ (抽象回退)   │ "Python 3.12 的 match 性能如何？"               │
+│             │ → "Python 模式匹配的实现原理和性能特征是什么？"   │
+└─────────────┴────────────────────────────────────────────────┘
+```
+
+```python
+# Query Rewriting 实现示例
+
+# 策略 1：查询扩展（LLM 辅助）
+EXPANSION_PROMPT = """
+请为以下搜索查询生成 3-5 个相关的扩展关键词或短语，用于提升检索召回率。
+只返回关键词列表，用逗号分隔。
+
+原始查询：{query}
+扩展关键词：
+"""
+
+def expand_query(query: str, llm) -> str:
+    expansions = llm.predict(EXPANSION_PROMPT.format(query=query))
+    return f"{query} {expansions}"
+
+# 策略 2：查询分解
+DECOMPOSE_PROMPT = """
+将以下复杂查询分解为 2-4 个独立的子查询，每个子查询可以独立检索。
+每行一个子查询。
+
+原始查询：{query}
+子查询：
+"""
+
+def decompose_query(query: str, llm) -> list[str]:
+    response = llm.predict(DECOMPOSE_PROMPT.format(query=query))
+    sub_queries = [q.strip() for q in response.strip().split("\n") if q.strip()]
+    return sub_queries
+
+def decompose_and_retrieve(query: str, retriever, llm) -> list:
+    """分解查询 → 分别检索 → 合并去重"""
+    sub_queries = decompose_query(query, llm)
+    all_docs = []
+    seen_ids = set()
+    
+    for sub_q in sub_queries:
+        docs = retriever.retrieve(sub_q, top_k=5)
+        for doc in docs:
+            if doc.id not in seen_ids:
+                all_docs.append(doc)
+                seen_ids.add(doc.id)
+    
+    return all_docs
+
+# 策略 5：Step-back Prompting
+STEPBACK_PROMPT = """
+给定以下具体问题，请生成一个更高层次、更通用的问题，
+这个通用问题的答案将有助于回答原始问题。
+
+原始问题：{query}
+抽象问题：
+"""
+
+def stepback_query(query: str, llm) -> str:
+    abstract_query = llm.predict(STEPBACK_PROMPT.format(query=query))
+    return abstract_query.strip()
+
+def stepback_retrieve(query: str, retriever, llm) -> list:
+    """同时检索原始查询和抽象查询，合并结果"""
+    abstract_q = stepback_query(query, llm)
+    
+    original_docs = retriever.retrieve(query, top_k=5)
+    abstract_docs = retriever.retrieve(abstract_q, top_k=5)
+    
+    # RRF 融合两路结果
+    fused = reciprocal_rank_fusion([
+        [d.id for d in original_docs],
+        [d.id for d in abstract_docs],
+    ])
+    
+    all_docs = {d.id: d for d in original_docs + abstract_docs}
+    return [all_docs[doc_id] for doc_id, _ in fused if doc_id in all_docs]
+```
+
+### 12.2 Query Routing
+
+不同类型的查询应该路由到不同的检索管道：
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                  Query Routing 架构                           │
+│                                                              │
+│  用户 Query                                                  │
+│     │                                                        │
+│     ▼                                                        │
+│  ┌──────────────────┐                                        │
+│  │  意图分类器        │  LLM / 分类模型                        │
+│  │  (Query Router)  │                                        │
+│  └────────┬─────────┘                                        │
+│           │                                                  │
+│     ┌─────┼─────────────────────┐                            │
+│     ▼     ▼                     ▼                            │
+│  ┌──────┐ ┌──────────────┐ ┌──────────────┐                 │
+│  │ 事实型│ │  代码/技术型  │ │  总结/分析型  │                 │
+│  │      │ │              │ │              │                 │
+│  │ 向量 │ │ BM25（精确   │ │ Graph RAG   │                 │
+│  │ 检索 │ │ 关键词匹配） │ │ (全局搜索)   │                 │
+│  └──────┘ └──────────────┘ └──────────────┘                 │
+│                                                              │
+│  路由规则示例：                                               │
+│  • "什么是 RAG？"        → 向量检索（语义匹配）               │
+│  • "BM25 公式中 k1 参数" → BM25 检索（精确术语）             │
+│  • "项目整体架构概述"     → Graph RAG 全局搜索               │
+│  • "最新的 LLM 论文"     → Web 搜索 + 向量检索              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+```python
+from enum import Enum
+
+class QueryType(Enum):
+    FACTUAL = "factual"           # 事实型 → 标准向量检索
+    TECHNICAL = "technical"       # 技术型 → BM25 + 向量混合
+    ANALYTICAL = "analytical"     # 分析型 → Graph RAG 全局搜索
+    CONVERSATIONAL = "conversational"  # 对话型 → 直接 LLM
+
+ROUTING_PROMPT = """
+将以下查询分类为以下类型之一：
+- factual: 事实性问题，寻找具体信息
+- technical: 技术性问题，包含代码、API、配置等精确术语
+- analytical: 分析/总结性问题，需要跨文档综合
+- conversational: 闲聊/不需要检索的问题
+
+查询：{query}
+类型：
+"""
+
+class QueryRouter:
+    def __init__(self, retrievers: dict, llm):
+        self.retrievers = retrievers
+        self.llm = llm
+    
+    def route_and_retrieve(self, query: str) -> list:
+        # LLM 分类查询意图
+        query_type = self.llm.predict(
+            ROUTING_PROMPT.format(query=query)
+        ).strip().lower()
+        
+        if query_type == "conversational":
+            return []  # 不需要检索
+        
+        retriever = self.retrievers.get(query_type, self.retrievers["factual"])
+        return retriever.retrieve(query)
+```
+
+### 12.3 Contextual Retrieval
+
+Anthropic 提出的 Contextual Retrieval 方法解决了一个常见问题：**分块后的文本缺少原始上下文**。
+
+```
+问题：分块导致上下文丢失
+
+  原始文档（关于 React 18 的文章）：
+    "... React 18 引入了并发模式 ..."
+    "... 它使用了新的 Fiber 架构 ..."      ← 这里的"它"指 React 18
+    "... 这种架构支持时间切片 ..."          ← "这种架构"指 Fiber
+
+  分块后（chunk_size=100）：
+    chunk_3: "它使用了新的 Fiber 架构，通过双缓冲机制..."
+    
+    ❌ 问题：独立的 chunk_3 中，"它"指代不明
+       向量嵌入无法准确表达 "React 18 的 Fiber 架构"
+       用户搜索 "React 18 架构" 时可能找不到这个 chunk
+
+  Contextual Retrieval 的解决方案：给每个 chunk 添加上下文前缀
+    
+    chunk_3（增强后）:
+    "[上下文：本段来自一篇关于 React 18 新特性的文章，
+      前文讨论了 React 18 的并发模式]
+     它使用了新的 Fiber 架构，通过双缓冲机制..."
+    
+    ✅ 嵌入向量现在包含了完整的语义上下文
+```
+
+```python
+CONTEXT_PROMPT = """
+以下是一篇文档的完整内容和其中的一个分块。
+请为这个分块生成一段简短的上下文描述（2-3 句话），
+说明这个分块在文档中的位置和上下文背景。
+
+<document>
+{document}
+</document>
+
+<chunk>
+{chunk}
+</chunk>
+
+请只返回上下文描述，不要包含其他内容。
+"""
+
+def add_contextual_prefix(
+    document: str,
+    chunks: list[str],
+    llm,
+) -> list[str]:
+    """为每个 chunk 添加上下文前缀（Anthropic Contextual Retrieval）"""
+    contextualized_chunks = []
+    
+    for chunk in chunks:
+        context = llm.predict(
+            CONTEXT_PROMPT.format(document=document, chunk=chunk)
+        )
+        # 将上下文前缀拼接到 chunk 前面
+        enhanced_chunk = f"[上下文：{context.strip()}]\n{chunk}"
+        contextualized_chunks.append(enhanced_chunk)
+    
+    return contextualized_chunks
+
+# 完整流水线
+def contextual_retrieval_pipeline(documents: list[str], llm, splitter):
+    """Contextual Retrieval 完整索引流水线"""
+    all_enhanced_chunks = []
+    
+    for doc in documents:
+        chunks = splitter.split_text(doc)
+        enhanced = add_contextual_prefix(doc, chunks, llm)
+        all_enhanced_chunks.extend(enhanced)
+    
+    # 索引增强后的 chunks（同时建立 BM25 和向量索引）
+    # 增强后的 chunk 在 BM25 和向量检索中都会表现更好
+    return all_enhanced_chunks
+```
+
+**Contextual Retrieval 的效果**（Anthropic 实验数据）：
+
+```
+检索失败率对比（越低越好）：
+
+  传统 RAG（向量检索）:                    检索失败率 基准
+  + Contextual Retrieval:              检索失败率 ↓ 35%
+  + Contextual Retrieval + BM25 混合:  检索失败率 ↓ 49%
+  + 上述 + 重排序:                      检索失败率 ↓ 67%
+
+关键洞察：
+  Contextual Retrieval 的成本 = 每个 chunk 一次 LLM 调用（离线预处理）
+  使用 Claude 的 prompt caching 可大幅降低成本（文档只需传一次）
+  是一种简单但高效的"以空间换精度"策略
+```
+
+---
+
+## 13. 常见陷阱与最佳实践
+
+### 13.1 检索策略陷阱
+
+```
+❌ 只用向量检索
+   问题：精确关键词（版本号、API 名称、错误码）匹配差
+   症状：搜 "ERR_CONNECTION_REFUSED" 找不到精确匹配的文档
+   
+✅ 混合检索（BM25 + 向量 + 图谱）
+   BM25 处理精确匹配，向量处理语义理解，图谱处理关系推理
+   三路 RRF 融合后 Cross-Encoder 精排
+```
+
+```
+❌ 单路召回
+   问题：单一检索管道的覆盖面有限，任何一种方法都有盲区
+   症状：召回率始终上不去，增加 top_k 也只是增加噪声
+   
+✅ 多路召回 + RRF 融合
+   多路并行检索 → RRF 融合排序 → 重排序精排
+   不同检索管道覆盖不同场景，互补盲区
+```
+
+### 13.2 分块策略陷阱
+
+```
+❌ 固定 chunk_size=512，所有文档统一处理
+   问题：代码文件、表格、长段落的最佳粒度完全不同
+   症状：代码函数被截断、表格行被拆散、段落语义不完整
+   
+✅ 语义分块 + 按文档类型调整
+   - Markdown/文档 → 按标题/段落结构分块（RecursiveCharacterTextSplitter）
+   - 代码 → 按函数/类粒度分块（AST 解析）
+   - 表格 → 按行组/整表保留
+   - 长文本 → SemanticChunker（基于嵌入余弦距离的语义边界检测）
+   - 每种类型独立调参 chunk_size 和 overlap
+```
+
+```
+❌ 分块后直接索引，不添加元数据
+   问题：分块后的文本丢失了原始上下文（指代消解、前文引用）
+   症状：检索到的 chunk 包含"它""这个方法"等代词，LLM 无法理解
+   
+✅ 使用 Contextual Retrieval + 丰富元数据
+   - 每个 chunk 添加上下文前缀（原文件名、章节标题、前文摘要）
+   - 保留 chunk 之间的 PREVIOUS/NEXT 关系
+   - 元数据中记录来源文件、页码、标题层级
+```
+
+### 13.3 排序与生成陷阱
+
+```
+❌ 忽略重排序，直接将向量检索 Top-K 结果送入 LLM
+   问题：向量检索（Bi-Encoder）的精度有上限，Top-10 中可能混入噪声
+   症状：LLM 生成的答案被无关上下文干扰，出现幻觉
+   
+✅ Cross-Encoder/ColBERT 精排
+   召回 Top-100 → Cross-Encoder 重排序 → 取 Top-10 最相关文档
+   精度提升约 15%（MS MARCO 基准），延迟增加约 200ms（可接受）
+```
+
+```
+❌ 忽略查询质量，直接用用户原始输入检索
+   问题：用户查询通常不完整、模糊、使用口语化表达
+   症状：检索结果不够精准，需要用户反复重新提问
+   
+✅ Query Rewriting + HyDE
+   - 简单查询 → 查询扩展（添加同义词/相关术语）
+   - 复杂查询 → 查询分解（拆为子查询分别检索）
+   - 语义鸿沟 → HyDE（生成假设文档，用假设文档的嵌入检索）
+   - 具体问题 → Step-back（抽象为更通用的问题，扩大召回面）
+```
+
+### 13.4 工程实践陷阱
+
+```
+❌ 不做评估就上线
+   问题：不知道 RAG 系统的检索质量和生成质量到底如何
+   症状：用户反馈答案不准确，但无法定位是检索问题还是生成问题
+   
+✅ RAGAS 四维评估 + 持续监控
+   - Faithfulness: 答案是否有上下文支撑（检测幻觉）
+   - Context Precision: 检索到的内容有多少是有用的
+   - Context Recall: 需要的信息是否被检索到
+   - Answer Relevancy: 答案是否切题
+   每次模型/索引更新后自动跑评估，用 MLflow 追踪指标趋势
+```
+
+```
+❌ 所有查询走同一条检索路径
+   问题：不同类型查询的最佳检索策略不同
+   症状：简单问题过度检索浪费资源，复杂问题检索不足答案不完整
+   
+✅ Query Routing 按意图路由
+   - 事实型问题 → 标准向量检索
+   - 精确技术查询 → BM25 优先
+   - 全局总结问题 → Graph RAG 全局搜索
+   - 闲聊/简单问题 → 直接 LLM 回答（跳过检索）
+```
+
+### 13.5 最佳实践速查表
+
+| 环节 | 推荐方案 | 关键参数 |
+|------|---------|---------|
+| 分块 | 语义分块 + 文档类型适配 | chunk_size: 256-1024（按类型调整） |
+| 嵌入 | e5-large / bge-large-zh | dim: 1024, batch_size: 128 |
+| 索引 | HNSW（Milvus/Qdrant） | M: 16, efConstruction: 200 |
+| 召回 | 多路召回（向量 + BM25） | 各路 Top-50 → RRF 融合 |
+| 精排 | Cross-Encoder / ColBERT | Top-100 → 重排 Top-10 |
+| 查询优化 | Query Rewriting + Routing | 按查询类型路由 |
+| 上下文 | Contextual Retrieval | 每个 chunk 添加上下文前缀 |
+| 评估 | RAGAS 四维 + MLflow 追踪 | Faithfulness > 0.85 为合格线 |
+| 生成 | 引用溯源 + 置信度标注 | 每个答案标注来源 chunk |
 
 ---
 

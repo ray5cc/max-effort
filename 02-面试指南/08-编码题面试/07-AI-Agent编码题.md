@@ -325,9 +325,9 @@ COMMON_TEMPLATES = {
 4. Best practices
 
 Code:
-```{language}
+\`\`\`{language}
 {code}
-```
+\`\`\`
 """
     )
 }

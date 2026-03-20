@@ -16,6 +16,11 @@
 6. [实战：构建多 Agent 代码审查系统](#6-实战构建多-agent-代码审查系统)
 7. [最佳实践](#7-最佳实践)
 8. [常见问题](#8-常见问题)
+9. [Agent 通信协议与消息标准化](#9-agent-通信协议与消息标准化)
+10. [生产级多 Agent 可靠性](#10-生产级多-agent-可靠性)
+11. [成本控制与优化](#11-成本控制与优化)
+12. [多 Agent 编排模式对比](#12-多-agent-编排模式对比)
+13. [常见陷阱与最佳实践](#13-常见陷阱与最佳实践)
 
 ---
 
@@ -1022,6 +1027,1265 @@ async def traced_agent_call(agent_name: str, task: str):
 - 流水线任务（步骤固定）→ `round_robin` 或自定义函数
 - 探索性协作（需要根据上下文灵活决策）→ `auto`
 - 调试阶段 → `manual`，手动控制，方便排查问题
+
+---
+
+## 9. Agent 通信协议与消息标准化
+
+> 第 5 节介绍了基础消息格式和共享状态方案。本节深入探讨**通信协议的架构级设计**——消息该用什么结构、Agent 之间该如何"说话"、消息路由怎么走、版本升级时老 Agent 怎么兼容新消息。
+
+### 9.1 结构化消息 vs 自然语言消息
+
+**类比**：想象两种开会方式——方式 A：每个人写自由格式的便签纸互相传递（自然语言消息）；方式 B：每个人填写统一的表单，包含"发起人、议题、结论、下一步行动"（结构化消息）。便签灵活但混乱，表单规范但不够灵活。
+
+| 维度 | 结构化消息（JSON Schema） | 自然语言消息 |
+|------|---------------------------|-------------|
+| **可解析性** | 确定性解析，无歧义 | 需要 LLM 理解，可能误判 |
+| **灵活性** | 字段固定，扩展需改 Schema | 任意表达，无限灵活 |
+| **调试难度** | 低，字段一目了然 | 高，需阅读长文本 |
+| **Token 消耗** | 低（紧凑格式） | 高（冗余表达） |
+| **适用场景** | Agent 间任务指令、状态同步 | 创意协作、开放式讨论 |
+
+**实践建议：混合策略**——Agent 间的**控制信令**用结构化消息，**内容讨论**用自然语言：
+
+```python
+from pydantic import BaseModel, Field
+from typing import Literal, Any
+from datetime import datetime
+
+class ControlMessage(BaseModel):
+    """Agent 间控制信令——高优先级、强类型"""
+    msg_type: Literal["task_assign", "status_update", "result_submit", "error_report"]
+    sender: str
+    receiver: str
+    payload: dict[str, Any]
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class ContentMessage(BaseModel):
+    """Agent 间内容讨论——允许自然语言"""
+    msg_type: Literal["discussion", "review", "suggestion"]
+    sender: str
+    receiver: str
+    content: str          # 自然语言正文
+    structured_hint: dict = Field(default_factory=dict)  # 可选的结构化摘要
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+```
+
+### 9.2 通信模式：请求-响应 vs 发布-订阅 vs 事件驱动
+
+**类比**：
+- **请求-响应** = 打电话：你说一句，对方回一句，一对一阻塞
+- **发布-订阅** = 广播电台：电台播新闻，所有调频的收音机都能收到
+- **事件驱动** = 公告栏：有人贴通知，感兴趣的人自己来看
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                  三种通信模式对比                                        │
+│                                                                         │
+│  1. 请求-响应（Request-Response）                                       │
+│     Agent A ──请求──► Agent B                                           │
+│     Agent A ◄──响应── Agent B       同步阻塞，简单可靠                  │
+│                                                                         │
+│  2. 发布-订阅（Pub-Sub）                                                │
+│     Agent A ──发布──► [Topic: "review_done"]                            │
+│                         │                                               │
+│                    ┌────┴────┐                                          │
+│                 Agent B   Agent C    多个订阅者异步接收                  │
+│                                                                         │
+│  3. 事件驱动（Event-Driven）                                            │
+│     [Event Bus]                                                         │
+│       │  ◄── Agent A 发出 "code_committed" 事件                        │
+│       ├──► Agent B (触发代码审查)                                       │
+│       └──► Agent C (触发测试执行)     解耦最彻底，但调试难              │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+| 模式 | 耦合度 | 延迟 | 可扩展性 | 调试难度 | 典型场景 |
+|------|-------|------|---------|---------|---------|
+| 请求-响应 | 高 | 同步等待 | 低 | 低 | 简单的任务分派与结果收集 |
+| 发布-订阅 | 中 | 异步低延迟 | 高 | 中 | 状态变更通知、多方监听 |
+| 事件驱动 | 低 | 异步 | 最高 | 高 | 复杂编排、微服务式 Agent |
+
+```python
+import asyncio
+from collections import defaultdict
+from typing import Callable, Any
+
+class AgentEventBus:
+    """轻量级事件总线——Agent 间发布-订阅 + 事件驱动的统一实现"""
+
+    def __init__(self):
+        self._subscribers: dict[str, list[Callable]] = defaultdict(list)
+        self._event_log: list[dict] = []
+
+    def subscribe(self, event_type: str, handler: Callable):
+        """订阅事件（发布-订阅模式）"""
+        self._subscribers[event_type].append(handler)
+
+    async def publish(self, event_type: str, data: dict[str, Any], sender: str):
+        """发布事件，所有订阅者异步执行"""
+        event = {"type": event_type, "data": data, "sender": sender}
+        self._event_log.append(event)
+
+        handlers = self._subscribers.get(event_type, [])
+        if handlers:
+            await asyncio.gather(*[h(event) for h in handlers])
+
+    async def request(self, receiver_handler: Callable, request_data: dict) -> Any:
+        """请求-响应模式：同步等待结果"""
+        return await receiver_handler(request_data)
+
+
+# ── 使用示例 ──────────────────────────────────────────────────────────
+bus = AgentEventBus()
+
+async def review_agent_handler(event: dict):
+    print(f"审查 Agent 收到事件: {event['type']}，开始审查代码...")
+
+async def test_agent_handler(event: dict):
+    print(f"测试 Agent 收到事件: {event['type']}，开始运行测试...")
+
+# 订阅
+bus.subscribe("code_committed", review_agent_handler)
+bus.subscribe("code_committed", test_agent_handler)
+
+# 发布——两个 Agent 同时收到通知
+# await bus.publish("code_committed", {"file": "main.py"}, sender="dev_agent")
+```
+
+### 9.3 消息路由策略
+
+不同场景需要不同的消息分发策略。**类比**：就像公司的信息传递——全员邮件（广播）、点对点微信（定向）、按部门群发（基于角色）。
+
+| 路由策略 | 机制 | 适用场景 | Token 开销 |
+|---------|------|---------|-----------|
+| **广播（Broadcast）** | 所有 Agent 都收到消息 | 系统公告、全局状态变更 | 最高（N 倍） |
+| **定向（Direct）** | 指定接收方 Agent | 任务分配、一对一协作 | 最低 |
+| **基于角色（Role-based）** | 按 Agent 角色分组发送 | "所有审查员"、"所有前端 Agent" | 中等 |
+| **基于内容（Content-based）** | 根据消息内容自动路由 | 智能分发（如按语言路由到对应翻译 Agent） | 中等 + 路由 Agent 成本 |
+
+```python
+from enum import Enum
+from dataclasses import dataclass
+
+class RoutingStrategy(Enum):
+    BROADCAST = "broadcast"
+    DIRECT = "direct"
+    ROLE_BASED = "role_based"
+    CONTENT_BASED = "content_based"
+
+@dataclass
+class AgentRegistry:
+    """Agent 注册表——消息路由的基础设施"""
+    _agents: dict[str, dict] = None  # name → {role, handler, capabilities}
+
+    def __post_init__(self):
+        self._agents = {}
+
+    def register(self, name: str, role: str, capabilities: list[str], handler):
+        self._agents[name] = {
+            "role": role,
+            "capabilities": capabilities,
+            "handler": handler,
+        }
+
+    def route(self, strategy: RoutingStrategy, **kwargs) -> list:
+        """根据策略返回目标 Agent 列表"""
+        if strategy == RoutingStrategy.BROADCAST:
+            return list(self._agents.values())
+        elif strategy == RoutingStrategy.DIRECT:
+            target = self._agents.get(kwargs.get("target", ""))
+            return [target] if target else []
+        elif strategy == RoutingStrategy.ROLE_BASED:
+            role = kwargs.get("role", "")
+            return [a for a in self._agents.values() if a["role"] == role]
+        elif strategy == RoutingStrategy.CONTENT_BASED:
+            # 根据内容中的关键词匹配 Agent 能力
+            content = kwargs.get("content", "").lower()
+            return [
+                a for a in self._agents.values()
+                if any(cap in content for cap in a["capabilities"])
+            ]
+        return []
+```
+
+### 9.4 消息序列化与版本兼容
+
+**类比**：想象你在和外国人通信——语言版本会随时间演变。如果你写信用的是 2025 版协议（多了一个"优先级"字段），而对方还在用 2024 版协议（没有这个字段），信就读不懂了。消息版本兼容就是确保"新旧系统能互相理解"。
+
+**核心原则**：
+
+1. **向后兼容**：新版本消息必须能被老版本 Agent 处理（忽略未知字段）
+2. **必填字段不可删除**：一旦发布为必填，永远保留
+3. **新字段设为可选**：添加新字段时提供默认值
+
+```python
+from pydantic import BaseModel, Field
+from typing import Optional, Any
+
+class MessageV1(BaseModel):
+    """v1 消息格式——初始版本"""
+    version: int = 1
+    sender: str
+    receiver: str
+    content: str
+
+class MessageV2(MessageV1):
+    """v2 消息格式——新增优先级和元数据（可选字段，向后兼容）"""
+    version: int = 2
+    priority: int = Field(default=5, ge=1, le=10)       # v2 新增，默认值保证 v1 兼容
+    metadata: Optional[dict[str, Any]] = None             # v2 新增，可选
+
+class MessageAdapter:
+    """消息版本适配器——不同版本 Agent 间的翻译官"""
+
+    @staticmethod
+    def normalize(raw: dict) -> MessageV2:
+        """将任意版本的消息统一转换为最新版本"""
+        version = raw.get("version", 1)
+        if version == 1:
+            return MessageV2(
+                sender=raw["sender"],
+                receiver=raw["receiver"],
+                content=raw["content"],
+                priority=5,          # v1 没有优先级，使用默认值
+                metadata=None,
+            )
+        elif version == 2:
+            return MessageV2(**raw)
+        else:
+            raise ValueError(f"未知消息版本: {version}")
+
+    @staticmethod
+    def downgrade(msg: MessageV2, target_version: int = 1) -> dict:
+        """降级消息版本以兼容老 Agent"""
+        data = msg.model_dump()
+        if target_version == 1:
+            data.pop("priority", None)
+            data.pop("metadata", None)
+            data["version"] = 1
+        return data
+```
+
+---
+
+## 10. 生产级多 Agent 可靠性
+
+> 开发阶段"能跑就行"的多 Agent 系统，到了生产环境会面临真实世界的各种故障。本节系统性地介绍如何让多 Agent 系统在生产环境中稳定运行。
+
+### 10.1 故障隔离：隔舱设计
+
+**类比**：远洋轮船的船底分成多个独立隔舱，即使一个隔舱进水，水也不会蔓延到其他隔舱，船不会沉。多 Agent 系统也一样——单个 Agent 的崩溃不应导致整个系统瘫痪。
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    隔舱设计（Bulkhead Pattern）                      │
+│                                                                     │
+│  ┌──── 隔舱 1 ────┐  ┌──── 隔舱 2 ────┐  ┌──── 隔舱 3 ────┐     │
+│  │  研究 Agent     │  │  编码 Agent     │  │  审查 Agent     │     │
+│  │  ┌───────────┐ │  │  ┌───────────┐ │  │  ┌───────────┐ │     │
+│  │  │独立进程   │ │  │  │独立进程   │ │  │  │独立进程   │ │     │
+│  │  │独立内存   │ │  │  │独立内存   │ │  │  │独立内存   │ │     │
+│  │  │独立 Token │ │  │  │独立 Token │ │  │  │独立 Token │ │     │
+│  │  │   配额    │ │  │  │   配额    │ │  │  │   配额    │ │     │
+│  │  └───────────┘ │  │  └───────────┘ │  │  └───────────┘ │     │
+│  │  ⚡ 崩溃不扩散 │  │  ✅ 正常运行   │  │  ✅ 正常运行   │     │
+│  └────────────────┘  └────────────────┘  └────────────────┘     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+```python
+import asyncio
+from dataclasses import dataclass, field
+from typing import Optional, Any, Callable
+from enum import Enum
+
+class AgentHealthStatus(Enum):
+    HEALTHY = "healthy"
+    DEGRADED = "degraded"
+    FAILED = "failed"
+
+@dataclass
+class BulkheadConfig:
+    """隔舱配置"""
+    max_concurrent: int = 3       # 最大并发任务数
+    timeout_seconds: float = 30   # 单任务超时时间
+    max_failures: int = 5         # 最大连续失败次数
+    recovery_seconds: float = 60  # 失败后恢复等待时间
+
+class AgentBulkhead:
+    """Agent 隔舱：限制并发 + 故障熔断 + 自动恢复"""
+
+    def __init__(self, agent_name: str, config: BulkheadConfig):
+        self.agent_name = agent_name
+        self.config = config
+        self._semaphore = asyncio.Semaphore(config.max_concurrent)
+        self._failure_count = 0
+        self._status = AgentHealthStatus.HEALTHY
+        self._last_failure_time: Optional[float] = None
+
+    @property
+    def status(self) -> AgentHealthStatus:
+        return self._status
+
+    async def execute(self, func: Callable, *args, **kwargs) -> Any:
+        """在隔舱保护下执行 Agent 任务"""
+        # 熔断检查：连续失败过多，暂停服务
+        if self._status == AgentHealthStatus.FAILED:
+            elapsed = asyncio.get_event_loop().time() - (self._last_failure_time or 0)
+            if elapsed < self.config.recovery_seconds:
+                raise RuntimeError(
+                    f"Agent [{self.agent_name}] 已熔断，"
+                    f"剩余恢复时间 {self.config.recovery_seconds - elapsed:.0f}s"
+                )
+            # 恢复期到，尝试半开
+            self._status = AgentHealthStatus.DEGRADED
+            self._failure_count = 0
+
+        # 信号量限制并发
+        async with self._semaphore:
+            try:
+                result = await asyncio.wait_for(
+                    func(*args, **kwargs),
+                    timeout=self.config.timeout_seconds,
+                )
+                # 成功：重置失败计数
+                self._failure_count = 0
+                self._status = AgentHealthStatus.HEALTHY
+                return result
+            except (asyncio.TimeoutError, Exception) as e:
+                self._failure_count += 1
+                if self._failure_count >= self.config.max_failures:
+                    self._status = AgentHealthStatus.FAILED
+                    self._last_failure_time = asyncio.get_event_loop().time()
+                raise
+```
+
+### 10.2 超时与降级策略
+
+**类比**：外卖平台——如果骑手 30 分钟还没送达，系统会自动触发"超时补偿"：要么重新派单（重试），要么直接退款（降级返回默认结果）。Agent 超时同理。
+
+**三级降级策略**：
+
+```
+正常响应 ───超时──► 重试（换模型） ───再超时──► 降级（缓存/默认值） ───仍失败──► 人工介入
+```
+
+```python
+import asyncio
+import time
+from typing import Optional, Any
+
+class DegradationLevel(Enum):
+    FULL = "full"           # 完整能力
+    REDUCED = "reduced"     # 降级：使用缓存或简化逻辑
+    MINIMAL = "minimal"     # 最小化：返回默认值
+    MANUAL = "manual"       # 人工介入
+
+class GracefulAgent:
+    """支持优雅降级的 Agent 包装器"""
+
+    def __init__(self, agent_name: str, primary_model: str, fallback_model: str):
+        self.agent_name = agent_name
+        self.primary_model = primary_model
+        self.fallback_model = fallback_model
+        self._cache: dict[str, Any] = {}
+
+    async def execute_with_degradation(
+        self, task: str, timeout: float = 30.0
+    ) -> dict[str, Any]:
+        """带降级的任务执行"""
+        # 第 1 级：使用主模型
+        try:
+            result = await asyncio.wait_for(
+                self._call_llm(task, self.primary_model), timeout=timeout
+            )
+            self._cache[self._cache_key(task)] = result  # 缓存成功结果
+            return {"level": DegradationLevel.FULL, "result": result}
+        except asyncio.TimeoutError:
+            pass
+
+        # 第 2 级：使用备用轻量模型
+        try:
+            result = await asyncio.wait_for(
+                self._call_llm(task, self.fallback_model), timeout=timeout / 2
+            )
+            return {"level": DegradationLevel.REDUCED, "result": result}
+        except asyncio.TimeoutError:
+            pass
+
+        # 第 3 级：使用缓存
+        cached = self._cache.get(self._cache_key(task))
+        if cached:
+            return {"level": DegradationLevel.MINIMAL, "result": cached, "from_cache": True}
+
+        # 第 4 级：请求人工介入
+        return {
+            "level": DegradationLevel.MANUAL,
+            "result": None,
+            "message": f"Agent [{self.agent_name}] 全部降级策略已耗尽，请人工处理",
+        }
+
+    def _cache_key(self, task: str) -> str:
+        return f"{self.agent_name}:{hash(task)}"
+
+    async def _call_llm(self, task: str, model: str) -> str:
+        # 实际调用 LLM API（此处为接口占位）
+        raise NotImplementedError
+```
+
+### 10.3 幂等性保证
+
+**类比**：电梯按钮——你按一次"3楼"和按十次"3楼"，电梯都只去一次 3 楼。Agent 操作的幂等性也是如此：同一个任务无论被发送一次还是重试五次，最终效果都只产生一次。
+
+**为什么需要幂等？** 分布式系统中网络抖动、超时重试极其常见，如果 Agent 操作不是幂等的，重试可能导致数据重复写入、资源重复创建等副作用。
+
+```python
+import hashlib
+import json
+from typing import Optional, Any
+from datetime import datetime, timedelta
+
+class IdempotencyStore:
+    """幂等性存储——记录已执行的操作，防止重复执行"""
+
+    def __init__(self):
+        self._executed: dict[str, dict] = {}  # idempotency_key → {result, expires_at}
+
+    def _make_key(self, agent_name: str, task: str, params: dict) -> str:
+        """生成幂等键：相同 Agent + 相同任务 + 相同参数 = 相同键"""
+        raw = json.dumps({"agent": agent_name, "task": task, "params": params}, sort_keys=True)
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+    def check_and_set(
+        self, agent_name: str, task: str, params: dict, ttl_hours: int = 24
+    ) -> Optional[Any]:
+        """
+        检查是否已执行。
+        - 已执行且未过期：返回缓存结果（跳过执行）
+        - 未执行或已过期：返回 None（继续执行）
+        """
+        key = self._make_key(agent_name, task, params)
+        entry = self._executed.get(key)
+        if entry and datetime.utcnow() < entry["expires_at"]:
+            return entry["result"]
+        return None
+
+    def record(self, agent_name: str, task: str, params: dict, result: Any, ttl_hours: int = 24):
+        """记录已执行的操作"""
+        key = self._make_key(agent_name, task, params)
+        self._executed[key] = {
+            "result": result,
+            "expires_at": datetime.utcnow() + timedelta(hours=ttl_hours),
+        }
+
+# ── 使用示例 ──────────────────────────────────────────────────────────
+store = IdempotencyStore()
+
+async def idempotent_agent_execute(agent, task: str, params: dict) -> Any:
+    """幂等执行：重试安全"""
+    # 先检查是否已执行
+    cached = store.check_and_set(agent.name, task, params)
+    if cached is not None:
+        print(f"⚡ 幂等命中：跳过重复执行 [{agent.name}] {task[:30]}...")
+        return cached
+
+    # 首次执行
+    result = await agent.execute(task, **params)
+    store.record(agent.name, task, params, result)
+    return result
+```
+
+### 10.4 监控与告警
+
+**类比**：ICU 病房的心电监护仪——持续监测心率、血压、血氧等关键指标，一旦超出阈值立即报警。多 Agent 系统也需要这样的"监护仪"来及时发现问题。
+
+**必须监控的四大指标**：
+
+| 指标类别 | 具体指标 | 告警阈值示例 | 含义 |
+|---------|---------|-------------|------|
+| **延迟** | Agent 响应 P99 延迟 | > 30s | 系统变慢，用户体验受损 |
+| **成功率** | Agent 任务完成率 | < 95% | 频繁失败，需排查 |
+| **Token 消耗** | 每分钟 Token 使用量 | > 预算 80% | 成本即将超限 |
+| **队列深度** | 待处理消息数 | > 100 | 消费跟不上生产，需扩容或限流 |
+
+```python
+import time
+from dataclasses import dataclass, field
+from collections import deque
+
+@dataclass
+class AgentMetrics:
+    """单个 Agent 的运行指标"""
+    agent_name: str
+    total_tasks: int = 0
+    success_count: int = 0
+    failure_count: int = 0
+    total_tokens: int = 0
+    latencies: deque = field(default_factory=lambda: deque(maxlen=100))  # 最近 100 次延迟
+
+    @property
+    def success_rate(self) -> float:
+        return self.success_count / max(self.total_tasks, 1)
+
+    @property
+    def p99_latency(self) -> float:
+        if not self.latencies:
+            return 0.0
+        sorted_lats = sorted(self.latencies)
+        idx = int(len(sorted_lats) * 0.99)
+        return sorted_lats[min(idx, len(sorted_lats) - 1)]
+
+    def record_task(self, success: bool, latency: float, tokens: int):
+        self.total_tasks += 1
+        if success:
+            self.success_count += 1
+        else:
+            self.failure_count += 1
+        self.latencies.append(latency)
+        self.total_tokens += tokens
+
+class MultiAgentMonitor:
+    """多 Agent 系统监控中心"""
+
+    def __init__(self):
+        self._metrics: dict[str, AgentMetrics] = {}
+        self._alerts: list[dict] = []
+
+    def get_or_create(self, agent_name: str) -> AgentMetrics:
+        if agent_name not in self._metrics:
+            self._metrics[agent_name] = AgentMetrics(agent_name=agent_name)
+        return self._metrics[agent_name]
+
+    def check_health(self) -> list[dict]:
+        """健康检查，返回告警列表"""
+        alerts = []
+        for name, m in self._metrics.items():
+            if m.success_rate < 0.95 and m.total_tasks >= 10:
+                alerts.append({
+                    "agent": name,
+                    "type": "low_success_rate",
+                    "value": f"{m.success_rate:.1%}",
+                    "severity": "critical" if m.success_rate < 0.8 else "warning",
+                })
+            if m.p99_latency > 30:
+                alerts.append({
+                    "agent": name,
+                    "type": "high_latency",
+                    "value": f"{m.p99_latency:.1f}s",
+                    "severity": "warning",
+                })
+        return alerts
+
+    def dashboard(self) -> str:
+        """输出文本仪表盘"""
+        lines = ["═══ Multi-Agent System Dashboard ═══"]
+        for name, m in self._metrics.items():
+            status = "✅" if m.success_rate >= 0.95 else "⚠️" if m.success_rate >= 0.8 else "🔴"
+            lines.append(
+                f"  {status} {name}: "
+                f"成功率={m.success_rate:.1%} | "
+                f"P99={m.p99_latency:.1f}s | "
+                f"Token={m.total_tokens:,}"
+            )
+        return "\n".join(lines)
+```
+
+### 10.5 限流与背压
+
+**类比**：高速公路匝道控制——当主路已经拥堵时，匝道的红绿灯会减慢上匝车辆的速度（限流），而不是让所有车都涌上去导致全线瘫痪（系统崩溃）。多 Agent 系统中，当下游 Agent 处理不过来时，上游 Agent 必须减速或暂停发送任务。
+
+**两种保护机制**：
+
+| 机制 | 方向 | 原理 | 类比 |
+|------|------|------|------|
+| **限流（Rate Limiting）** | 上游主动控制 | 限制每秒发送的任务数 | 水龙头控制出水量 |
+| **背压（Backpressure）** | 下游反馈上游 | 下游告知上游"我忙不过来" | 工厂流水线前一个工位喊停 |
+
+```python
+import asyncio
+import time
+from collections import deque
+
+class TokenBucketRateLimiter:
+    """令牌桶限流器——控制 Agent 任务发送速率"""
+
+    def __init__(self, rate: float, burst: int):
+        """
+        rate: 每秒补充的令牌数（= 允许的最大 QPS）
+        burst: 桶容量（= 允许的突发量）
+        """
+        self.rate = rate
+        self.burst = burst
+        self._tokens = float(burst)
+        self._last_refill = time.monotonic()
+
+    async def acquire(self):
+        """获取一个令牌（无令牌时阻塞等待）"""
+        while True:
+            self._refill()
+            if self._tokens >= 1:
+                self._tokens -= 1
+                return
+            # 等待直到下一个令牌生成
+            wait_time = (1 - self._tokens) / self.rate
+            await asyncio.sleep(wait_time)
+
+    def _refill(self):
+        now = time.monotonic()
+        elapsed = now - self._last_refill
+        self._tokens = min(self.burst, self._tokens + elapsed * self.rate)
+        self._last_refill = now
+
+
+class BackpressureQueue:
+    """带背压的任务队列——队列满时拒绝新任务"""
+
+    def __init__(self, max_size: int = 50, high_watermark: float = 0.8):
+        self._queue: asyncio.Queue = asyncio.Queue(maxsize=max_size)
+        self._max_size = max_size
+        self._high_watermark = high_watermark
+
+    @property
+    def pressure_level(self) -> float:
+        """当前压力水平 (0.0 ~ 1.0)"""
+        return self._queue.qsize() / self._max_size
+
+    @property
+    def should_slow_down(self) -> bool:
+        """是否应该减速"""
+        return self.pressure_level >= self._high_watermark
+
+    async def submit(self, task: dict) -> bool:
+        """提交任务。队列满时返回 False（背压信号）"""
+        if self._queue.full():
+            return False  # 背压：拒绝新任务
+        await self._queue.put(task)
+        return True
+
+    async def consume(self) -> dict:
+        """消费一个任务"""
+        return await self._queue.get()
+
+
+# ── 组合使用：限流 + 背压 ──────────────────────────────────────────
+async def protected_task_dispatch(
+    task: dict,
+    limiter: TokenBucketRateLimiter,
+    queue: BackpressureQueue,
+):
+    """带完整保护的任务分发"""
+    # 第 1 层：背压检查
+    if queue.should_slow_down:
+        print(f"⚠️ 队列压力 {queue.pressure_level:.0%}，延迟提交...")
+        await asyncio.sleep(2)  # 主动减速
+
+    # 第 2 层：限流
+    await limiter.acquire()
+
+    # 第 3 层：入队
+    success = await queue.submit(task)
+    if not success:
+        print("🔴 队列已满，任务被拒绝。请稍后重试。")
+    return success
+```
+
+---
+
+## 11. 成本控制与优化
+
+> 多 Agent 系统的运营成本远高于单 Agent——每个 Agent 独立调用 LLM，Token 消耗呈倍数增长。不做成本控制，几个小时就能烧掉几百美元。
+
+### 11.1 Token 预算分配
+
+**类比**：家庭财务预算——总收入有限，要把钱分配到房租、餐饮、交通等不同类别。给每个 Agent 设置 Token "预算"，超支时触发限制，避免某个 Agent 失控烧光全部预算。
+
+```python
+from dataclasses import dataclass, field
+from typing import Optional
+
+@dataclass
+class TokenBudget:
+    """单个 Agent 的 Token 预算"""
+    agent_name: str
+    max_tokens_per_task: int = 4000      # 单任务上限
+    max_tokens_per_hour: int = 100_000   # 每小时上限
+    max_tokens_total: int = 1_000_000    # 总预算上限
+    used_tokens: int = 0
+    _hourly_used: int = 0
+
+    @property
+    def remaining(self) -> int:
+        return self.max_tokens_total - self.used_tokens
+
+    @property
+    def budget_exhausted(self) -> bool:
+        return self.used_tokens >= self.max_tokens_total
+
+class BudgetManager:
+    """多 Agent Token 预算管理器"""
+
+    def __init__(self):
+        self._budgets: dict[str, TokenBudget] = {}
+
+    def set_budget(self, agent_name: str, **kwargs):
+        self._budgets[agent_name] = TokenBudget(agent_name=agent_name, **kwargs)
+
+    def request_tokens(self, agent_name: str, estimated_tokens: int) -> dict:
+        """
+        申请 Token。返回是否批准 + 可用额度。
+        ❌ 超预算 → 拒绝
+        ⚠️ 接近上限 → 批准但告警
+        ✅ 正常 → 批准
+        """
+        budget = self._budgets.get(agent_name)
+        if not budget:
+            return {"approved": True, "warning": "未设置预算，不限制"}
+
+        if budget.budget_exhausted:
+            return {"approved": False, "reason": f"总预算已耗尽 ({budget.used_tokens:,} tokens)"}
+
+        if estimated_tokens > budget.max_tokens_per_task:
+            return {
+                "approved": False,
+                "reason": f"单任务预估 {estimated_tokens:,} 超过上限 {budget.max_tokens_per_task:,}",
+            }
+
+        remaining_pct = budget.remaining / budget.max_tokens_total
+        budget.used_tokens += estimated_tokens
+
+        if remaining_pct < 0.1:
+            return {"approved": True, "warning": f"⚠️ 预算剩余不足 10% ({budget.remaining:,} tokens)"}
+        return {"approved": True}
+
+    def report(self) -> str:
+        """预算使用报告"""
+        lines = ["═══ Token Budget Report ═══"]
+        for name, b in self._budgets.items():
+            pct = b.used_tokens / b.max_tokens_total * 100
+            bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
+            lines.append(f"  {name}: [{bar}] {pct:.1f}% ({b.used_tokens:,}/{b.max_tokens_total:,})")
+        return "\n".join(lines)
+```
+
+### 11.2 模型分层：关键决策用强模型，辅助任务用轻量模型
+
+**类比**：医院分诊——普通感冒由全科医生处理（轻量模型），疑难杂症才请专家会诊（旗舰模型）。不是每个 Agent 都需要 GPT-4o 或 Claude Sonnet——对于简单格式化、信息提取等任务，小模型既快又便宜。
+
+| Agent 角色 | 推荐模型层级 | 理由 | 成本比 |
+|-----------|-------------|------|--------|
+| **Orchestrator（编排者）** | 旗舰模型（GPT-4o / Claude Sonnet） | 需要复杂推理、全局决策 | 1× |
+| **Coder（代码生成）** | 旗舰模型或代码专用模型 | 代码质量直接影响结果 | 1× |
+| **Reviewer（审查员）** | 中等模型 | 按 Checklist 检查即可 | 0.3× |
+| **Formatter（格式化）** | 轻量模型（GPT-4o-mini / Haiku） | 纯格式转换，无需深度推理 | 0.05× |
+| **Router（路由分发）** | 轻量模型或规则引擎 | 分类任务，确定性高 | 0.05× |
+| **Summarizer（摘要）** | 中等模型 | 需要理解但不需要创造 | 0.3× |
+
+```python
+from enum import Enum
+
+class ModelTier(Enum):
+    FLAGSHIP = "flagship"       # GPT-4o, Claude Sonnet 4
+    MID = "mid"                 # GPT-4o-mini, Claude Haiku
+    LIGHT = "light"             # 轻量模型或本地模型
+    RULE = "rule"               # 不使用 LLM，纯规则引擎
+
+# 模型分层配置
+MODEL_TIER_MAP = {
+    ModelTier.FLAGSHIP: {"model": "gpt-4o", "cost_per_1k_tokens": 0.005},
+    ModelTier.MID:      {"model": "gpt-4o-mini", "cost_per_1k_tokens": 0.00015},
+    ModelTier.LIGHT:    {"model": "local-qwen-7b", "cost_per_1k_tokens": 0.0},
+    ModelTier.RULE:     {"model": None, "cost_per_1k_tokens": 0.0},
+}
+
+class SmartModelSelector:
+    """根据任务复杂度自动选择模型层级"""
+
+    @staticmethod
+    def select(task_description: str, agent_role: str) -> ModelTier:
+        """简单的基于规则的模型选择（生产环境可用 LLM 做更智能的判断）"""
+        # 编排者和代码生成始终用旗舰模型
+        if agent_role in ("orchestrator", "coder"):
+            return ModelTier.FLAGSHIP
+
+        # 简单任务用轻量模型
+        simple_keywords = ["格式化", "排版", "转换格式", "提取字段", "分类"]
+        if any(kw in task_description for kw in simple_keywords):
+            return ModelTier.LIGHT
+
+        # 其他用中等模型
+        return ModelTier.MID
+```
+
+### 11.3 缓存与复用：Agent 间共享推理结果
+
+**类比**：办公室的共享文件柜——第一个同事查到的资料放进文件柜，后面的同事直接取用，不需要重新去图书馆查。Agent 之间共享推理结果也一样，避免多个 Agent 重复进行相同的 LLM 调用。
+
+```python
+import hashlib
+import json
+import time
+from typing import Optional, Any
+
+class AgentResultCache:
+    """Agent 推理结果缓存——跨 Agent 共享"""
+
+    def __init__(self, max_entries: int = 1000, default_ttl: int = 3600):
+        self._cache: dict[str, dict] = {}
+        self._max_entries = max_entries
+        self._default_ttl = default_ttl
+        self._hits = 0
+        self._misses = 0
+
+    def _make_key(self, task: str, context: str = "") -> str:
+        """语义相似的任务应命中同一缓存键"""
+        raw = f"{task.strip().lower()}|{context.strip().lower()}"
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+    def get(self, task: str, context: str = "") -> Optional[Any]:
+        key = self._make_key(task, context)
+        entry = self._cache.get(key)
+        if entry and time.time() < entry["expires_at"]:
+            self._hits += 1
+            return entry["result"]
+        self._misses += 1
+        return None
+
+    def put(self, task: str, result: Any, context: str = "", ttl: Optional[int] = None):
+        # 缓存满时淘汰最旧的条目
+        if len(self._cache) >= self._max_entries:
+            oldest_key = min(self._cache, key=lambda k: self._cache[k]["created_at"])
+            del self._cache[oldest_key]
+
+        key = self._make_key(task, context)
+        self._cache[key] = {
+            "result": result,
+            "created_at": time.time(),
+            "expires_at": time.time() + (ttl or self._default_ttl),
+        }
+
+    @property
+    def hit_rate(self) -> float:
+        total = self._hits + self._misses
+        return self._hits / max(total, 1)
+
+
+# ── 在 Agent 编排器中使用缓存 ─────────────────────────────────────────
+shared_cache = AgentResultCache()
+
+async def cached_agent_call(agent, task: str, context: str = "") -> Any:
+    """缓存感知的 Agent 调用"""
+    cached = shared_cache.get(task, context)
+    if cached is not None:
+        print(f"📦 缓存命中 (命中率 {shared_cache.hit_rate:.1%})：跳过 [{agent.name}]")
+        return cached
+
+    result = await agent.execute(task)
+    shared_cache.put(task, result, context)
+    return result
+```
+
+### 11.4 动态规模调整
+
+**类比**：网约车平台——早高峰多派车，深夜少派车，根据实时需求动态调整运力。多 Agent 系统也应该根据任务量和复杂度动态增减 Agent 数量，而不是固定一个"满编"阵容。
+
+**何时扩容 / 缩容**：
+
+| 信号 | 动作 | 原因 |
+|------|------|------|
+| 任务队列深度 > 阈值 | 增加同类 Agent 实例 | 处理能力不足 |
+| Agent 空闲时间 > 阈值 | 减少 Agent 实例 | 避免浪费（空闲也消耗基础资源） |
+| 任务复杂度突增 | 升级 Agent 的模型层级 | 需要更强推理能力 |
+| 任务复杂度降低 | 降级 Agent 的模型层级 | 节省成本 |
+| 特定领域任务激增 | 临时创建专业 Agent | 比通用 Agent 更高效 |
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class ScalingPolicy:
+    """自动伸缩策略"""
+    min_agents: int = 1
+    max_agents: int = 10
+    scale_up_threshold: int = 20      # 队列深度超过此值 → 扩容
+    scale_down_threshold: int = 3     # 队列深度低于此值 → 缩容
+    cooldown_seconds: float = 60      # 扩缩容冷却时间
+
+class AutoScaler:
+    """Agent 自动伸缩器"""
+
+    def __init__(self, policy: ScalingPolicy):
+        self.policy = policy
+        self.current_count = policy.min_agents
+        self._last_scale_time = 0.0
+
+    def evaluate(self, queue_depth: int, avg_latency: float) -> dict:
+        """评估是否需要扩缩容"""
+        now = time.time()
+        if now - self._last_scale_time < self.policy.cooldown_seconds:
+            return {"action": "none", "reason": "冷却期内"}
+
+        if queue_depth > self.policy.scale_up_threshold and self.current_count < self.policy.max_agents:
+            new_count = min(self.current_count + 2, self.policy.max_agents)
+            self.current_count = new_count
+            self._last_scale_time = now
+            return {"action": "scale_up", "new_count": new_count, "reason": f"队列深度 {queue_depth}"}
+
+        if queue_depth < self.policy.scale_down_threshold and self.current_count > self.policy.min_agents:
+            new_count = max(self.current_count - 1, self.policy.min_agents)
+            self.current_count = new_count
+            self._last_scale_time = now
+            return {"action": "scale_down", "new_count": new_count, "reason": f"队列空闲"}
+
+        return {"action": "none", "reason": "无需调整"}
+```
+
+---
+
+## 12. 多 Agent 编排模式对比
+
+> 第 2.4 节概述了三种基本拓扑（Hub-Spoke、P2P、分层）。本节进一步展开，系统对比五种主流编排模式在实际落地时的权衡。
+
+### 12.1 五种编排模式总览
+
+**类比**：这五种模式就像五种团队管理风格——
+
+| 模式 | 类比 |
+|------|------|
+| 层级式 | 公司组织架构：CEO → VP → 经理 → 员工，逐级下达指令 |
+| 对等式 | 开源社区：每个人都可以自由协作，没有固定领导 |
+| 市场式 | 自由职业平台（Upwork）：任务发布方发布需求，有能力的人抢单 |
+| 流水线式 | 汽车装配线：焊接 → 喷漆 → 装配 → 质检，严格按顺序 |
+| 辩论式 | 法庭审判：控方辩方轮流发言，法官最终裁决 |
+
+### 12.2 模式详解
+
+#### 12.2.1 层级式（Supervisor → Workers）
+
+```
+               ┌──────────────┐
+               │  Supervisor  │
+               │  (管理者)    │
+               └──┬───┬───┬──┘
+                  │   │   │
+           ┌──────┘   │   └──────┐
+           ▼          ▼          ▼
+    ┌──────────┐ ┌──────────┐ ┌──────────┐
+    │ Worker A │ │ Worker B │ │ Worker C │
+    │ (研究)   │ │ (编码)   │ │ (测试)   │
+    └──────────┘ └──────────┘ └──────────┘
+```
+
+- **工作流程**：Supervisor 接收用户请求 → 拆分任务 → 分配给对应 Worker → 收集结果 → 汇总返回
+- **适用场景**：任务可明确拆分、子任务相互独立、需要集中控制
+- **典型实现**：AutoGen GroupChat with Manager、LangGraph Supervisor Node
+
+#### 12.2.2 对等式（Peer-to-Peer）
+
+```
+    Agent A ◄──────► Agent B
+       ▲  ╲            ╱  ▲
+       │    ╲        ╱    │
+       │      ╲    ╱      │
+       ▼        ╳        ▼
+    Agent D ◄──────► Agent C
+```
+
+- **工作流程**：任何 Agent 都可以直接与其他 Agent 通信，无中心协调者
+- **适用场景**：探索性任务、创意头脑风暴、需要动态组队
+- **典型实现**：AutoGen Two-Agent Chat、自定义 P2P 协议
+
+#### 12.2.3 市场式（Task Marketplace）
+
+```
+    ┌──────────────────────────────────┐
+    │        任务市场 (Marketplace)    │
+    │  ┌────┐ ┌────┐ ┌────┐ ┌────┐  │
+    │  │任务│ │任务│ │任务│ │任务│  │
+    │  │ #1 │ │ #2 │ │ #3 │ │ #4 │  │
+    │  └────┘ └────┘ └────┘ └────┘  │
+    └──────┬───────────────┬─────────┘
+           │  竞标/认领     │
+    ┌──────┴──┐      ┌─────┴───┐
+    │ Agent A │      │ Agent B │   按能力自主选择任务
+    │ (擅长   │      │ (擅长   │
+    │  前端)  │      │  后端)  │
+    └─────────┘      └─────────┘
+```
+
+- **工作流程**：任务发布到公共市场 → Agent 根据自身能力评估并认领 → 完成后提交结果
+- **适用场景**：异构 Agent 池、任务类型多样、需要弹性分配
+- **典型实现**：自定义 Task Queue + Agent Capability Matching
+
+#### 12.2.4 流水线式（Pipeline）
+
+```
+    输入 ──► Agent A ──► Agent B ──► Agent C ──► Agent D ──► 输出
+             (解析)      (分析)      (生成)      (校验)
+```
+
+- **工作流程**：任务严格按顺序流过一系列 Agent，前一步的输出是后一步的输入
+- **适用场景**：步骤固定、强依赖顺序的工作流（如 ETL 处理、文档生成流水线）
+- **典型实现**：LangGraph Sequential Nodes、Dify Workflow
+
+#### 12.2.5 辩论式（Debate / Adversarial）
+
+```
+    ┌──────────┐        ┌──────────┐
+    │ Agent A  │  交替  │ Agent B  │
+    │ (正方)   │◄─────►│ (反方)   │
+    └────┬─────┘ 辩论   └────┬─────┘
+         │                   │
+         └─────────┬─────────┘
+                   ▼
+            ┌──────────┐
+            │  Judge   │
+            │ (裁判)   │
+            └──────────┘
+```
+
+- **工作流程**：正方 Agent 提出方案 → 反方 Agent 批评 → 多轮辩论 → 裁判 Agent 综合裁决
+- **适用场景**：需要高质量决策、方案评估、安全审查
+- **典型实现**：AutoGen 多角色 GroupChat、自定义 Debate Loop
+
+### 12.3 综合对比表
+
+| 维度 | 层级式 | 对等式 | 市场式 | 流水线式 | 辩论式 |
+|------|--------|--------|--------|---------|--------|
+| **通信开销** | 中等（星形） | 高（网状） | 低（集中） | 最低（线性） | 中等（往返） |
+| **实现复杂度** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐ | ⭐⭐ |
+| **可扩展性** | 中等 | 差（N² 通信） | 好 | 中等 | 差 |
+| **容错能力** | 中等（单点在 Supervisor） | 好（无单点故障） | 好（任务可重新认领） | 差（断链即停） | 中等 |
+| **适合任务类型** | 明确可拆分的复杂任务 | 探索性、创意性任务 | 异构任务池 | 固定步骤的流程 | 需要对抗验证的决策 |
+| **Agent 数量建议** | 3-10 | 2-5 | 5-50 | 2-8 | 2-3 + 裁判 |
+| **延迟** | 中等 | 不可预测 | 中等 | 累加（串行） | 高（多轮） |
+| **代表框架** | AutoGen GroupChat、LangGraph | AutoGen Two-Agent | 自定义实现 | Dify Workflow | LangGraph Debate |
+
+**选择决策树**：
+
+```
+任务特征判断：
+│
+├─ 步骤固定且有序？ ──────────────► 流水线式
+│
+├─ 需要对抗性验证？ ──────────────► 辩论式
+│
+├─ Agent 能力差异大、任务类型多？ ──► 市场式
+│
+├─ 任务可明确拆分为子任务？ ───────► 层级式
+│
+└─ 以上都不符合 / 探索性任务 ─────► 对等式
+```
+
+---
+
+## 13. 常见陷阱与最佳实践
+
+> 多 Agent 系统的设计和运维充满了反直觉的陷阱。以下总结了实践中最常见的 ❌ 错误做法和 ✅ 正确做法。
+
+### 13.1 Agent 数量
+
+**❌ 误区：Agent 数量越多越好**
+
+> "任务复杂？加 Agent！效果不好？再加 Agent！"
+
+这是最常见的直觉——觉得更多 Agent = 更强能力。实际上，每增加一个 Agent，通信开销、协调成本和故障概率都在增长。
+
+**✅ 正确做法：最少化 Agent 数量，优先单 Agent 增强**
+
+> 先尝试用一个强 Agent + 多工具解决问题。只有当单 Agent 的上下文窗口、专业知识或并行处理确实成为瓶颈时，才引入多 Agent。
+
+```python
+# ❌ 过度拆分：6 个 Agent 完成一个简单任务
+agents = {
+    "input_parser": Agent("解析用户输入"),
+    "validator": Agent("验证输入合法性"),
+    "formatter": Agent("格式化数据"),
+    "processor": Agent("处理核心逻辑"),
+    "output_formatter": Agent("格式化输出"),
+    "responder": Agent("生成回复"),
+}
+# 问题：6 次 LLM 调用，大量通信开销，简单任务被过度工程化
+
+# ✅ 简化：1 个 Agent + 工具完成同样任务
+agent = Agent(
+    name="all_in_one",
+    system_message="你是一个全能助手，负责解析、验证、处理和回复用户请求。",
+    tools=[validate_tool, format_tool, process_tool],
+)
+# 效果：1 次 LLM 调用（可能触发多次工具调用），延迟低，成本低
+```
+
+**判断是否需要多 Agent 的检查清单**：
+
+- [ ] 单 Agent 的上下文窗口是否已不够用？
+- [ ] 任务是否需要多个截然不同的专业角色？
+- [ ] 是否需要并行处理以降低延迟？
+- [ ] 是否需要 Agent 之间的对抗性审查？
+
+> 如果以上全部回答"否"，那就不需要多 Agent。
+
+### 13.2 模型选择
+
+**❌ 误区：所有 Agent 用同一个模型**
+
+> "统一用 GPT-4o 就行了，简单省事。"
+
+这导致简单任务浪费昂贵的 Token，而真正需要强推理的任务却没有额外资源。
+
+**✅ 正确做法：按角色选择合适的模型**
+
+```python
+# ❌ 全部用旗舰模型
+orchestrator = Agent(model="gpt-4o")      # 需要强推理 ✅ 合理
+router = Agent(model="gpt-4o")            # 只做分类 ❌ 浪费
+formatter = Agent(model="gpt-4o")         # 只做格式化 ❌ 浪费
+# 成本：$$$$$
+
+# ✅ 按角色分层
+orchestrator = Agent(model="gpt-4o")          # 核心决策：旗舰模型
+reviewer = Agent(model="gpt-4o-mini")         # 审查校验：中等模型
+router = Agent(model="gpt-4o-mini")           # 任务路由：轻量模型
+formatter = Agent(model="local-qwen-7b")      # 格式转换：本地模型（零成本）
+# 成本：$ （节省 60-80%）
+```
+
+### 13.3 循环控制
+
+**❌ 误区：允许无限循环讨论**
+
+> "让 Agent 们自由讨论，直到达成共识为止。"
+
+没有终止条件的多 Agent 对话极易陷入无限循环——Agent A 提出方案，Agent B 反对，Agent A 修改后再提，Agent B 又反对……永远无法收敛。
+
+**✅ 正确做法：设置最大轮次 + 裁判机制**
+
+```python
+# ❌ 无限循环：永远等待"共识"
+while True:
+    response_a = agent_a.respond(response_b)
+    response_b = agent_b.respond(response_a)
+    if "达成共识" in response_b:  # 这个条件可能永远不满足
+        break
+
+# ✅ 有限轮次 + 强制裁决
+MAX_ROUNDS = 5
+
+for round_num in range(MAX_ROUNDS):
+    response_a = agent_a.respond(response_b)
+    response_b = agent_b.respond(response_a)
+
+    # 收敛检测：如果双方意见趋同，提前结束
+    if similarity(response_a, response_b) > 0.9:
+        break
+
+# 无论是否收敛，裁判 Agent 做最终决策
+final_answer = judge_agent.arbitrate(
+    opinions=[response_a, response_b],
+    instruction="综合正反双方意见，给出最终方案",
+)
+```
+
+### 13.4 通信成本意识
+
+**❌ 误区：忽略 Agent 间通信的 Token 成本**
+
+> "Agent 之间传递消息又不是调用 API，不花钱吧？"
+
+**大错特错**。在基于 LLM 的多 Agent 系统中，Agent 之间的每一条消息都会被塞进下一个 Agent 的 Prompt 里。这意味着：
+
+- Agent A 给 Agent B 发了 500 Token 的消息
+- Agent B 处理时，这 500 Token 作为上下文输入消耗
+- Agent B 的输出又发给 Agent C，上下文继续膨胀
+
+**✅ 正确做法：精简 Agent 间消息，做摘要压缩**
+
+```python
+# ❌ 完整传递：把 Agent A 的全部输出原封不动传给 Agent B
+agent_b_input = {
+    "context": agent_a_full_output,  # 可能有 2000+ Token
+    "task": "请审查以上内容",
+}
+
+# ✅ 摘要传递：只传递关键信息
+agent_b_input = {
+    "context": summarize(agent_a_full_output, max_tokens=200),  # 压缩到 200 Token
+    "key_findings": extract_key_points(agent_a_full_output),     # 结构化关键发现
+    "task": "请审查以上要点",
+}
+# 节省：~80% 的上下文 Token
+```
+
+**消息大小控制的经验法则**：
+
+| 消息类型 | 建议 Token 上限 | 原因 |
+|---------|---------------|------|
+| 任务指令 | 200-500 | 清晰明确即可 |
+| 执行结果 | 500-1000 | 包含关键数据 + 简要总结 |
+| 讨论消息 | 200-400 | 观点 + 理由，不要冗余 |
+| 错误报告 | 100-200 | 错误类型 + 简短描述 |
+
+### 13.5 故障处理
+
+**❌ 误区：假设 Agent 永远不会出错**
+
+> "反正 LLM 很智能，不会出问题的。"
+
+LLM 可能返回格式错误、幻觉输出、超时无响应、甚至 API 500 错误。在多 Agent 系统中，一个 Agent 的失败如果没有处理，会像多米诺骨牌一样连锁导致整个系统崩溃。
+
+**✅ 正确做法：每个 Agent 必须有降级方案**
+
+```python
+# ❌ 无容错：任何一个 Agent 失败都会导致整体崩溃
+async def pipeline_no_protection(task: str) -> str:
+    result_a = await agent_a.execute(task)           # 如果失败 → 整个函数崩溃
+    result_b = await agent_b.execute(result_a)       # 上游失败 → 拿到 None → 出错
+    result_c = await agent_c.execute(result_b)       # 连锁崩溃
+    return result_c
+
+# ✅ 有容错：每一步都有降级方案
+async def pipeline_with_protection(task: str) -> str:
+    # Agent A：有重试 + 降级
+    try:
+        result_a = await retry(agent_a.execute, task, max_attempts=2)
+    except Exception:
+        result_a = fallback_extract(task)  # 降级：使用规则引擎提取
+        log_warning("Agent A 降级执行")
+
+    # Agent B：有超时 + 默认值
+    try:
+        result_b = await asyncio.wait_for(agent_b.execute(result_a), timeout=20)
+    except asyncio.TimeoutError:
+        result_b = default_analysis(result_a)  # 降级：返回基础分析
+        log_warning("Agent B 超时，使用默认分析")
+
+    # Agent C：有熔断保护
+    if agent_c_bulkhead.status != AgentHealthStatus.FAILED:
+        try:
+            result_c = await agent_c_bulkhead.execute(agent_c.execute, result_b)
+        except Exception:
+            result_c = result_b  # 降级：跳过最终处理，直接输出
+    else:
+        result_c = result_b
+        log_warning("Agent C 已熔断，跳过")
+
+    return result_c
+```
+
+### 13.6 陷阱速查表
+
+| 序号 | ❌ 常见错误 | ✅ 正确做法 | 核心原因 |
+|-----|-----------|------------|---------|
+| 1 | Agent 数量越多越好 | 最少化 Agent，优先单 Agent + 多工具 | 通信开销 O(N²) 增长 |
+| 2 | 所有 Agent 用同一个模型 | 按角色选择模型层级 | 简单任务用旗舰模型是浪费 |
+| 3 | 无限循环讨论 | 设置最大轮次 + 裁判机制 | LLM 对话不保证收敛 |
+| 4 | 忽略通信成本 | Agent 间消息做摘要压缩 | 每条消息都是 Token 消耗 |
+| 5 | 无故障处理 | 每个 Agent 有降级方案 | LLM 调用本质上不可靠 |
+| 6 | Agent 共享一个巨大的上下文 | 每个 Agent 只看自己需要的信息 | 上下文越长，推理质量越差 |
+| 7 | 不监控 Agent 运行状态 | 为每个 Agent 记录延迟/成功率/Token | 无法观测 = 无法改进 |
+| 8 | 先设计 Agent 再想通信协议 | 先定义消息格式和通信协议 | 协议是 Agent 协作的"合同" |
+| 9 | 同步阻塞等待所有 Agent | 独立任务并行执行 | 串行调用延迟线性叠加 |
+| 10 | 测试时只测单个 Agent | 端到端测试整个 Agent 流水线 | 集成问题只在组合时出现 |
 
 ---
 

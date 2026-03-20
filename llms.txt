@@ -54,15 +54,15 @@
 - [Kubernetes 核心技术](./01-技术资料/06-DevOps与云计算/02-Kubernetes核心技术.md): K8s 架构(kube-apiserver/etcd/kube-scheduler/controller-manager/kubelet) / Pod生命周期与设计模式 / Deployment/StatefulSet/DaemonSet/Job/CronJob / Service(ClusterIP/NodePort/LoadBalancer) / Ingress / 调度(Affinity/Taints/QoS) / 存储(PV/PVC/StorageClass/CSI) / 网络(CNI/NetworkPolicy) / 生产运维(RBAC/HPA/Helm/蓝绿/金丝雀)
 - [CI/CD 与 GitOps](./01-技术资料/06-DevOps与云计算/03-CICD与GitOps.md): CI/CD核心概念(持续集成/持续交付/持续部署) / Pipeline设计原则 / 代码质量门禁 / GitHub Actions(Workflow/Job/Step/矩阵策略/复合Action/OIDC) / GitOps原则 / ArgoCD(Application/AppProject/ApplicationSet/同步策略) / Flux CD / 多架构镜像(buildx/QEMU) / 镜像签名(cosign/Sigstore)
 - [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md): AI Agent全栈开发文档目录（LLM原理→前端渲染全链路）
-- [01-LLM原理](./01-技术资料/07-AI-Agent全栈开发/01-LLM原理.md): Transformer架构深度解析/Self-Attention数学推导/位置编码演进(RoPE/ALiBi)/预训练范式(CLM/MLM/Seq2Seq)/BPE/Scaling Laws/解码策略
-- [02-Prompt工程](./01-技术资料/07-AI-Agent全栈开发/02-Prompt工程.md): PromptTemplate/ChatPromptTemplate源码/CoT/ReAct/ToT/Self-Consistency/Reflexion/结构化输出/Pydantic OutputParser/Prompt Injection攻防
-- [03-工具调用与Function-Calling](./01-技术资料/07-AI-Agent全栈开发/03-工具调用与Function-Calling.md): OpenAI/Anthropic/Google三大Function Calling协议对比/LangChain BaseTool源码/StructuredTool/@tool装饰器/MCP协议JSON-RPC传输层/LangGraph工具编排/AgentExecutor执行循环
-- [04-记忆系统与RAG](./01-技术资料/07-AI-Agent全栈开发/04-记忆系统与RAG.md): RAG全链路/向量数据库/HNSW/语义分块/HyDE/Self-RAG/RAGAS评估/Graph RAG
-- [05-Agent框架与编排](./01-技术资料/07-AI-Agent全栈开发/05-Agent框架与编排.md): ReAct/LangGraph StateGraph/AutoGen ConversableAgent/Dify工作流/Plan-and-Solve/Supervisor模式
+- [01-LLM原理](./01-技术资料/07-AI-Agent全栈开发/01-LLM原理.md): Transformer架构深度解析/Self-Attention数学推导/位置编码演进(RoPE/ALiBi)/预训练范式(CLM/MLM/Seq2Seq)/BPE/Scaling Laws/解码策略/MoE稀疏架构(Mixtral/DeepSeek-MoE)/推理模型(o1/o3/DeepSeek-R1/GRPO)/多模态大模型(ViT/融合架构/Whisper)/长上下文技术(YaRN/滑动窗口/Ring Attention/长上下文vs RAG)
+- [02-Prompt工程](./01-技术资料/07-AI-Agent全栈开发/02-Prompt工程.md): PromptTemplate/ChatPromptTemplate源码/CoT/ReAct/ToT/Self-Consistency/Reflexion/结构化输出/Pydantic OutputParser/Prompt Injection攻防/Prompt缓存与成本优化/推理模型提示策略/Extended Thinking/Meta-Prompting/DSPy/评估驱动优化
+- [03-工具调用与Function-Calling](./01-技术资料/07-AI-Agent全栈开发/03-工具调用与Function-Calling.md): OpenAI/Anthropic/Google三大Function Calling协议对比/LangChain BaseTool源码/StructuredTool/@tool装饰器/MCP协议JSON-RPC传输层/LangGraph工具编排/AgentExecutor执行循环/Computer Use自主操作/屏幕理解与坐标定位/浏览器自动化Agent/视觉工具集成/OCR文档理解/Tool RAG/语义缓存/成本感知路由
+- [04-记忆系统与RAG](./01-技术资料/07-AI-Agent全栈开发/04-记忆系统与RAG.md): RAG全链路/向量数据库/HNSW/语义分块/HyDE/Self-RAG/RAGAS评估/Graph RAG/混合搜索(BM25+向量RRF融合)/Neo4j知识图谱/Microsoft GraphRAG/Cross-Encoder与ColBERT重排序/Query Rewriting与Routing/Contextual Retrieval/多路召回架构/生产级最佳实践
+- [05-Agent框架与编排](./01-技术资料/07-AI-Agent全栈开发/05-Agent框架与编排.md): ReAct/LangGraph StateGraph/AutoGen ConversableAgent/Dify工作流/Plan-and-Solve/Supervisor模式/A2A通信协议/Agent评估体系/可观测性/Human-in-the-Loop/可靠性工程
 - [06-后端服务与API设计](./01-技术资料/07-AI-Agent全栈开发/06-后端服务与API设计.md): SSE流式API/LiteLLM网关/Redis会话管理/Langfuse可观测性/tiktoken成本控制/Circuit Breaker/K8s部署
 - [07-前端渲染与流式UI](./01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md): Fetch Streaming/React 18并发渲染/Next.js App Router/Vercel AI SDK/rAF批量Markdown渲染/Chat状态机/Zustand
 - [08-LLM微调技术](./01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md): LoRA/QLoRA/RLHF/DPO/GRPO 微调全链路技术资料
-- [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作技术资料
+- [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作；通信协议与消息标准化；生产级可靠性（故障隔离/超时降级/幂等性/监控告警/限流背压）；成本控制（Token预算/模型分层/缓存复用/动态伸缩）；五种编排模式对比（层级/对等/市场/流水线/辩论）；常见陷阱与最佳实践
 - [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/browser-use 架构解析、沙箱安全机制与 Prompt Injection 防护
 - [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理
 - [12-参数高效微调PEFT](./01-技术资料/07-AI-Agent全栈开发/12-参数高效微调PEFT.md): LoRA数学原理/QLoRA/Adapter Tuning/Prefix Tuning/HuggingFace PEFT生态
