@@ -15,13 +15,14 @@
 
 两大目录均按以下分类组织，分类编号一一对应：
 
-1. **前端** — HTML/CSS/JavaScript/框架
-2. **后端** — Java/Go/Python/Node.js 等服务端技术
-3. **数据库** — 关系型数据库、NoSQL、缓存
-4. **算法与数据结构** — 常见算法、复杂度分析、LeetCode
-5. **系统设计** — 高并发、分布式、架构设计
-6. **DevOps 与云计算** — CI/CD、容器化、云服务
-7. **AI Agent 全栈开发** — LLM 原理、Prompt 工程、RAG、Agent 框架、流式渲染、生产部署
+1. **前端** — React/JavaScript/TypeScript/Next.js/状态管理/浏览器原理
+2. **后端** — Java/Go/Python/Node.js/微服务/网络协议
+3. **数据库** — Redis/PostgreSQL/MySQL/MongoDB/Elasticsearch/向量数据库
+4. **算法与数据结构** — 排序搜索/动态规划/图算法/基础数据结构
+5. **系统设计** — 分布式系统/消息队列/LLM推理引擎/分布式训练
+6. **DevOps 与云计算** — Docker/Kubernetes/CI-CD/GitOps
+7. **AI Agent 全栈开发** — LLM 原理/Prompt 工程/RAG/Agent 框架/微调/多Agent/流式渲染
+8. **编码题** — 编码技巧与解题策略、各领域手写代码实战
 
 ## 使用说明
 
@@ -32,7 +33,7 @@
 ## AI 工具接入
 
 - [`AGENTS.md`](./AGENTS.md) — AI Agent 精简入口（TOC 式，Harness Engineering 规范）
-- [`docs/operations.md`](./docs/operations.md) — 详细操作规范（渐进式披露）
+- [`.agent-docs/operations.md`](./.agent-docs/operations.md) — 详细操作规范（渐进式披露）
 - [`llms.txt`](./llms.txt) — 符合 llms.txt 规范，供 AI 工具快速理解项目结构
 - [`CLAUDE.md`](./CLAUDE.md) — Claude AI 助手协作指南（含记忆系统最佳实践）
 

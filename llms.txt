@@ -10,7 +10,7 @@
 - [README](./README.md): 项目概览与结构说明
 - [AGENTS.md](./AGENTS.md): AI Agent 精简入口（TOC 式，Harness Engineering 规范）
 - [CLAUDE.md](./CLAUDE.md): Claude AI 助手协作指南（含记忆系统最佳实践）
-- [docs/operations.md](./docs/operations.md): 详细操作规范（命名、日志、目录更新）
+- [.agent-docs/operations.md](./.agent-docs/operations.md): 详细操作规范（命名、日志、目录更新）
 - [CHANGELOG/2026-03.md](./CHANGELOG/2026-03.md): 2026年3月操作记录
 - [CHANGELOG/2026-03-part2.md](./CHANGELOG/2026-03-part2.md): 2026年3月操作记录（续）
 
