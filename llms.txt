@@ -68,6 +68,8 @@
 - [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理
 - [12-参数高效微调PEFT](./01-技术资料/07-AI-Agent全栈开发/12-参数高效微调PEFT.md): LoRA数学原理/QLoRA/Adapter Tuning/Prefix Tuning/HuggingFace PEFT生态
 - [13-对齐训练技术TRL](./01-技术资料/07-AI-Agent全栈开发/13-对齐训练技术TRL.md): RLHF/PPO/DPO/GRPO/SFT/奖励模型/TRL参考实现
+- [08-编码题](./01-技术资料/08-编码题/README.md): 手写代码方法论与解题策略
+- [编码技巧与解题策略](./01-技术资料/08-编码题/01-编码技巧与解题策略.md): 四步解题法/常见代码模式(双指针/哈希表/栈/递归/动态规划/二分/位运算)/代码规范/时间管理/调试技巧/实战案例
 
 ## 02-面试指南
 
@@ -120,6 +122,14 @@
 - [11-Transformers与模型架构面试题](./02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md): RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码/70B推理系统设计 22道分层面试题
 - [12-PEFT面试题](./02-面试指南/07-AI-Agent全栈开发面试/12-PEFT面试题.md): LoRA/QLoRA/Adapter/Prefix Tuning/PEFT工程实践 26道分层面试题
 - [13-TRL面试题](./02-面试指南/07-AI-Agent全栈开发面试/13-TRL面试题.md): RLHF/DPO/PPO/GRPO/KL散度/对齐工程实践 26道分层面试题
+- [08-编码题面试](./02-面试指南/08-编码题面试/README.md): 各领域手写代码题目集合
+- [前端编码题](./02-面试指南/08-编码题面试/01-前端编码题.md): JavaScript/DOM操作/异步编程/设计模式 16+题(map/debounce/throttle/deepClone/Promise.all/EventEmitter/curry/instanceof/new/async-await/虚拟DOM diff/LazyMan/懒加载/无限滚动/拖拽排序)
+- [后端编码题](./02-面试指南/08-编码题面试/02-后端编码题.md): 多线程/网络编程/设计模式/并发控制 20+题(单例/线程安全计数器/LRU/生产者消费者/HTTP服务器/线程池/Snowflake ID/限流器/分布式锁/对象池/秒杀库存/分布式事务)
+- [数据库编码题](./02-面试指南/08-编码题面试/03-数据库编码题.md): SQL查询/窗口函数/递归/性能优化 25+题(第N高薪资/删除重复/连续数字/部门Top3/累计登录/互关好友/移动平均/类目销售占比/留存率/行转列/递归树查询/数据去重/秒杀库存SQL/分库分表查询)
+- [算法编码题](./02-面试指南/08-编码题面试/04-算法编码题.md): 经典算法/数据结构/动态规划/图论 30+题(两数之和/翻转链表/有效括号/二分查找/合并有序数组/最长公共子序列/岛屿数量/股票交易/编辑距离/LRU Cache/Top K频繁元素/滑动窗口最大值)
+- [系统设计编码题](./02-面试指南/08-编码题面试/05-系统设计编码题.md): 分布式组件/缓存/负载均衡/ID生成 20+题(URL短链接/一致性哈希/负载均衡器/令牌桶限流/滑动窗口限流/Snowflake ID/分布式锁/对象池/消息队列/蓝绿部署)
+- [DevOps编码题](./02-面试指南/08-编码题面试/06-DevOps编码题.md): Shell脚本/CI-CD/容器化/监控自动化 20+题(日志分析/自动部署/系统监控/CI-CD Pipeline/Kubernetes Operator/蓝绿部署脚本)
+- [AI-Agent编码题](./02-面试指南/08-编码题面试/07-AI-Agent编码题.md): Prompt工程/RAG/Agent框架/工具调用 25+题(LLM API封装/Prompt模板系统/Function Calling/RAG系统/ReAct Agent/多Agent协作/智能客服系统)
 
 ## Optional
 

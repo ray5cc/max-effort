@@ -13,6 +13,7 @@
 | 05 | 系统设计 | [05-系统设计](./05-系统设计/README.md) | [05-系统设计面试](../02-面试指南/05-系统设计面试/README.md) |
 | 06 | DevOps 与云计算 | [06-DevOps与云计算](./06-DevOps与云计算/README.md) | [06-DevOps与云计算面试](../02-面试指南/06-DevOps与云计算面试/README.md) |
 | 07 | AI Agent 全栈开发 | [07-AI-Agent全栈开发](./07-AI-Agent全栈开发/README.md) | [07-AI-Agent全栈开发面试](../02-面试指南/07-AI-Agent全栈开发面试/README.md) |
+| 08 | 编码题 | [08-编码题](./08-编码题/README.md) | [08-编码题面试](../02-面试指南/08-编码题面试/README.md) |
 
 ## 使用说明
 
