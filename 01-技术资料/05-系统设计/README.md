@@ -1,6 +1,6 @@
 # 05-系统设计 — 技术资料
 
-> 覆盖 LLM 推理优化、分布式训练等系统设计核心技术。
+> 覆盖 LLM 推理优化、分布式训练、分布式系统、消息队列与流处理、经典系统设计等核心技术。
 
 ## 相关链接
 
@@ -12,8 +12,9 @@
 | ---- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
 | 01   | [01-LLM推理引擎优化.md](./01-LLM推理引擎优化.md)   | KV Cache / PagedAttention / Continuous Batching / 量化 / CPU 推理（vLLM、TensorRT-LLM、llama.cpp）                                         | [面试题](../../02-面试指南/05-系统设计面试/01-LLM推理引擎面试题.md) |
 | 02   | [02-分布式训练技术.md](./02-分布式训练技术.md)     | ZeRO Stage 1/2/3 / 张量并行 / 流水线并行 / 3D 并行（DeepSpeed、Megatron-LM）                                                               | [面试题](../../02-面试指南/05-系统设计面试/02-分布式训练面试题.md)  |
-| 03   | [03-分布式系统基础.md](./03-分布式系统基础.md)     | CAP/PACELC 定理 / Raft 深度(Leader Election/Log Replication/Safety) / Multi-Raft(TiKV/CockroachDB) / 分布式事务(2PC/3PC/Saga/TCC/Temporal) / LSM-Tree vs B+Tree / 分片(Range/Hash/Hybrid) / 副本(主从/多主/Dynamo Quorum) / 缓存一致性(延迟双删/binlog) / Redis Cluster(16384 slots) / 服务注册中心(etcd/Consul/Nacos/ZK) / OpenTelemetry / SLO/SLI/Error Budget / 容错(Circuit Breaker/Bulkhead/Rate Limiting) / 分布式锁(Redis/Redlock/ZK) / 逻辑时钟 / CRDT / Gossip | [面试题](../../02-面试指南/05-系统设计面试/04-分布式系统面试题.md)  |
-| 04   | [04-消息队列与流处理.md](./04-消息队列与流处理.md) | Kafka 深度(日志段/ISR/KRaft) / RabbitMQ(DLQ/Quorum Queue) / Flink / Kafka Streams / 幂等与事务                                             | [面试题](../../02-面试指南/05-系统设计面试/05-消息队列面试题.md)    |
+| 03   | [03-分布式系统基础.md](./03-分布式系统基础.md)     | CAP/PACELC / Raft 深度 / Multi-Raft / 分布式事务(2PC/Saga/TCC/Temporal) / 分片 / 副本 / 缓存一致性 / Redis Cluster / 服务注册中心 / 容错 / 分布式锁 / CRDT / Gossip | [面试题](../../02-面试指南/05-系统设计面试/03-分布式系统面试题.md)  |
+| 04   | [04-消息队列与流处理.md](./04-消息队列与流处理.md) | Kafka深度(Controller/ISR/KRaft/副本同步/Exactly-Once/分层存储) / Pulsar(BookKeeper/多租户) / RocketMQ(延迟消息/事务消息) / Flink(窗口/水位线/Checkpoint) / 流处理引擎对比 / 消息可靠性 / 消息积压运维 | [面试题](../../02-面试指南/05-系统设计面试/04-消息队列面试题.md)    |
+| 05   | [05-经典系统设计案例.md](./05-经典系统设计案例.md) | 短链系统 / Feed流 / 即时通讯 / 搜索引擎 / 秒杀系统 / 分布式文件存储 / 通用设计模式                                                         | [面试题](../../02-面试指南/05-系统设计面试/05-经典系统设计面试题.md) |
 
 ## 说明
 

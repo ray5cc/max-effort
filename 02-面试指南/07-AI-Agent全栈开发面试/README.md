@@ -10,11 +10,11 @@
 
 | 序号 | 文件名 | 覆盖知识点 | 关联技术资料 |
 |------|--------|-----------|-------------|
-| 01 | [01-LLM原理面试题.md](./01-LLM原理面试题.md) | Transformer、Self-Attention、预训练、RLHF | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/01-LLM原理.md) |
-| 02 | [02-Prompt工程面试题.md](./02-Prompt工程面试题.md) | 提示词设计、CoT、Few-shot、结构化输出 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/02-Prompt工程.md) |
+| 01 | [01-LLM原理面试题.md](./01-LLM原理面试题.md) | Transformer、Self-Attention、预训练、RLHF、MoE架构、推理模型、长上下文、多模态LLM、KV Cache优化、Scaling Laws | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/01-LLM原理.md) |
+| 02 | [02-Prompt工程面试题.md](./02-Prompt工程面试题.md) | 提示词设计、CoT、Few-shot、结构化输出、Prompt Caching、推理模型提示、元提示优化、注入防御、多轮对话管理 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/02-Prompt工程.md) |
 | 03 | [03-工具调用面试题.md](./03-工具调用面试题.md) | Function Calling、Tool Use、MCP 协议 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/03-工具调用与Function-Calling.md) |
 | 04 | [04-记忆系统面试题.md](./04-记忆系统面试题.md) | RAG、向量检索、持久化记忆、Fine-tuning | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/04-记忆系统与RAG.md) |
-| 05 | [05-Agent框架面试题.md](./05-Agent框架面试题.md) | LangChain、LangGraph、AutoGen、多 Agent | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/05-Agent框架与编排.md) |
+| 05 | [05-Agent框架面试题.md](./05-Agent框架面试题.md) | LangChain、LangGraph、AutoGen、CrewAI、OpenAI Agents SDK、A2A协议、Agent可靠性与评估 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/05-Agent框架与编排.md) |
 | 06 | [06-后端服务面试题.md](./06-后端服务面试题.md) | 流式 API、会话管理、编排架构 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/06-后端服务与API设计.md) |
 | 07 | [07-前端渲染面试题.md](./07-前端渲染面试题.md) | SSE、WebSocket、流式 UI、React、AG-UI 协议、CopilotKit、Generative UI、Ant Design X、LobeChat、Open WebUI | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md) |
 | 08 | [08-LLM微调技术面试题.md](./08-LLM微调技术面试题.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md) |

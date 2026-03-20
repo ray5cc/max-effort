@@ -35,6 +35,16 @@
 | Q23  | Multi-Agent 系统的评估框架设计？                                         | ⭐⭐⭐ |
 | Q24  | LangGraph 与 CrewAI、AutoGen 的架构对比？                                | ⭐⭐⭐ |
 | Q25  | 如何用 LangGraph 实现带时间感知的长期任务规划 Agent？                    | ⭐⭐⭐ |
+| Q26  | ReAct vs Plan-and-Execute vs LLMCompiler 的架构对比与适用场景？ | ⭐⭐   |
+| Q27  | LangGraph 状态图深入：State 设计、条件边与 Human-in-the-Loop 最佳实践？ | ⭐⭐   |
+| Q28  | CrewAI 角色编排：Role/Goal/Backstory 设计与 Process 类型选择？ | ⭐⭐   |
+| Q29  | OpenAI Agents SDK 的 Runner、Handoffs 与 Guardrails 机制？ | ⭐⭐⭐ |
+| Q30  | A2A（Agent-to-Agent）协议：Agent Card、Task 生命周期与互操作性？ | ⭐⭐⭐ |
+| Q31  | Agent 可靠性工程：重试策略、Fallback 机制与输出结构化验证？ | ⭐⭐   |
+| Q32  | Agent 评估方法论：轨迹评估、工具调用准确率与端到端指标？ | ⭐⭐⭐ |
+| Q33  | 场景题：设计多 Agent 智能客服系统（意图识别 + 工单处理 + 人工升级）？ | ⭐⭐⭐ |
+| Q34  | 场景题：Agent 评测平台架构设计（基准测试 + 回归检测 + 可视化）？ | ⭐⭐⭐ |
+| Q35  | LangGraph Cloud 与 Agent 部署的工程化最佳实践？ | ⭐⭐⭐ |
 
 ---
 
@@ -509,3 +519,1429 @@ class TaskState(TypedDict):
 - CronJob 定期恢复挂起任务
 
 **延伸阅读** — [LangGraph 长时运行任务](https://langchain-ai.github.io/langgraph/how-tos/async/)
+
+---
+
+### Q26：ReAct vs Plan-and-Execute vs LLMCompiler 的架构对比与适用场景？
+
+<details><summary>参考答案</summary>
+
+三种架构代表了 Agent 推理与执行的三种不同范式，各有最佳适用场景。
+
+**1. ReAct（Reason + Act）**
+
+ReAct 的核心思想是"交替思考与行动"：LLM 生成一步推理（Thought），据此选择一个工具执行（Action），观察结果（Observation），再进入下一轮循环。这种逐步反馈的方式就像一个人在陌生城市导航——走一步看一步，每到路口根据路牌决定下一步方向。
+
+- **优势**：实时纠错，每步都有反馈，适合工具调用结果不可预测的场景
+- **劣势**：串行执行，延迟高；多步骤任务中容易"迷路"，忘记整体目标
+- **适用**：简单查询、少于 5 步的任务、工具结果影响后续决策的场景
+
+**2. Plan-and-Execute**
+
+Plan-and-Execute 将推理与执行解耦为两个阶段：Planner 先生成完整的任务计划（步骤列表），Executor 按计划逐步执行，执行完成后 Re-planner 根据已完成步骤和新信息调整剩余计划。类比做菜——先写好完整菜谱，再按步骤操作，中间发现缺少某种调料再调整后续步骤。
+
+- **优势**：全局视角，步骤清晰，可在执行前审查计划
+- **劣势**：初始计划可能不准确，Re-plan 需要额外 LLM 调用
+- **适用**：复杂多步骤任务（>5 步）、需要人工审批计划的场景、步骤之间相对独立
+
+**3. LLMCompiler（Berkeley, 2023）**
+
+LLMCompiler 借鉴编译器中的指令级并行思想：Planner 生成带依赖关系的任务 DAG（有向无环图），Task Fetcher 识别无依赖的任务并行执行，最后 Joiner 汇总结果决定是否需要 Re-plan。如同工厂流水线——能并行的工序同时进行，只有真正有依赖的步骤才串行等待。
+
+- **优势**：最大化并行，显著降低端到端延迟（论文实验加速 3.7×）
+- **劣势**：依赖关系识别不准确时会出错，实现复杂度高
+- **适用**：工具调用间部分独立的场景、对延迟敏感的生产环境
+
+**架构对比表**
+
+| 维度         | ReAct              | Plan-and-Execute     | LLMCompiler          |
+| ------------ | ------------------ | -------------------- | -------------------- |
+| 规划粒度     | 无全局规划，逐步   | 先全局规划，后逐步   | DAG 级规划           |
+| 并行能力     | 无                 | 无（串行执行）       | 有（DAG 并行）       |
+| 错误恢复     | 每步即时纠错       | Re-plan 阶段修正     | Joiner 决定是否重来  |
+| 延迟         | 高（串行+多轮LLM） | 中（额外Plan/Replan）| 低（并行执行）       |
+| 实现复杂度   | 低                 | 中                   | 高                   |
+| 适合任务复杂度| 简单（<5步）       | 复杂（5-20步）       | 中等且可并行         |
+
+```python
+# LangGraph Plan-and-Execute 模式核心结构
+from langgraph.graph import StateGraph, END
+from typing import TypedDict, Annotated, List
+import operator
+
+class PlanExecuteState(TypedDict):
+    input: str
+    plan: List[str]
+    past_steps: Annotated[List[tuple], operator.add]
+    response: str
+
+def planner(state: PlanExecuteState):
+    """调用 LLM 生成任务计划"""
+    plan = llm.invoke(f"为以下任务生成步骤计划：{state['input']}")
+    return {"plan": plan.steps}
+
+def executor(state: PlanExecuteState):
+    """执行计划中的当前步骤"""
+    current_step = state["plan"][0]
+    result = agent_executor.invoke({"input": current_step})
+    return {"past_steps": [(current_step, result["output"])]}
+
+def replanner(state: PlanExecuteState):
+    """根据已完成步骤调整剩余计划"""
+    output = replan_llm.invoke({
+        "input": state["input"],
+        "plan": state["plan"],
+        "past_steps": state["past_steps"]
+    })
+    return {"plan": output.steps} if output.steps else {"response": output.response}
+
+graph = StateGraph(PlanExecuteState)
+graph.add_node("planner", planner)
+graph.add_node("executor", executor)
+graph.add_node("replanner", replanner)
+graph.set_entry_point("planner")
+graph.add_edge("planner", "executor")
+graph.add_edge("executor", "replanner")
+graph.add_conditional_edges("replanner", lambda s: END if s.get("response") else "executor")
+```
+
+**关键知识点**
+
+- ReAct 适合简单任务，逐步反馈；Plan-and-Execute 适合复杂任务，全局规划
+- LLMCompiler 通过 DAG 并行显著降低延迟，但实现复杂度高
+- 生产中常混合使用：外层 Plan-and-Execute，单步内部用 ReAct
+
+**延伸阅读** — [LLMCompiler 论文](https://arxiv.org/abs/2312.04511) · [LangGraph Plan-and-Execute](https://langchain-ai.github.io/langgraph/tutorials/plan-and-execute/plan-and-execute/)
+
+</details>
+
+---
+
+### Q27：LangGraph 状态图深入：State 设计、条件边与 Human-in-the-Loop 最佳实践？
+
+<details><summary>参考答案</summary>
+
+LangGraph 的核心抽象是**状态图（StateGraph）**，理解其 State 设计、条件边路由和 Human-in-the-Loop 机制是构建生产级 Agent 的关键。
+
+**1. State 设计：TypedDict + Reducer**
+
+LangGraph 的 State 是一个 `TypedDict`，每个字段可通过 `Annotated` 指定 Reducer 函数。Reducer 决定了节点返回值如何与现有 State 合并：
+
+- **默认行为（无 Reducer）**：直接覆盖，后写入的值替换先前值
+- **`operator.add`**：追加合并，适用于消息列表、步骤记录等需要累积的字段
+- **自定义 Reducer**：如去重合并、取最新 N 条等
+
+设计原则：State 应该是**最小必要集**——只存放跨节点需要共享的数据，节点内部的临时变量不要放进 State。
+
+**2. 条件边（Conditional Edges）**
+
+条件边是 LangGraph 实现复杂路由的核心机制。通过 `add_conditional_edges(source, router_fn, path_map)` 定义，`router_fn` 根据当前 State 返回下一个节点的名称。
+
+常见路由模式：
+- **工具调用路由**：检查 LLM 输出是否包含 tool_calls，有则路由到 ToolNode，无则结束
+- **分类路由**：根据意图分类结果路由到不同的专家节点
+- **质量门控**：检查输出质量评分，低于阈值则路由回重试节点
+
+**3. Human-in-the-Loop（HITL）**
+
+LangGraph 通过 `interrupt_before` 和 `interrupt_after` 实现人工干预：
+
+- `interrupt_before=["node_name"]`：执行到该节点**之前**暂停，人工审批后再继续
+- `interrupt_after=["node_name"]`：节点执行**之后**暂停，人工检查输出后决定是否继续
+
+暂停后，人工可以通过 `graph.update_state(config, new_values)` 修改 State，再调用 `graph.invoke(None, config)` 恢复执行。这要求配置 Checkpointer 以持久化暂停时的状态。
+
+**4. Checkpointer 选型**
+
+| Checkpointer      | 适用场景       | 特点                     |
+| ------------------ | -------------- | ------------------------ |
+| `MemorySaver`      | 本地开发/测试  | 内存存储，进程结束即丢失 |
+| `SqliteSaver`      | 单机生产       | 文件级持久化，无需外部服务 |
+| `PostgresSaver`    | 分布式生产     | 支持多实例共享状态       |
+| `RedisSaver`       | 高频读写       | 低延迟，适合实时系统     |
+
+```python
+from langgraph.graph import StateGraph, END
+from langgraph.prebuilt import ToolNode
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_openai import ChatOpenAI
+from typing import TypedDict, Annotated, Literal
+import operator
+
+class AgentState(TypedDict):
+    messages: Annotated[list, operator.add]
+    intent: str
+    retry_count: int
+
+llm = ChatOpenAI(model="gpt-4o").bind_tools(tools)
+
+def agent_node(state: AgentState):
+    response = llm.invoke(state["messages"])
+    return {"messages": [response]}
+
+def intent_classifier(state: AgentState):
+    last_msg = state["messages"][-1].content
+    intent = classify(last_msg)  # 自定义分类逻辑
+    return {"intent": intent}
+
+def route_by_intent(state: AgentState) -> Literal["faq", "order", "escalate"]:
+    intent_map = {"faq": "faq", "order": "order"}
+    return intent_map.get(state["intent"], "escalate")
+
+def should_continue(state: AgentState) -> Literal["tools", "end"]:
+    last = state["messages"][-1]
+    return "tools" if last.tool_calls else "end"
+
+# 构建状态图
+graph = StateGraph(AgentState)
+graph.add_node("classifier", intent_classifier)
+graph.add_node("agent", agent_node)
+graph.add_node("tools", ToolNode(tools))
+
+graph.set_entry_point("classifier")
+graph.add_conditional_edges("classifier", route_by_intent,
+    {"faq": "agent", "order": "agent", "escalate": END})
+graph.add_conditional_edges("agent", should_continue,
+    {"tools": "tools", "end": END})
+graph.add_edge("tools", "agent")
+
+# 启用 HITL：在 agent 节点执行后暂停，等待人工审核
+checkpointer = MemorySaver()
+app = graph.compile(
+    checkpointer=checkpointer,
+    interrupt_after=["agent"]  # agent 输出后暂停
+)
+
+# 使用：人工修改 state 后恢复
+config = {"configurable": {"thread_id": "user-123"}}
+result = app.invoke({"messages": [user_msg]}, config)
+# 人工审核 result，决定修改或继续
+app.update_state(config, {"messages": [human_feedback]})
+final = app.invoke(None, config)  # 恢复执行
+```
+
+**关键知识点**
+
+- State Reducer 决定字段合并策略，`operator.add` 最常用于消息累积
+- 条件边是实现分支路由、质量门控、循环的核心机制
+- HITL 依赖 Checkpointer 持久化暂停状态，生产环境必须用 PostgresSaver
+
+**延伸阅读** — [LangGraph State 管理](https://langchain-ai.github.io/langgraph/concepts/low_level/#state) · [Human-in-the-Loop 指南](https://langchain-ai.github.io/langgraph/how-tos/human_in_the_loop/)
+
+</details>
+
+---
+
+### Q28：CrewAI 角色编排：Role/Goal/Backstory 设计与 Process 类型选择？
+
+<details><summary>参考答案</summary>
+
+CrewAI 是一个以**角色扮演**为核心的多 Agent 框架，其设计哲学是"把 Agent 当团队成员来管理"。理解 Agent 定义、Task 编排和 Process 类型是高效使用 CrewAI 的关键。
+
+**1. Agent 定义三要素**
+
+CrewAI 的 Agent 由三个核心属性定义，这就像为一个新员工写岗位说明书：
+
+- **Role（角色）**：Agent 的职位头衔，影响 LLM 的行为基调。例如"高级数据分析师"比"分析师"更能引导 LLM 产出深度分析
+- **Goal（目标）**：Agent 的工作目标，是驱动 Agent 行为的核心。应具体且可衡量，如"生成包含可视化图表的市场分析报告"
+- **Backstory（背景故事）**：Agent 的经验背景，为 LLM 提供上下文。例如"你在麦肯锡工作了 10 年，擅长用数据讲故事"
+
+设计原则：Role 决定身份，Goal 决定方向，Backstory 决定能力边界。三者缺一不可，且需要相互一致。
+
+**2. Task 定义**
+
+Task 是分配给 Agent 的具体任务单元：
+
+- **description**：详细的任务描述，越具体越好
+- **expected_output**：期望输出的格式和内容描述
+- **agent**：负责执行该 Task 的 Agent
+- **context**：依赖的前置 Task 列表（前置 Task 的输出会注入到当前 Task 的上下文）
+
+**3. Process 类型**
+
+| Process 类型  | 执行方式            | 适用场景                   |
+| ------------- | ------------------- | -------------------------- |
+| `sequential`  | 按 Task 列表顺序执行 | 步骤间有严格依赖的流水线   |
+| `hierarchical`| Manager Agent 分配任务 | 需要动态决策分配的复杂任务 |
+
+- **Sequential（顺序执行）**：如同流水线，前一个 Task 的输出自动作为下一个的输入。简单可控，适合固定流程
+- **Hierarchical（层级管理）**：自动创建 Manager Agent，由其决定任务分配顺序和执行者。适合任务间关系不确定、需要动态调度的场景
+
+**4. 优势与局限**
+
+优势：
+- 声明式 API，5 分钟搭建多 Agent 系统
+- 支持 YAML 配置文件，非开发者也能调整 Agent 行为
+- 内置工具集成（搜索、文件读写、代码执行等）
+
+局限：
+- 相比 LangGraph，缺少细粒度的状态管理和条件路由
+- 无原生状态持久化（无 Checkpointer 机制）
+- 复杂控制流（循环、动态分支）实现困难
+
+```python
+from crewai import Agent, Task, Crew, Process
+
+# 定义 Agents
+researcher = Agent(
+    role="高级市场研究员",
+    goal="发现并分析最新的 AI Agent 市场趋势和竞品动态",
+    backstory="你是一位在 Gartner 工作了 8 年的技术分析师，"
+              "擅长从海量信息中提炼关键洞察。",
+    tools=[search_tool, web_scraper],
+    llm="gpt-4o",
+    verbose=True
+)
+
+writer = Agent(
+    role="技术内容总监",
+    goal="将研究数据转化为结构清晰、观点鲜明的市场分析报告",
+    backstory="你是前 TechCrunch 资深编辑，擅长用故事化手法呈现技术趋势。",
+    llm="gpt-4o"
+)
+
+reviewer = Agent(
+    role="质量审核专家",
+    goal="确保报告数据准确、逻辑严密、格式规范",
+    backstory="你是一位学术期刊审稿人，对事实准确性要求极高。",
+    llm="gpt-4o"
+)
+
+# 定义 Tasks
+research_task = Task(
+    description="调研 2024-2025 年 AI Agent 框架市场，包括 LangGraph、CrewAI、AutoGen、Dify 的最新动态",
+    expected_output="一份包含市场规模、竞品对比、技术趋势的结构化调研数据",
+    agent=researcher
+)
+
+writing_task = Task(
+    description="基于调研数据撰写 3000 字的 AI Agent 市场分析报告",
+    expected_output="一份包含摘要、正文、图表建议的完整 Markdown 报告",
+    agent=writer,
+    context=[research_task]  # 依赖调研结果
+)
+
+review_task = Task(
+    description="审核报告的事实准确性和逻辑连贯性，给出修改建议",
+    expected_output="审核意见列表和修改后的终稿",
+    agent=reviewer,
+    context=[writing_task]
+)
+
+# 组建 Crew 并执行
+crew = Crew(
+    agents=[researcher, writer, reviewer],
+    tasks=[research_task, writing_task, review_task],
+    process=Process.sequential,  # 顺序执行
+    verbose=True
+)
+
+result = crew.kickoff()
+```
+
+**关键知识点**
+
+- Role/Goal/Backstory 三要素缺一不可，Backstory 对输出质量影响显著
+- Sequential 适合固定流程，Hierarchical 适合动态任务分配
+- CrewAI 适合快速原型，复杂状态管理场景应选 LangGraph
+
+**延伸阅读** — [CrewAI 官方文档](https://docs.crewai.com/) · [CrewAI vs LangGraph 选型指南](https://blog.langchain.dev/)
+
+</details>
+
+---
+
+### Q29：OpenAI Agents SDK 的 Runner、Handoffs 与 Guardrails 机制？
+
+<details><summary>参考答案</summary>
+
+OpenAI Agents SDK（2025 年 3 月发布）是 OpenAI 官方的 Agent 构建框架，提供了简洁但强大的 Agent 编排原语。其核心三大机制是 Runner（执行引擎）、Handoffs（Agent 间交接）和 Guardrails（安全护栏）。
+
+**1. Agent 定义**
+
+Agent 是 SDK 的基本单元，包含 `name`（名称）、`instructions`（系统提示词）、`model`（模型）、`tools`（工具列表）等属性。与 LangGraph 的图节点不同，Agent 本身就是一个完整的推理执行单元。
+
+**2. Runner：执行引擎**
+
+Runner 是 Agent 的执行编排器，负责运行 Agent Loop：
+
+- 调用 LLM 获取响应
+- 如果响应包含工具调用，执行工具并将结果反馈给 LLM
+- 如果响应包含 Handoff，切换到目标 Agent
+- 如果响应是纯文本（final output），结束执行
+
+```python
+from agents import Agent, Runner
+
+agent = Agent(
+    name="研究助手",
+    instructions="你是一个研究助手，帮助用户查找和分析信息。",
+    tools=[search_tool, calculator_tool]
+)
+
+# 同步执行
+result = Runner.run_sync(agent, "分析 2025 年 AI Agent 市场规模")
+print(result.final_output)
+```
+
+Runner 支持三种执行模式：`run_sync`（同步阻塞）、`run`（异步）、`run_streamed`（流式输出）。
+
+**3. Handoffs：Agent 间交接**
+
+Handoffs 是 Agents SDK 最独特的机制——一个 Agent 可以将控制权"交接"给另一个 Agent，类比公司里的工作转交。当前 Agent 的对话历史会完整传递给接手的 Agent。
+
+```python
+from agents import Agent, handoff
+
+billing_agent = Agent(
+    name="账单专员",
+    instructions="你负责处理账单相关问题。",
+    tools=[billing_api_tool]
+)
+
+tech_agent = Agent(
+    name="技术支持",
+    instructions="你负责处理技术问题。",
+    tools=[diagnostic_tool]
+)
+
+triage_agent = Agent(
+    name="分诊客服",
+    instructions="你负责识别用户问题类型，并转交给对应的专员。",
+    handoffs=[
+        handoff(billing_agent, description="账单、付款、退款相关问题"),
+        handoff(tech_agent, description="技术故障、配置、使用问题")
+    ]
+)
+
+# triage_agent 会根据用户问题自动 handoff 到合适的 agent
+result = Runner.run_sync(triage_agent, "我的账单金额好像不对")
+```
+
+Handoffs 的本质是一种特殊的工具调用——当 LLM 决定 handoff 时，Runner 会切换当前 Agent 上下文。
+
+**4. Guardrails：安全护栏**
+
+Guardrails 在 Agent 执行的输入和输出端设置安全检查：
+
+- **input_guardrails**：在 Agent 开始处理前检查用户输入，拦截注入攻击、越界请求等
+- **output_guardrails**：在 Agent 输出返回用户前检查，过滤敏感信息、验证合规性
+
+```python
+from agents import Agent, GuardrailFunctionOutput, InputGuardrail
+
+async def check_injection(ctx, agent, input_text):
+    """检测 Prompt 注入攻击"""
+    result = await Runner.run(injection_detector, input_text)
+    return GuardrailFunctionOutput(
+        output_info={"is_injection": result.final_output == "INJECTION"},
+        tripwire_triggered=result.final_output == "INJECTION"
+    )
+
+safe_agent = Agent(
+    name="安全助手",
+    instructions="你是一个安全的 AI 助手。",
+    input_guardrails=[
+        InputGuardrail(guardrail_function=check_injection)
+    ]
+)
+```
+
+**5. 内置 Tracing**
+
+SDK 内置了完整的 Tracing 系统，所有 Agent 调用、工具执行、Handoff 事件都会自动记录，可在 OpenAI Dashboard 中可视化查看调用链路。
+
+**6. 与 LangGraph 对比**
+
+| 维度         | OpenAI Agents SDK      | LangGraph             |
+| ------------ | ---------------------- | --------------------- |
+| 抽象级别     | 高（声明式）           | 低（图构建）          |
+| 状态管理     | 隐式（对话历史）       | 显式（TypedDict）     |
+| 多 Agent     | Handoffs（线性交接）   | 图节点（任意拓扑）    |
+| 持久化       | 无内置                 | Checkpointer          |
+| 控制粒度     | 粗（Agent 级别）       | 细（节点/边级别）     |
+| 适用场景     | 快速构建、OpenAI 生态  | 复杂流程、生产部署    |
+
+**追问链**
+
+1. **Handoffs 和 LangGraph 的 Supervisor 模式有什么本质区别？** → Handoffs 是线性交接（A→B），控制权完全转移；Supervisor 是中心化调度，Supervisor 始终保持控制权
+2. **如何在 Agents SDK 中实现类似 LangGraph 的循环？** → 通过在 Handoff 中形成环路（A handoff to B, B handoff to A），但缺乏显式终止条件控制
+3. **Guardrails 与 LangChain 的 OutputParser 有何不同？** → Guardrails 是安全层面的拦截（阻止执行），OutputParser 是格式层面的解析（结构化输出）
+
+**关键知识点**
+
+- Runner 编排 Agent Loop：LLM → 工具/Handoff → 循环直到 final output
+- Handoffs 实现 Agent 间线性交接，本质是特殊工具调用
+- Guardrails 在输入/输出端设置安全拦截，tripwire 触发时中止执行
+
+**延伸阅读** — [OpenAI Agents SDK 文档](https://openai.github.io/openai-agents-python/) · [Agents SDK GitHub](https://github.com/openai/openai-agents-python)
+
+</details>
+
+---
+
+### Q30：A2A（Agent-to-Agent）协议：Agent Card、Task 生命周期与互操作性？
+
+<details><summary>参考答案</summary>
+
+A2A（Agent-to-Agent）是 Google 于 2025 年 4 月发布的开放协议，旨在解决不同平台、不同框架构建的 Agent 之间的互操作性问题。如果说 MCP 解决的是"Agent 如何使用工具"，A2A 解决的则是"Agent 如何与其他 Agent 协作"。
+
+**1. 为什么需要 A2A？**
+
+当前 Agent 生态面临"孤岛问题"：用 LangGraph 构建的 Agent 无法直接与 CrewAI 构建的 Agent 通信。A2A 提供了一个标准化的通信协议，让不同平台的 Agent 能够发现彼此、交换任务、协同工作，就像 HTTP 让不同的 Web 服务能够相互调用一样。
+
+**2. Agent Card：Agent 的"名片"**
+
+每个 A2A Agent 通过 Agent Card（JSON 格式）声明自己的能力、接口和认证方式。Agent Card 通常托管在 `/.well-known/agent.json` 路径下，供其他 Agent 发现和调用。
+
+```json
+{
+  "name": "智能文档分析 Agent",
+  "description": "自动分析 PDF/Word 文档，提取关键信息并生成摘要",
+  "url": "https://doc-agent.example.com",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": true,
+    "stateTransitionHistory": true
+  },
+  "authentication": {
+    "schemes": ["Bearer"],
+    "credentials": "OAuth2"
+  },
+  "defaultInputModes": ["text/plain", "application/pdf"],
+  "defaultOutputModes": ["text/plain", "application/json"],
+  "skills": [
+    {
+      "id": "document-summary",
+      "name": "文档摘要",
+      "description": "为上传的文档生成结构化摘要",
+      "tags": ["summarization", "document", "NLP"],
+      "examples": ["请帮我分析这份年报的关键数据"]
+    }
+  ]
+}
+```
+
+**3. Task 生命周期**
+
+A2A 中的核心交互单元是 Task，其状态流转如下：
+
+```
+submitted → working → input-required → completed
+                  ↘                  ↗
+                   → failed / canceled
+```
+
+- **submitted**：Client Agent 提交任务
+- **working**：Server Agent 正在处理
+- **input-required**：Server Agent 需要更多信息（类似 HITL）
+- **completed**：任务成功完成
+- **failed**：任务执行失败
+- **canceled**：任务被取消
+
+每个 Task 包含一个或多个 Message，每个 Message 包含多个 Part（TextPart、FilePart、DataPart）。
+
+**4. 核心 API 端点**
+
+| 端点                    | 方法   | 说明                       |
+| ----------------------- | ------ | -------------------------- |
+| `/tasks/send`           | POST   | 发送任务（请求-响应模式）  |
+| `/tasks/sendSubscribe`  | POST   | 发送任务（SSE 流式模式）   |
+| `/tasks/{id}`           | GET    | 查询任务状态               |
+| `/tasks/{id}/cancel`    | POST   | 取消任务                   |
+
+**5. 与 MCP 的关系**
+
+| 维度       | A2A                        | MCP                         |
+| ---------- | -------------------------- | --------------------------- |
+| 解决的问题 | Agent 与 Agent 的通信      | Agent 与工具/数据源的通信   |
+| 交互单位   | Task（异步、有状态）       | Tool Call（同步、无状态）   |
+| 发现机制   | Agent Card                 | Server Capabilities         |
+| 协议层     | HTTP + JSON-RPC + SSE      | JSON-RPC over stdio/HTTP    |
+| 典型场景   | 跨组织 Agent 协作          | Agent 调用数据库/API        |
+
+两者是互补而非竞争关系：一个 Agent 可以通过 MCP 使用工具，同时通过 A2A 与其他 Agent 协作。
+
+**6. 生态支持**
+
+A2A 已获得 50+ 合作伙伴支持，包括 Salesforce、SAP、MongoDB、LangChain 等。LangGraph 已提供 A2A 适配器，可以将 LangGraph Agent 暴露为 A2A 兼容服务。
+
+**追问链**
+
+1. **A2A 如何处理跨组织的认证与授权？** → Agent Card 声明 auth scheme，实际通信使用 OAuth2/API Key，支持服务端推送通知的 JWT 认证
+2. **A2A 的 input-required 状态和 LangGraph 的 interrupt 有什么异同？** → 都是暂停等待输入，但 A2A 是协议级别的标准化状态，LangGraph 是框架级别的内部机制
+3. **如何测试 A2A Agent 的互操作性？** → Google 提供了 A2A 合规性测试套件，验证 Agent Card 格式、Task 生命周期状态转换、消息格式等
+
+**关键知识点**
+
+- A2A 解决 Agent 间互操作性，MCP 解决 Agent-工具通信，两者互补
+- Agent Card 是 Agent 的自描述元数据，类似 OpenAPI Spec
+- Task 生命周期支持异步长时运行和 input-required 人工干预
+
+**延伸阅读** — [A2A 协议规范](https://google.github.io/A2A/) · [A2A GitHub](https://github.com/google/A2A)
+
+</details>
+
+---
+
+### Q31：Agent 可靠性工程：重试策略、Fallback 机制与输出结构化验证？
+
+<details><summary>参考答案</summary>
+
+生产环境中的 Agent 系统面临 LLM API 不稳定、工具调用失败、输出格式不可控等问题。可靠性工程是 Agent 从"Demo 能跑"到"生产可用"的关键跨越。
+
+**1. 重试策略**
+
+Agent 系统中的失败大多是瞬时性的（网络超时、API 限流、模型过载），合理的重试策略能显著提升稳定性：
+
+- **指数退避（Exponential Backoff）**：每次重试等待时间翻倍（1s → 2s → 4s → 8s），避免雪崩
+- **抖动（Jitter）**：在退避时间基础上加随机偏移，防止多个请求同时重试造成"惊群效应"
+- **区分可重试与不可重试错误**：超时、429（限流）可重试；400（参数错误）、安全拒绝不应重试
+- **分层重试**：工具调用级别重试 3 次，Agent 整体级别重试 1 次
+
+**2. Fallback 机制**
+
+当主策略失败时，系统应有优雅降级方案：
+
+- **模型 Fallback**：GPT-4o 失败 → 降级到 GPT-4o-mini → 再降级到本地模型
+- **工具 Fallback**：实时 API 不可用 → 使用缓存数据 → 返回"暂时无法获取"
+- **策略 Fallback**：复杂 Agent 推理超时 → 降级为简单 Prompt + 单次调用
+- **提供者 Fallback**：OpenAI 不可用 → 切换到 Anthropic → 再切换到 Azure OpenAI
+
+**3. 输出结构化验证**
+
+LLM 输出不可控是 Agent 最大的不稳定来源之一。结构化验证是最后一道防线：
+
+- **Pydantic 模型验证**：定义输出 Schema，解析失败时触发重试
+- **LLM 内置结构化输出**：OpenAI 的 `response_format={"type": "json_schema"}`
+- **验证重试**：解析失败后，将错误信息和原始输出一并反馈给 LLM，要求修正
+
+**4. 超时管理**
+
+- **单步超时**：每个工具调用设置独立超时（如 30s），超时后记录错误并跳过
+- **全局超时**：Agent 整体执行设置最大时间（如 5 分钟），超时后返回部分结果
+- **流式超时**：对流式响应设置心跳检测，长时间无新 token 则中断
+
+**5. 幂等性设计**
+
+重试意味着工具调用可能重复执行，必须确保幂等性：
+- 数据库写入使用 `INSERT ... ON CONFLICT DO NOTHING`
+- API 调用使用 `Idempotency-Key` 头
+- 文件操作先检查是否已完成
+
+```python
+import tenacity
+from pydantic import BaseModel, ValidationError
+from langgraph.graph import StateGraph
+
+class AnalysisResult(BaseModel):
+    summary: str
+    key_points: list[str]
+    confidence: float
+
+# 带重试的工具调用
+@tenacity.retry(
+    wait=tenacity.wait_exponential(multiplier=1, min=1, max=30),
+    stop=tenacity.stop_after_attempt(3),
+    retry=tenacity.retry_if_exception_type((TimeoutError, ConnectionError)),
+    before_sleep=lambda retry_state: logger.warning(
+        f"重试第 {retry_state.attempt_number} 次: {retry_state.outcome.exception()}"
+    )
+)
+async def call_api_with_retry(url: str, params: dict) -> dict:
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+
+# 带 Fallback 的 LLM 调用
+from langchain_openai import ChatOpenAI
+
+primary_llm = ChatOpenAI(model="gpt-4o", timeout=60)
+fallback_llm = ChatOpenAI(model="gpt-4o-mini", timeout=30)
+llm_with_fallback = primary_llm.with_fallbacks([fallback_llm])
+
+# 输出结构化验证 + 重试
+def validated_output_node(state):
+    for attempt in range(3):
+        response = llm.invoke(state["messages"])
+        try:
+            parsed = AnalysisResult.model_validate_json(response.content)
+            return {"result": parsed, "messages": [response]}
+        except ValidationError as e:
+            error_msg = f"输出格式错误：{e}。请严格按 JSON Schema 输出。"
+            state["messages"].append(HumanMessage(content=error_msg))
+    return {"result": None, "error": "输出验证失败，已重试 3 次"}
+
+# 断路器模式
+class CircuitBreaker:
+    def __init__(self, failure_threshold=5, reset_timeout=60):
+        self.failures = 0
+        self.threshold = failure_threshold
+        self.reset_timeout = reset_timeout
+        self.last_failure_time = None
+        self.state = "closed"  # closed → open → half-open
+
+    def call(self, func, *args, **kwargs):
+        if self.state == "open":
+            if time.time() - self.last_failure_time > self.reset_timeout:
+                self.state = "half-open"
+            else:
+                raise CircuitBreakerOpen("断路器已打开，拒绝请求")
+        try:
+            result = func(*args, **kwargs)
+            if self.state == "half-open":
+                self.state = "closed"
+                self.failures = 0
+            return result
+        except Exception as e:
+            self.failures += 1
+            self.last_failure_time = time.time()
+            if self.failures >= self.threshold:
+                self.state = "open"
+            raise
+```
+
+**关键知识点**
+
+- 指数退避 + 抖动是重试的标准策略，需区分可重试和不可重试错误
+- 多层 Fallback（模型/工具/策略/提供者）确保优雅降级
+- Pydantic 验证 + 重试是 LLM 输出结构化的最后防线
+
+**延伸阅读** — [LangChain Fallbacks](https://python.langchain.com/docs/how_to/fallbacks/) · [Tenacity 重试库](https://tenacity.readthedocs.io/)
+
+</details>
+
+---
+
+### Q32：Agent 评估方法论：轨迹评估、工具调用准确率与端到端指标？
+
+<details><summary>参考答案</summary>
+
+Agent 评估比传统 LLM 评估复杂得多——不仅要评估最终答案是否正确，还要评估推理过程是否合理、工具使用是否高效。这就像评价一个员工不仅看 KPI 结果，还要看工作方法和效率。
+
+**1. 三个评估层次**
+
+| 层次         | 评估对象           | 核心指标                       |
+| ------------ | ------------------ | ------------------------------ |
+| 轨迹评估     | Agent 的行动序列   | 步骤正确率、路径最优性         |
+| 工具调用评估 | 单次工具选择与参数 | 工具选择准确率、参数正确率     |
+| 端到端评估   | 最终任务完成情况   | 任务完成率、答案正确性、效率   |
+
+**2. 轨迹评估（Trajectory Evaluation）**
+
+将 Agent 的实际行动序列与预定义的"黄金轨迹"（Golden Trajectory）进行对比：
+
+- **精确匹配**：每一步工具调用和参数完全一致（太严格，实际很少用）
+- **关键步骤匹配**：只验证关键步骤是否出现，忽略顺序差异
+- **LLM-as-Judge**：用另一个 LLM 评估轨迹的合理性（灵活但有偏差）
+
+轨迹评估的挑战在于：完成同一任务可能有多条合理路径，硬编码"正确轨迹"会过度约束。
+
+**3. 工具调用准确率**
+
+- **工具选择准确率**：Agent 是否选择了正确的工具？例如用户问天气却调用了搜索引擎
+- **参数准确率**：工具参数是否正确？例如查询"北京天气"却传入 city="Shanghai"
+- **调用顺序合理性**：工具调用的顺序是否高效？是否有冗余调用？
+- **错误恢复率**：工具调用失败后，Agent 是否能正确处理并恢复？
+
+**4. 端到端指标**
+
+| 指标           | 计算方式                            | 说明                       |
+| -------------- | ----------------------------------- | -------------------------- |
+| 任务完成率     | 成功任务数 / 总任务数               | 最核心的业务指标           |
+| 答案正确性     | 正确答案数 / 总答案数               | 对有标准答案的任务         |
+| 步骤效率       | 实际步骤数 / 最优步骤数             | 衡量 Agent 是否"绕弯路"   |
+| Token 效率     | 消耗 Token 数 / 任务完成数          | 成本控制指标               |
+| 端到端延迟     | 从输入到最终输出的时间              | 用户体验指标               |
+| 安全合规率     | 无安全违规的任务比例                | 对安全敏感场景必须跟踪     |
+
+**5. 标准化基准测试**
+
+| Benchmark   | 评估内容                        | 特点                       |
+| ----------- | ------------------------------- | -------------------------- |
+| AgentBench  | 8 个环境下的 Agent 能力        | 覆盖 Web、DB、游戏等       |
+| GAIA        | 通用 AI 助手能力               | 多步推理 + 工具使用        |
+| SWE-bench   | 软件工程任务（GitHub Issue 修复）| 真实代码库，端到端评估     |
+| WebArena    | Web 浏览与操作                  | 模拟真实网站交互           |
+| ToolBench   | 工具使用能力                    | 16000+ 真实 API            |
+
+**6. LangSmith 评估实践**
+
+LangSmith 提供了完整的 Agent 评估工具链：
+
+```python
+from langsmith import Client
+from langsmith.evaluation import evaluate
+
+client = Client()
+
+# 1. 创建评估数据集
+dataset = client.create_dataset("agent-eval-v1")
+client.create_examples(
+    inputs=[
+        {"question": "北京今天的天气怎么样？"},
+        {"question": "计算 2024 年 Q1 销售额同比增长率"},
+    ],
+    outputs=[
+        {"answer": "包含温度、湿度等天气信息", "expected_tools": ["weather_api"]},
+        {"answer": "包含具体增长率数字", "expected_tools": ["database_query", "calculator"]},
+    ],
+    dataset_id=dataset.id
+)
+
+# 2. 定义评估器
+def tool_accuracy_evaluator(run, example):
+    """评估工具调用准确率"""
+    expected_tools = set(example.outputs["expected_tools"])
+    actual_tools = set()
+    for step in run.child_runs or []:
+        if step.run_type == "tool":
+            actual_tools.add(step.name)
+    accuracy = len(expected_tools & actual_tools) / len(expected_tools)
+    return {"key": "tool_accuracy", "score": accuracy}
+
+def step_efficiency_evaluator(run, example):
+    """评估步骤效率"""
+    total_steps = len([r for r in (run.child_runs or []) if r.run_type == "llm"])
+    optimal_steps = len(example.outputs["expected_tools"]) + 1  # 工具数 + 最终回答
+    efficiency = min(optimal_steps / max(total_steps, 1), 1.0)
+    return {"key": "step_efficiency", "score": efficiency}
+
+# 3. 运行评估
+results = evaluate(
+    agent_executor.invoke,
+    data=dataset.name,
+    evaluators=[tool_accuracy_evaluator, step_efficiency_evaluator],
+    experiment_prefix="agent-v2.1"
+)
+```
+
+**7. 回归测试策略**
+
+- **基线建立**：首次评估建立各指标基线
+- **PR 级评估**：每次 Prompt/模型变更在 CI 中运行评估套件
+- **阈值告警**：任务完成率下降 > 5% 或 Token 消耗上升 > 20% 时阻止合并
+- **A/B 测试**：新旧版本并行运行，统计显著性检验
+
+**追问链**
+
+1. **LLM-as-Judge 评估 Agent 轨迹的偏差如何缓解？** → 多个 Judge 模型投票、提供详细评分 rubric、定期用人工标注校准 Judge 模型
+2. **如何评估多 Agent 系统中单个 Agent 的贡献？** → Shapley 值分析、消融实验（逐个移除 Agent 观察效果）、Agent 级别的任务完成率拆分
+3. **评估数据集如何防止"过拟合"？** → 定期更新数据集、使用 LLM 生成变体、从生产日志中提取新案例
+
+**关键知识点**
+
+- Agent 评估需覆盖轨迹、工具调用、端到端三个层次
+- LangSmith 提供数据集管理 + 自定义评估器 + 实验对比的完整工具链
+- 回归测试集成到 CI/CD，防止 Prompt 修改导致质量下降
+
+**延伸阅读** — [LangSmith 评估文档](https://docs.smith.langchain.com/evaluation) · [AgentBench 论文](https://arxiv.org/abs/2308.03688)
+
+</details>
+
+---
+
+### Q33：场景题：设计多 Agent 智能客服系统（意图识别 + 工单处理 + 人工升级）？
+
+<details><summary>参考答案</summary>
+
+这是一道综合性场景设计题，考察 Agent 架构设计、多 Agent 协作、状态管理和生产工程化能力。
+
+**1. 需求分析**
+
+一个智能客服系统需要处理：
+- **FAQ 查询**：产品使用、价格方案等常见问题（占 60%+）
+- **工单操作**：查询订单状态、修改地址、退款申请等（占 25%）
+- **投诉升级**：复杂投诉、情绪激动用户需转人工（占 15%）
+
+核心挑战：准确识别意图并路由到正确的处理链路，同时维护对话上下文和工单状态。
+
+**2. 系统架构**
+
+```
+用户消息
+    ↓
+┌─────────────┐
+│  Router Agent│ ← 意图分类 + 情绪检测
+└──────┬──────┘
+       ├──────────────┬──────────────┐
+       ↓              ↓              ↓
+┌──────────┐  ┌──────────┐  ┌──────────────┐
+│ FAQ Agent │  │Order Agent│  │Complaint Agent│
+│ (RAG)    │  │ (API调用) │  │ (工单+升级)  │
+└──────────┘  └──────────┘  └──────────────┘
+                                     ↓
+                              ┌──────────┐
+                              │ 人工坐席  │
+                              └──────────┘
+```
+
+**3. 各 Agent 设计**
+
+**Router Agent（路由 Agent）**
+- 职责：意图分类 + 情绪检测 + 路由决策
+- 实现：使用轻量 LLM（GPT-4o-mini）做分类，低延迟
+- 路由规则：意图 + 情绪综合判断（情绪值 > 0.8 直接升级）
+
+**FAQ Agent**
+- 职责：回答常见问题
+- 实现：RAG 架构，从产品知识库检索 + LLM 生成答案
+- 置信度门控：检索相似度 < 0.7 时返回"无法确定"，触发升级
+
+**Order Agent**
+- 职责：处理订单相关操作
+- 实现：绑定订单 API 工具（查询、修改、退款）
+- 权限控制：退款金额 > 500 元需人工审批
+
+**Complaint Agent**
+- 职责：处理投诉，创建工单，必要时升级人工
+- 实现：创建工单 + 记录投诉详情 + 评估升级必要性
+- 升级触发：3 轮对话未解决 / 用户主动要求 / 情绪持续恶化
+
+**4. LangGraph 实现**
+
+```python
+from langgraph.graph import StateGraph, END
+from langgraph.checkpoint.postgres import PostgresSaver
+from typing import TypedDict, Annotated, Literal
+import operator
+
+class CustomerServiceState(TypedDict):
+    messages: Annotated[list, operator.add]
+    customer_id: str
+    intent: str
+    sentiment_score: float
+    ticket_id: str | None
+    escalated: bool
+    turn_count: int
+
+def router_node(state: CustomerServiceState):
+    """意图识别 + 情绪检测"""
+    last_msg = state["messages"][-1].content
+    classification = router_llm.invoke(
+        f"分类用户意图（faq/order/complaint）并评估情绪（0-1）：\n{last_msg}"
+    )
+    return {
+        "intent": classification.intent,
+        "sentiment_score": classification.sentiment,
+        "turn_count": state.get("turn_count", 0) + 1
+    }
+
+def should_escalate(state: CustomerServiceState) -> bool:
+    """判断是否需要升级到人工"""
+    return (
+        state["sentiment_score"] > 0.8
+        or state["turn_count"] > 3
+        or state.get("escalated", False)
+    )
+
+def route_by_intent(state: CustomerServiceState) -> Literal["faq", "order", "complaint", "escalate"]:
+    if should_escalate(state):
+        return "escalate"
+    return state["intent"]
+
+def faq_node(state: CustomerServiceState):
+    """RAG 检索 + 回答"""
+    query = state["messages"][-1].content
+    docs = vector_store.similarity_search(query, k=3)
+    if docs[0].metadata["score"] < 0.7:
+        return {"messages": [AIMessage("抱歉，这个问题我需要转接专员为您处理。")], "escalated": True}
+    answer = faq_llm.invoke(f"基于以下资料回答问题：\n{docs}\n\n问题：{query}")
+    return {"messages": [answer]}
+
+def order_node(state: CustomerServiceState):
+    """订单操作"""
+    result = order_agent.invoke(state["messages"])
+    return {"messages": [result]}
+
+def complaint_node(state: CustomerServiceState):
+    """投诉处理 + 工单创建"""
+    ticket = create_ticket(
+        customer_id=state["customer_id"],
+        messages=state["messages"],
+        sentiment=state["sentiment_score"]
+    )
+    response = complaint_llm.invoke(state["messages"])
+    return {"messages": [response], "ticket_id": ticket.id}
+
+def escalate_node(state: CustomerServiceState):
+    """人工升级"""
+    handoff_summary = summarize_llm.invoke(
+        f"总结以下对话要点，供人工坐席参考：\n{state['messages']}"
+    )
+    notify_human_agent(
+        customer_id=state["customer_id"],
+        ticket_id=state.get("ticket_id"),
+        summary=handoff_summary,
+        sentiment=state["sentiment_score"]
+    )
+    return {"messages": [AIMessage("正在为您转接人工客服，请稍候...")], "escalated": True}
+
+# 构建图
+graph = StateGraph(CustomerServiceState)
+graph.add_node("router", router_node)
+graph.add_node("faq", faq_node)
+graph.add_node("order", order_node)
+graph.add_node("complaint", complaint_node)
+graph.add_node("escalate", escalate_node)
+
+graph.set_entry_point("router")
+graph.add_conditional_edges("router", route_by_intent, {
+    "faq": "faq", "order": "order",
+    "complaint": "complaint", "escalate": "escalate"
+})
+graph.add_edge("faq", END)
+graph.add_edge("order", END)
+graph.add_edge("complaint", END)
+graph.add_edge("escalate", END)
+
+checkpointer = PostgresSaver.from_conn_string(DATABASE_URL)
+app = graph.compile(checkpointer=checkpointer)
+```
+
+**5. 监控指标**
+
+| 指标         | 目标值   | 说明                   |
+| ------------ | -------- | ---------------------- |
+| 意图准确率   | > 95%    | 路由到正确处理链路     |
+| 自助解决率   | > 70%    | 无需人工介入即解决     |
+| 人工升级率   | < 15%    | 升级应精准不过度       |
+| 首次响应时间 | < 3s     | 用户体验关键指标       |
+| 客户满意度   | > 4.2/5  | 会话结束后评分         |
+
+**追问链**
+
+1. **如何处理多轮对话中的意图切换？** → Router 在每轮重新分类，但保持对话历史；意图切换时更新 State 但不丢失上下文
+2. **FAQ Agent 的知识库如何保持更新？** → 对接内部 Wiki/CMS 系统，增量向量化更新，设置知识过期时间
+3. **如何防止 Agent 在投诉场景中"火上浇油"？** → 情绪检测 + 专门的安抚话术模板 + 高情绪时限制 LLM 自由发挥，使用预设回复
+
+**关键知识点**
+
+- Supervisor 模式（Router Agent）是客服系统最常用的架构
+- 情绪检测 + 置信度门控双重机制控制升级策略
+- PostgresSaver 持久化对话状态，支持跨会话上下文
+
+**延伸阅读** — [LangGraph 客服示例](https://langchain-ai.github.io/langgraph/tutorials/customer-support/customer-support/) · [对话系统设计模式](https://arxiv.org/abs/2304.04995)
+
+</details>
+
+---
+
+### Q34：场景题：Agent 评测平台架构设计（基准测试 + 回归检测 + 可视化）？
+
+<details><summary>参考答案</summary>
+
+Agent 评测平台是确保 Agent 系统质量的基础设施，类比软件工程中的 CI/CD 测试平台。本题考察系统架构设计、评估方法论和工程化能力。
+
+**1. 需求分析**
+
+评测平台需要支持四个核心场景：
+- **基准测试**：在标准数据集上评估 Agent 的基线能力
+- **回归检测**：Prompt/模型/工具变更后自动检测质量退化
+- **A/B 对比**：并行运行两个版本，统计显著性比较
+- **可视化报告**：直观展示评估结果、趋势和异常
+
+**2. 系统架构**
+
+```
+┌────────────────────────────────────────────────────────┐
+│                     评测平台架构                         │
+├──────────────┬──────────────┬──────────────┬───────────┤
+│  Test Suite  │  Execution   │  Evaluation  │ Dashboard │
+│  Registry    │  Engine      │  Pipeline    │           │
+├──────────────┼──────────────┼──────────────┼───────────┤
+│ • 数据集管理  │ • 并行执行    │ • 自动评估    │ • 趋势图   │
+│ • 版本控制    │ • 超时控制    │ • 多维评分    │ • 对比视图  │
+│ • 标签分类    │ • 成本追踪    │ • 回归告警    │ • 轨迹回放  │
+│ • 黄金标注    │ • 重试策略    │ • 统计检验    │ • 成本分析  │
+└──────────────┴──────────────┴──────────────┴───────────┘
+         ↓              ↓              ↓
+    PostgreSQL    Agent Runtime    LangSmith/自建
+```
+
+**3. 核心模块设计**
+
+**Test Suite Registry（测试套件注册中心）**
+
+```python
+# 测试用例数据模型
+class TestCase(BaseModel):
+    id: str
+    category: str  # unit / integration / e2e
+    input: dict  # 输入（用户消息、上下文等）
+    expected: dict  # 期望输出
+    metadata: dict  # 难度、标签、创建时间等
+
+class TestSuite(BaseModel):
+    id: str
+    name: str
+    version: str
+    test_cases: list[TestCase]
+    agent_config: dict  # 目标 Agent 配置
+
+# 三层测试体系
+# Unit：单次工具调用正确性
+unit_case = TestCase(
+    id="unit-weather-001",
+    category="unit",
+    input={"tool": "weather_api", "params": {"city": "北京"}},
+    expected={"contains": ["温度", "湿度"]},
+    metadata={"tags": ["tool-call"], "difficulty": "easy"}
+)
+
+# Integration：多步骤工具链
+integration_case = TestCase(
+    id="int-travel-001",
+    category="integration",
+    input={"question": "帮我规划北京三日游，预算 5000 元"},
+    expected={
+        "required_tools": ["search", "calculator", "map_api"],
+        "min_steps": 3,
+        "contains": ["行程", "预算"]
+    },
+    metadata={"tags": ["multi-step"], "difficulty": "medium"}
+)
+
+# E2E：完整任务评估
+e2e_case = TestCase(
+    id="e2e-analysis-001",
+    category="e2e",
+    input={"question": "分析 Apple 2024 Q4 财报的关键指标"},
+    expected={
+        "correctness_rubric": "必须包含营收、利润率、iPhone 销量数据",
+        "max_steps": 10,
+        "max_tokens": 5000
+    },
+    metadata={"tags": ["analysis", "finance"], "difficulty": "hard"}
+)
+```
+
+**Execution Engine（执行引擎）**
+
+```python
+import asyncio
+from dataclasses import dataclass
+from datetime import datetime
+
+@dataclass
+class ExecutionResult:
+    test_case_id: str
+    agent_version: str
+    output: dict
+    trajectory: list[dict]  # 每步的 action/observation
+    total_tokens: int
+    total_cost: float
+    latency_ms: int
+    error: str | None
+
+class ExecutionEngine:
+    def __init__(self, max_concurrent: int = 10, timeout: int = 300):
+        self.semaphore = asyncio.Semaphore(max_concurrent)
+        self.timeout = timeout
+
+    async def run_test_case(self, agent, test_case: TestCase) -> ExecutionResult:
+        async with self.semaphore:
+            start = datetime.now()
+            try:
+                result = await asyncio.wait_for(
+                    agent.ainvoke(test_case.input),
+                    timeout=self.timeout
+                )
+                return ExecutionResult(
+                    test_case_id=test_case.id,
+                    agent_version=agent.version,
+                    output=result["output"],
+                    trajectory=result["intermediate_steps"],
+                    total_tokens=result["token_usage"],
+                    total_cost=result["cost"],
+                    latency_ms=(datetime.now() - start).microseconds // 1000,
+                    error=None
+                )
+            except asyncio.TimeoutError:
+                return ExecutionResult(
+                    test_case_id=test_case.id, agent_version=agent.version,
+                    output={}, trajectory=[], total_tokens=0, total_cost=0,
+                    latency_ms=self.timeout * 1000, error="TIMEOUT"
+                )
+
+    async def run_suite(self, agent, suite: TestSuite) -> list[ExecutionResult]:
+        tasks = [self.run_test_case(agent, tc) for tc in suite.test_cases]
+        return await asyncio.gather(*tasks)
+```
+
+**Evaluation Pipeline（评估流水线）**
+
+多维评估矩阵：
+
+| 评估维度   | 评估方法              | 指标                   |
+| ---------- | --------------------- | ---------------------- |
+| 正确性     | LLM-as-Judge + 规则   | correctness_score      |
+| 效率       | 步骤数/Token 数对比   | step_efficiency        |
+| 安全性     | 关键词扫描 + 分类器   | safety_score           |
+| 延迟       | 端到端耗时统计        | p50/p95/p99 latency    |
+| 成本       | Token 消耗 × 单价     | cost_per_task          |
+
+**回归检测**
+
+```python
+from scipy import stats
+
+def detect_regression(baseline_scores: list[float],
+                      current_scores: list[float],
+                      threshold: float = 0.05) -> dict:
+    """使用 Mann-Whitney U 检验检测质量回归"""
+    stat, p_value = stats.mannwhitneyu(
+        baseline_scores, current_scores, alternative='greater'
+    )
+    baseline_mean = sum(baseline_scores) / len(baseline_scores)
+    current_mean = sum(current_scores) / len(current_scores)
+    delta = (current_mean - baseline_mean) / baseline_mean
+
+    return {
+        "regression_detected": p_value < threshold,
+        "p_value": p_value,
+        "baseline_mean": baseline_mean,
+        "current_mean": current_mean,
+        "delta_pct": delta * 100,
+        "recommendation": "BLOCK_MERGE" if p_value < threshold and delta < -0.05 else "PASS"
+    }
+```
+
+**4. CI/CD 集成**
+
+```yaml
+# .github/workflows/agent-eval.yml
+name: Agent Evaluation
+on:
+  pull_request:
+    paths: ['prompts/**', 'agents/**', 'tools/**']
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Agent Evaluation Suite
+        run: python eval/run_suite.py --suite core-v1 --compare main
+      - name: Check Regression
+        run: python eval/check_regression.py --threshold 0.05
+        # 质量下降超过 5% 时 CI 失败
+```
+
+**5. Dashboard 可视化**
+
+核心视图：
+- **趋势图**：各指标随版本/时间的变化趋势
+- **雷达图**：多维度能力对比（正确性、效率、安全性、成本）
+- **轨迹回放**：逐步回放 Agent 的推理过程，标记异常步骤
+- **成本热力图**：按测试类别和时间段展示 Token 消耗分布
+
+**追问链**
+
+1. **评估数据集的质量如何保证？** → 多人标注 + 标注一致性检查（Kappa 系数 > 0.8）+ 定期清洗过时用例
+2. **如何评估不确定性？** → 同一用例多次运行（n=5），计算置信区间，只在统计显著时判定回归
+3. **评估平台本身的评估器如何验证？** → Meta-evaluation：用已知好/坏的 Agent 输出验证评估器的区分能力
+
+**关键知识点**
+
+- 三层测试体系（Unit/Integration/E2E）对应不同粒度的评估
+- Mann-Whitney U 检验比简单均值对比更可靠地检测回归
+- CI/CD 集成确保每次变更都经过质量门控
+
+**延伸阅读** — [LangSmith 评测指南](https://docs.smith.langchain.com/evaluation) · [Braintrust AI 评估平台](https://www.braintrust.dev/)
+
+</details>
+
+---
+
+### Q35：LangGraph Cloud 与 Agent 部署的工程化最佳实践？
+
+<details><summary>参考答案</summary>
+
+将 Agent 从本地开发部署到生产环境是"最后一公里"的挑战。LangGraph Cloud 提供了托管部署方案，但自建部署同样常见。本题覆盖两种路径的工程化最佳实践。
+
+**1. LangGraph Cloud 托管部署**
+
+LangGraph Cloud 是 LangChain 提供的托管 Agent 部署平台，核心能力包括：
+
+- **一键部署**：从 GitHub 仓库自动构建和部署 LangGraph 应用
+- **持久化状态**：内置 Checkpointer，支持长时运行和断点恢复
+- **水平扩展**：自动根据负载扩缩容
+- **Cron 任务**：支持定时触发 Agent 执行
+- **内置认证**：API Key 管理和访问控制
+
+部署流程：
+
+```python
+# langgraph.json — 部署配置文件
+{
+    "dependencies": ["./requirements.txt"],
+    "graphs": {
+        "customer_service": "./agents/customer_service.py:graph"
+    },
+    "env": ".env",
+    "python_version": "3.11"
+}
+```
+
+```
+# 目录结构
+my-agent/
+├── langgraph.json         # 部署配置
+├── requirements.txt       # Python 依赖
+├── .env                   # 环境变量
+└── agents/
+    ├── customer_service.py  # Agent 图定义
+    └── tools.py             # 工具定义
+```
+
+**2. LangGraph Studio：可视化调试**
+
+LangGraph Studio 是桌面端调试工具，提供：
+- **图可视化**：实时显示 StateGraph 的节点和边
+- **状态检查**：每个节点执行后查看完整 State
+- **断点调试**：在任意节点设置断点，手动注入 State
+- **历史回放**：查看和回放历史执行轨迹
+
+**3. 自建部署架构**
+
+对于需要完全控制的场景，自建部署是更灵活的选择：
+
+```
+                    ┌──────────────┐
+                    │   Nginx/ALB  │
+                    └──────┬───────┘
+                           ↓
+              ┌────────────────────────┐
+              │    FastAPI / LangServe │
+              │    (Agent API 层)      │
+              ├────────────────────────┤
+              │  LangGraph Runtime     │
+              │  (Agent 执行引擎)      │
+              └──────┬────────┬────────┘
+                     ↓        ↓
+            ┌────────┐  ┌──────────┐
+            │PostgreSQL│  │  Redis   │
+            │(State)  │  │(Cache)   │
+            └────────┘  └──────────┘
+                     ↓
+            ┌────────────────┐
+            │   LangSmith    │
+            │  (Observability)│
+            └────────────────┘
+```
+
+```python
+# FastAPI + LangServe 部署示例
+from fastapi import FastAPI, HTTPException
+from langserve import add_routes
+from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.postgres import PostgresSaver
+
+app = FastAPI(title="Agent API")
+
+# 初始化 Agent
+checkpointer = PostgresSaver.from_conn_string(DATABASE_URL)
+agent_graph = create_agent_graph()
+agent_app = agent_graph.compile(checkpointer=checkpointer)
+
+# 添加 LangServe 路由
+add_routes(app, agent_app, path="/agent")
+
+# 自定义端点：带认证和限流
+from slowapi import Limiter
+limiter = Limiter(key_func=get_api_key)
+
+@app.post("/v1/chat")
+@limiter.limit("60/minute")
+async def chat(request: ChatRequest, api_key: str = Depends(verify_api_key)):
+    config = RunnableConfig(
+        configurable={
+            "thread_id": request.thread_id,
+            "user_id": request.user_id
+        }
+    )
+    try:
+        result = await agent_app.ainvoke(
+            {"messages": [HumanMessage(content=request.message)]},
+            config=config
+        )
+        return {"response": result["messages"][-1].content}
+    except Exception as e:
+        logger.error(f"Agent 执行失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="处理请求时出错")
+```
+
+**4. 生产环境 Checklist**
+
+| 类别       | 检查项                                | 状态 |
+| ---------- | ------------------------------------- | ---- |
+| 状态管理   | PostgresSaver 配置完成                | ☐    |
+| 状态管理   | 状态清理策略（TTL/定期归档）          | ☐    |
+| 安全       | API 认证（API Key / OAuth2）          | ☐    |
+| 安全       | 输入验证与 Prompt 注入防护            | ☐    |
+| 安全       | LLM API Key 密钥管理（Vault/KMS）    | ☐    |
+| 限流       | 每用户/每 API Key 速率限制            | ☐    |
+| 限流       | LLM API 调用预算上限                  | ☐    |
+| 监控       | LangSmith Tracing 集成               | ☐    |
+| 监控       | Prometheus 指标暴露                   | ☐    |
+| 监控       | 结构化日志（JSON 格式）               | ☐    |
+| 告警       | 错误率 > 5% 告警                      | ☐    |
+| 告警       | P95 延迟 > 30s 告警                   | ☐    |
+| 告警       | Token 消耗异常告警                    | ☐    |
+| 容灾       | LLM 提供者 Fallback 配置             | ☐    |
+| 容灾       | 数据库主从复制                        | ☐    |
+| 测试       | 评测套件 CI 集成                      | ☐    |
+| 测试       | 回归检测阈值配置                      | ☐    |
+
+**5. 水平扩展策略**
+
+- **无状态 API 层**：FastAPI 实例无状态，可随意扩缩
+- **共享状态存储**：所有实例连接同一个 PostgreSQL 集群
+- **消息队列**：高峰期使用 Redis/Kafka 队列削峰
+- **GPU 推理独立部署**：本地模型推理部署在独立 GPU 节点，API 调用
+
+**6. 可观测性**
+
+三大支柱在 Agent 系统中的应用：
+
+- **Traces（链路追踪）**：LangSmith 记录完整的 Agent 执行链路，每个节点的输入/输出/延迟
+- **Metrics（指标）**：Prometheus 暴露 `agent_invocations_total`、`agent_latency_seconds`、`tool_calls_total`
+- **Logs（日志）**：结构化 JSON 日志，包含 `thread_id`、`user_id`、`agent_step`、`tool_name`
+
+```python
+# Prometheus 指标示例
+from prometheus_client import Counter, Histogram
+
+agent_requests = Counter(
+    'agent_requests_total', 'Total agent invocations',
+    ['agent_name', 'status']
+)
+agent_latency = Histogram(
+    'agent_latency_seconds', 'Agent execution latency',
+    ['agent_name'],
+    buckets=[1, 3, 5, 10, 30, 60, 120, 300]
+)
+tool_calls = Counter(
+    'tool_calls_total', 'Total tool invocations',
+    ['tool_name', 'status']
+)
+```
+
+**追问链**
+
+1. **LangGraph Cloud 和自建部署如何选择？** → 团队 < 5 人且无合规要求用 Cloud；大团队、数据敏感场景、需要深度定制用自建
+2. **Agent 的冷启动延迟如何优化？** → 预热 LLM 连接池、缓存常用 Prompt 模板、使用更快的小模型做路由
+3. **如何实现 Agent 的灰度发布？** → 按用户 ID 哈希分流到新旧版本，监控新版本各指标，逐步扩大流量比例
+
+**关键知识点**
+
+- LangGraph Cloud 适合快速部署，自建方案适合深度定制和数据合规
+- 生产 Checklist 覆盖状态管理、安全、限流、监控、容灾、测试六大维度
+- 可观测性三支柱（Traces/Metrics/Logs）对 Agent 调试至关重要
+
+**延伸阅读** — [LangGraph Cloud 文档](https://langchain-ai.github.io/langgraph/cloud/) · [LangServe 部署指南](https://python.langchain.com/docs/langserve/)
+
+</details>

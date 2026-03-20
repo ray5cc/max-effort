@@ -41,15 +41,16 @@
 - [MongoDB 核心技术](./01-技术资料/03-数据库/05-MongoDB核心技术.md): 文档模型与 BSON / WiredTiger 存储引擎 / 查询规划器 / 复制集与 oplog / 分片与 Chunk Balancer / Read/Write Concern / 事务 / Embedding vs Referencing / 聚合管道 / 索引设计 / 性能调优
 - [Elasticsearch 全文搜索](./01-技术资料/03-数据库/06-Elasticsearch全文搜索.md): 倒排索引原理 / Analyzer与分词(IK中文分词) / Mapping映射设计 / Query DSL / Aggregation聚合框架 / 分布式架构 / 副本与故障恢复 / 性能优化 / Dense Vector与kNN搜索 / Hybrid Search / RAG系统集成 / ELK Stack
 - [04-算法与数据结构](./01-技术资料/04-算法与数据结构/README.md): 算法与数据结构文档目录
-- [排序与搜索算法](./01-技术资料/04-算法与数据结构/01-排序与搜索算法.md): Big O/冒泡/选择/插入排序/归并/快排/堆排序/二分搜索变体/DFS/BFS/TimSort
+- [排序与搜索算法](./01-技术资料/04-算法与数据结构/01-排序与搜索算法.md): Big O/冒泡/选择/插入排序/归并/快排/堆排序/二分搜索变体/DFS/BFS/TimSort设计哲学(Run检测/Galloping/归并栈不变量)/外部排序(多路归并/败者树/置换选择)/二分搜索变体大全(左右边界/旋转数组/峰值/二维矩阵)/双指针与滑动窗口(快慢指针/碰撞指针/单调队列)/排序在数据库(B+Tree/ORDER BY)/搜索引擎(BM25)/MapReduce/LSM-Tree中的应用/常见陷阱与最佳实践
 - [动态规划](./01-技术资料/04-算法与数据结构/02-动态规划.md): DP五步法/背包问题/LCS/编辑距离/区间DP/状态压缩/空间优化
 - [基础数据结构](./01-技术资料/04-算法与数据结构/03-基础数据结构.md): 数组(动态扩容/双指针/滑动窗口)/链表(翻转/Floyd环检测/快慢指针)/栈与队列(单调栈/单调队列)/哈希表(链地址法/开放寻址/负载因子扩容/手写HashMap)/树(BST/AVL vs 红黑树/Trie前缀树)/堆(sift_up/sift_down/TopK)/图(邻接表/BFS/DFS)/数据结构选型指南
 - [图算法与贪心策略](./01-技术资料/04-算法与数据结构/04-图算法与贪心.md): BFS/DFS深度解析/Dijkstra/Bellman-Ford/Floyd-Warshall/拓扑排序(Kahn/DFS)/并查集(路径压缩+按秩合并)/最小生成树(Kruskal/Prim)/贪心算法(区间调度/跳跃游戏/分发糖果)/回溯算法(子集/排列/组合/N皇后)
-- [05-系统设计](./01-技术资料/05-系统设计/README.md): 系统设计文档目录（LLM推理优化/分布式训练）
+- [05-系统设计](./01-技术资料/05-系统设计/README.md): 系统设计文档目录（LLM推理优化/分布式训练/分布式系统/消息队列/经典系统设计）
 - [LLM推理引擎优化](./01-技术资料/05-系统设计/01-LLM推理引擎优化.md): KV Cache/PagedAttention/Continuous Batching/量化/CPU推理（vLLM/TensorRT-LLM/llama.cpp）
 - [分布式训练技术](./01-技术资料/05-系统设计/02-分布式训练技术.md): ZeRO Stage 1/2/3/张量并行/流水线并行/3D并行（DeepSpeed/Megatron-LM）
 - [分布式系统基础](./01-技术资料/05-系统设计/03-分布式系统基础.md): CAP定理/Raft共识/分布式事务(2PC/Saga/TCC)/一致性哈希/缓存策略/容错模式/分布式锁(Redis/Redlock/ZooKeeper)/逻辑时钟(Lamport/向量时钟)/CRDT/Gossip协议
-- [消息队列与流处理](./01-技术资料/05-系统设计/04-消息队列与流处理.md): Kafka深度(日志段/ISR/HW/LEO/Producer/Consumer/KRaft)/RabbitMQ(Exchange/Publisher Confirm/DLQ/Quorum Queue)/Flink(DataStream/Checkpoint)/Kafka Streams/幂等与事务/消息可靠性模式
+- [消息队列与流处理](./01-技术资料/05-系统设计/04-消息队列与流处理.md): Kafka深度(日志段/ISR/HW/LEO/Controller/KRaft/副本同步/Exactly-Once/分层存储)/RabbitMQ(Exchange/DLQ/Quorum Queue)/Pulsar(BookKeeper存算分离/分层存储/多租户/Schema Registry)/RocketMQ(延迟消息/事务消息/Tag过滤)/流处理引擎对比(Flink vs Spark Streaming vs Kafka Streams)/Flink核心(窗口/水位线/状态管理/Checkpoint/Savepoint)/消息可靠性(Exactly-once/幂等消费者/死信队列)/消息积压运维(扩容/监控/容量规划)
+- [经典系统设计案例](./01-技术资料/05-系统设计/05-经典系统设计案例.md): 系统设计方法论(四步法/容量估算/延迟数字)/短链系统(Base62/哈希截断/KGS/布隆过滤器)/Feed流(推拉混合/大V问题/Redis Sorted Set)/即时通讯(WebSocket/ACK重传/E2EE)/搜索引擎(倒排索引/BM25/向量搜索)/秒杀系统(Redis Lua原子操作/限流熔断)/分布式文件存储(GFS/HDFS/Chunk/副本/Lease)/通用模式(CQRS/一致性哈希/Saga/分布式锁)
 - [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md): DevOps与云计算文档目录
 - [Docker 与容器化技术](./01-技术资料/06-DevOps与云计算/01-Docker与容器化技术.md): Linux Namespace(PID/NET/MNT/UTS/IPC/USER) / Cgroups v1-v2 / OverlayFS 分层存储 / OCI 标准 / Docker 架构(dockerd/containerd/runc) / 多阶段构建 / 网络模式(bridge/host/overlay/macvlan) / Docker Compose / 容器安全(seccomp/AppArmor/Trivy/distroless)
 - [Kubernetes 核心技术](./01-技术资料/06-DevOps与云计算/02-Kubernetes核心技术.md): K8s 架构(kube-apiserver/etcd/kube-scheduler/controller-manager/kubelet) / Pod生命周期与设计模式 / Deployment/StatefulSet/DaemonSet/Job/CronJob / Service(ClusterIP/NodePort/LoadBalancer) / Ingress / 调度(Affinity/Taints/QoS) / 存储(PV/PVC/StorageClass/CSI) / 网络(CNI/NetworkPolicy) / 生产运维(RBAC/HPA/Helm/蓝绿/金丝雀)
@@ -94,32 +95,32 @@
 - [Node.js面试题](./02-面试指南/02-后端面试/06-Node.js面试题.md): 事件循环六阶段/nextTick vs Promise微任务/libuv线程池(UV_THREADPOOL_SIZE)/V8 JIT管线(Ignition→Sparkplug→Maglev→TurboFan)/隐藏类与内联缓存/Stream四种类型与背压/Express vs Koa中间件模型/NestJS依赖注入与请求生命周期/Worker Threads SharedArrayBuffer+Atomics/Cluster多进程负载均衡/GC(Scavenger/Mark-Compact)/原型链污染/ReDoS/内存泄漏排查/优雅停机/实时通知系统设计 38道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景）
 - [03-数据库面试](./02-面试指南/03-数据库面试/README.md): 数据库面试题目与解析
 - [向量数据库面试题](./02-面试指南/03-数据库面试/01-向量数据库面试题.md): 向量嵌入/ANN搜索/HNSW/IVF/PQ/pgvector/Chroma/Milvus架构/混合搜索/Reranking/生产扩展 30道分层面试题（含🔥高频考点速记）
-- [Redis 面试题](./02-面试指南/03-数据库面试/02-Redis面试题.md): Redis数据结构/持久化/内存管理/网络模型/集群/事务 22道分层面试题
+- [Redis 面试题](./02-面试指南/03-数据库面试/02-Redis面试题.md): Redis数据结构底层(SDS/listpack/skiplist概率分析/quicklist)/持久化深度(AOF重写fork COW/RDB/混合持久化)/集群架构(16384slots/Gossip/脑裂)/Pipeline vs事务vs Lua原子性/Redlock争议/布隆过滤器/热Key/singleflight/排行榜/分布式限流器/延迟队列 33道分层面试题
 - [PostgreSQL 面试题](./02-面试指南/03-数据库面试/03-PostgreSQL面试题.md): 进程架构/MVCC可见性/HOT更新/WAL/Checkpoint/B-tree High Key/SSI/VACUUM/XID Wraparound 22道分层面试题
 - [MySQL/InnoDB 面试题](./02-面试指南/03-数据库面试/04-MySQL-InnoDB面试题.md): Buffer Pool/B+树聚簇索引/MVCC Read View/Next-Key Lock/Change Buffer/Doublewrite/崩溃恢复 22道分层面试题
 - [MongoDB 面试题](./02-面试指南/03-数据库面试/05-MongoDB面试题.md): BSON vs JSON / Embedding vs Referencing / 复合索引设计 / Covered Query / Replica Set / Read/Write Concern / 事务限制 / Shard Key / Aggregation Pipeline / 慢查询排查 30道分层面试题（含🔥高频考点速记）
 - [Elasticsearch 面试题](./02-面试指南/03-数据库面试/06-Elasticsearch面试题.md): 倒排索引 / 分词器 / Query DSL(match vs term/bool查询) / 聚合分析(Bucket/Metric) / 分布式架构(Primary/Replica Shard) / Mapping设计(text vs keyword/nested) / BM25评分算法 / 深分页优化(search_after) / Filter Context缓存 / ILM生命周期管理 / 性能调优与监控 24道分层面试题（含🔥高频考点速记）
 - [04-算法与数据结构面试](./02-面试指南/04-算法与数据结构面试/README.md): 算法面试题目与解析
-- [排序与搜索面试题](./02-面试指南/04-算法与数据结构面试/01-排序与搜索面试题.md): 排序算法对比/二分搜索变体/Top-K/DFS/BFS/外部排序 25道分层题
-- [动态规划面试题](./02-面试指南/04-算法与数据结构面试/02-动态规划面试题.md): 背包/LCS/编辑距离/股票买卖/状态压缩 25道分层题
+- [排序与搜索面试题](./02-面试指南/04-算法与数据结构面试/01-排序与搜索面试题.md): 排序算法对比/二分搜索变体(左右边界/旋转数组/峰值)/双指针(3Sum/接雨水/滑动窗口最大值)/堆(中位数维护/K路归并)/外部排序(多路归并/败者树)/TimSort设计/主定理/搜索引擎排序/海量Top-K/自动补全系统 33道分层题
+- [动态规划面试题](./02-面试指南/04-算法与数据结构面试/02-动态规划面试题.md): 背包/LCS/编辑距离/区间DP(矩阵链乘法/石子合并/戳气球)/树形DP(换根DP)/博弈DP(Nim/SG函数)/状态压缩DP/数位DP/单调队列优化/斜率优化/股票买卖状态机/零钱兑换/分割等和子集 33道分层题
 - [基础数据结构面试题](./02-面试指南/04-算法与数据结构面试/03-基础数据结构面试题.md): 链表翻转/哈希表原理(扩容+冲突)/二叉树遍历/LRU Cache(HashMap+双向链表)/单调栈/BST/堆TopK/Trie前缀树/红黑树vs AVL/跳表/O(1)随机数据结构 25道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景)
 - [图算法与贪心面试题](./02-面试指南/04-算法与数据结构面试/04-图算法与贪心面试题.md): BFS/DFS/岛屿问题/Dijkstra/拓扑排序(课程表)/并查集/最大路径和/N皇后/贪心(区间调度/跳跃游戏)/回溯(排列组合/单词搜索)/社交推荐/任务调度/地图导航 25道分层面试题(⭐基础/⭐⭐进阶/⭐⭐⭐高级/🎯场景)
 - [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md): 系统设计面试题目与解析
 - [LLM推理引擎面试题](./02-面试指南/05-系统设计面试/01-LLM推理引擎面试题.md): KV Cache/PagedAttention/Continuous Batching/vLLM/TensorRT-LLM/llama.cpp 30道面试题
 - [分布式训练面试题](./02-面试指南/05-系统设计面试/02-分布式训练面试题.md): ZeRO Stage 1/2/3 深度(显存公式/通信量分析)/3D并行(TP+PP+DP组合/Megatron-LM策略)/通信原语(Ring vs Tree AllReduce/NCCL)/Pipeline调度(GPipe/PipeDream/1F1B/气泡率)/混合精度(BF16/FP16/FP8/Loss Scaling)/故障恢复(Checkpoint/Elastic Training)/DeepSpeed·Megatron-LM工程实践/MFU指标 30道分层面试题
-- [llama.cpp面试题](./02-面试指南/05-系统设计面试/03-llama.cpp面试题.md): GGUF格式/CPU量化推理/Metal/本地部署
-- [分布式系统面试题](./02-面试指南/05-系统设计面试/04-分布式系统面试题.md): CAP/PACELC定理/Raft共识深度(Leader Election/Log Replication/Safety/Multi-Raft)/分布式事务(2PC/3PC/Saga/TCC/Temporal)/一致性哈希/缓存(Cache-Aside/延迟双删/热点Key/雪崩穿透击穿)/分布式锁(Redlock争议/fencing token)/服务发现(etcd/Consul/Nacos)/可观测性(OpenTelemetry/SLO)/容错模式(Circuit Breaker/Bulkhead/Rate Limiting/Backoff+Jitter)/CRDTs 30道分层面试题
-- [消息队列面试题](./02-面试指南/05-系统设计面试/05-消息队列面试题.md): Kafka深度(ISR/HW/LEO/Controller选举/Rebalance/Exactly-Once/事务/epoch fencing)/Pulsar架构(BookKeeper存算分离/分层存储/Schema Registry)/消息可靠性(幂等消费者)/顺序消息/消息积压/流处理(Flink窗口/水位线/状态/Checkpoint)/延迟消息(时间轮)/实时数据管道设计 30道分层面试题
+- [分布式系统面试题](./02-面试指南/05-系统设计面试/03-分布式系统面试题.md): CAP/PACELC定理/Raft共识深度(Leader Election/Log Replication/Safety/Multi-Raft)/分布式事务(2PC/3PC/Saga/TCC/Temporal)/一致性哈希/缓存(Cache-Aside/延迟双删/热点Key/雪崩穿透击穿)/分布式锁(Redlock争议/fencing token)/服务发现(etcd/Consul/Nacos)/可观测性(OpenTelemetry/SLO)/容错模式(Circuit Breaker/Bulkhead/Rate Limiting/Backoff+Jitter)/CRDTs 30道分层面试题
+- [消息队列面试题](./02-面试指南/05-系统设计面试/04-消息队列面试题.md): Kafka深度(ISR/HW/LEO/Controller选举/Rebalance/Exactly-Once/事务/epoch fencing)/Pulsar架构(BookKeeper存算分离/分层存储/Schema Registry)/消息可靠性(幂等消费者)/顺序消息/消息积压/流处理(Flink窗口/水位线/状态/Checkpoint)/延迟消息(时间轮)/实时数据管道设计 30道分层面试题
+- [经典系统设计面试题](./02-面试指南/05-系统设计面试/05-经典系统设计面试题.md): 短链系统/Feed流/即时通讯/搜索引擎/秒杀系统/分布式文件存储 25道分层面试题(Base62/推拉混合/WebSocket/倒排索引/BM25/Redis Lua扣库存/流量漏斗/GFS分块副本/一致性哈希/限流算法)
 - [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md): DevOps与云计算面试题目与解析
 - [Docker 面试题](./02-面试指南/06-DevOps与云计算面试/01-Docker面试题.md): 容器原理/镜像架构/网络存储/Compose/容器安全 21道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
 - [Kubernetes 面试题](./02-面试指南/06-DevOps与云计算面试/02-Kubernetes面试题.md): K8s架构/调度/存储/网络/RBAC/HPA/部署策略 25道分层面试题（⭐基础/⭐⭐进阶/⭐⭐⭐高级/场景题）
 - [CI/CD 面试题](./02-面试指南/06-DevOps与云计算面试/03-CICD面试题.md): CI/CD核心概念/GitHub Actions/GitOps/ArgoCD/Flux/多架构镜像/cosign镜像签名 分层面试题
 - [07-AI-Agent全栈开发面试](./02-面试指南/07-AI-Agent全栈开发面试/README.md): AI Agent全栈开发高频面试题
-- [01-LLM原理面试题](./02-面试指南/07-AI-Agent全栈开发面试/01-LLM原理面试题.md): Transformer/Self-Attention/KV Cache/RoPE/Flash Attention/投机解码/PagedAttention 25道分层面试题
-- [02-Prompt工程面试题](./02-面试指南/07-AI-Agent全栈开发面试/02-Prompt工程面试题.md): CoT/ReAct/ToT/Self-Consistency/Reflexion/LangChain源码/Prompt Injection防护 25道分层面试题
+- [01-LLM原理面试题](./02-面试指南/07-AI-Agent全栈开发面试/01-LLM原理面试题.md): Transformer/Self-Attention/KV Cache/RoPE/Flash Attention/投机解码/PagedAttention/MoE架构/推理模型/长上下文/多模态LLM/Scaling Laws 35道分层面试题
+- [02-Prompt工程面试题](./02-面试指南/07-AI-Agent全栈开发面试/02-Prompt工程面试题.md): CoT/ReAct/ToT/Self-Consistency/Reflexion/LangChain源码/Prompt Injection防护/Prompt Caching/推理模型提示/结构化输出/元提示优化/多轮对话管理 35道分层面试题
 - [03-工具调用面试题](./02-面试指南/07-AI-Agent全栈开发面试/03-工具调用面试题.md): Function Calling协议/LangChain BaseTool/MCP/LangGraph工具节点/Tool RAG 25道分层面试题
 - [04-记忆系统面试题](./02-面试指南/07-AI-Agent全栈开发面试/04-记忆系统面试题.md): RAG全链路/向量数据库/语义分块/混合检索/RAGAS评估/Graph RAG 25道分层面试题
-- [05-Agent框架面试题](./02-面试指南/07-AI-Agent全栈开发面试/05-Agent框架面试题.md): ReAct/LangGraph/AutoGen/Dify/多Agent编排模式/生产工程化 25道分层面试题
+- [05-Agent框架面试题](./02-面试指南/07-AI-Agent全栈开发面试/05-Agent框架面试题.md): ReAct/LangGraph/AutoGen/CrewAI/OpenAI Agents SDK/A2A协议/Agent可靠性/Agent评估/多Agent编排模式/生产工程化 35道分层面试题
 - [06-后端服务面试题](./02-面试指南/07-AI-Agent全栈开发面试/06-后端服务面试题.md): 流式API/LLM网关/会话管理/Langfuse可观测性/生产部署 25道分层面试题
 - [07-前端渲染面试题](./02-面试指南/07-AI-Agent全栈开发面试/07-前端渲染面试题.md): SSE/WebSocket流式传输/React并发渲染/Vercel AI SDK/Markdown实时渲染/Chat UI/AG-UI协议/CopilotKit Generative UI/Ant Design X RICH范式/LobeChat架构/Open WebUI Artifact/Human-in-the-Loop 44道分层面试题
 - [08-LLM微调技术面试题](./02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md): LoRA/QLoRA/RLHF/DPO/GRPO 25道分层面试题

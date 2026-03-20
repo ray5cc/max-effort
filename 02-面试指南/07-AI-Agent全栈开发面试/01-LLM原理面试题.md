@@ -35,6 +35,16 @@
 | Q23  | 设计一个服务 70B LLM 的推理系统，考虑哪些因素？                 | ⭐⭐⭐ |
 | Q24  | 对比解码（Contrastive Decoding）的原理与适用场景？              | ⭐⭐⭐ |
 | Q25  | LLM 训练稳定性技巧：梯度裁剪、Warmup、Z-loss 各自解决什么问题？ | ⭐⭐⭐ |
+| Q26  | MoE（Mixture-of-Experts）架构的核心原理与 DeepSeek-V3 的 Expert Parallelism？ | ⭐⭐   |
+| Q27  | MoE 路由机制中 Top-K 选择与 Load Balancing Loss 的作用？ | ⭐⭐   |
+| Q28  | 推理模型（o1/R1）的 Chain-of-Thought 训练与 test-time compute scaling？ | ⭐⭐⭐ |
+| Q29  | RoPE 长度外推技术（NTK-aware、YaRN、Dynamic NTK）的原理对比？ | ⭐⭐⭐ |
+| Q30  | 长上下文技术：Sliding Window Attention 与 ALiBi 的工程取舍？ | ⭐⭐   |
+| Q31  | 多模态 LLM 的视觉编码器融合策略（Cross-Attention vs Linear Projection）？ | ⭐⭐⭐ |
+| Q32  | KV Cache 优化：MLA 低秩压缩与 GQA/MQA 的对比？ | ⭐⭐⭐ |
+| Q33  | Scaling Laws 的实践意义：Chinchilla-optimal 训练与 compute-optimal 预算分配？ | ⭐⭐   |
+| Q34  | 场景题：设计一个多模态理解系统（图文+视频），需考虑哪些架构决策？ | ⭐⭐⭐ |
+| Q35  | 场景题：100B 参数模型的低成本部署方案设计？ | ⭐⭐⭐ |
 
 ---
 
@@ -574,3 +584,855 @@ CD score(x) = log p_expert(x) − log p_amateur(x)
 
 - Zoph et al., "ST-MoE: Designing Stable and Transferable Sparse Expert Models" (Z-loss 来源, 2022) — https://arxiv.org/abs/2202.08906
 - Chowdhery et al., "PaLM: Scaling Language Modeling with Pathways" (训练稳定性详述, 2022) — https://arxiv.org/abs/2204.02311
+
+---
+
+## ⭐⭐ 进阶题·续（Q26–Q27, Q30, Q33）
+
+### Q26：MoE（Mixture-of-Experts）架构的核心原理与 DeepSeek-V3 的 Expert Parallelism？
+
+<details>
+<summary>参考答案</summary>
+
+MoE（Mixture-of-Experts）的核心思想是**稀疏激活**：模型包含大量专家子网络（Expert），但每个 token 只激活其中 K 个，从而在保持庞大参数量（知识容量）的同时，控制每次前向传播的实际计算量。
+
+**基本架构**：在标准 Transformer 的 FFN 层替换为 MoE 层，包含 N 个结构相同但参数独立的专家网络（每个专家通常是一个标准 FFN）和一个路由器（Router/Gate）。路由器对每个 token 的隐藏状态计算一个得分向量，选择得分最高的 K 个专家进行计算，最终输出是被选中专家输出的加权和。
+
+**稀疏激活的价值**：以 DeepSeek-V3 为例，模型总参数量为 671B，但每个 token 仅激活约 37B 参数（256 个 routed experts 中选 top-8），训练和推理的 FLOPs 仅相当于一个 37B 的稠密模型，但拥有 671B 参数的知识容量。这就像一家大型医院有 256 位专科医生，但每位患者只需看 8 位相关科室的医生即可。
+
+**DeepSeek-V3 的 Expert Parallelism**：256 个专家分布在多张 GPU 上（如 8 张 GPU 各放 32 个专家），每个 token 经路由后需 All-to-All 通信将 token 发送到对应专家所在的 GPU。DeepSeek-V3 使用 device-level auxiliary loss 保证每张 GPU 接收到的 token 数量均衡，减少通信等待。此外引入了 1 个 shared expert（所有 token 都经过），捕获通用知识。
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SimpleMoELayer(nn.Module):
+    """简化的 MoE 层示例"""
+    def __init__(self, d_model, d_ff, num_experts, top_k):
+        super().__init__()
+        self.num_experts = num_experts
+        self.top_k = top_k
+        # 路由器：线性层，输出每个专家的得分
+        self.router = nn.Linear(d_model, num_experts, bias=False)
+        # N 个独立的 FFN 专家
+        self.experts = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(d_model, d_ff),
+                nn.SiLU(),
+                nn.Linear(d_ff, d_model)
+            ) for _ in range(num_experts)
+        ])
+
+    def forward(self, x):
+        # x: (batch, seq_len, d_model)
+        scores = self.router(x)                    # (batch, seq_len, num_experts)
+        top_k_scores, top_k_indices = scores.topk(self.top_k, dim=-1)
+        weights = F.softmax(top_k_scores, dim=-1)  # 归一化选中专家的权重
+
+        output = torch.zeros_like(x)
+        for i in range(self.top_k):
+            expert_idx = top_k_indices[..., i]      # (batch, seq_len)
+            weight = weights[..., i].unsqueeze(-1)   # (batch, seq_len, 1)
+            for e in range(self.num_experts):
+                mask = (expert_idx == e)
+                if mask.any():
+                    expert_input = x[mask]
+                    expert_output = self.experts[e](expert_input)
+                    output[mask] += weight[mask] * expert_output
+        return output
+```
+
+**与稠密模型的对比**：
+
+| 维度 | 稠密模型（如 Llama-70B） | MoE 模型（如 DeepSeek-V3） |
+|------|------------------------|--------------------------|
+| 总参数量 | 70B | 671B |
+| 每 token 激活参数 | 70B（全部） | ~37B（top-8 experts + shared） |
+| 训练 FLOPs | 高 | 与同等激活参数的稠密模型相当 |
+| 显存需求 | 总参数 × 2B（BF16） | 总参数 × 2B，但可按专家分片 |
+| 知识容量 | 受限于参数量 | 远大于同 FLOPs 稠密模型 |
+
+**关键知识点**
+
+- MoE 的核心优势：参数量（容量）和计算量（FLOPs）解耦，用少量计算获得大模型的知识容量
+- DeepSeek-V3 使用 256 routed experts + 1 shared expert，top-8 路由，Expert Parallelism 跨 GPU 分布
+- 通信开销是 MoE 的主要工程挑战，All-to-All 通信量与 top-K 值和专家分布直接相关
+
+**延伸阅读**
+
+- Fedus et al., "Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity" (2022) — https://arxiv.org/abs/2101.03961
+- DeepSeek-AI, "DeepSeek-V3 Technical Report" (2024) — https://arxiv.org/abs/2412.19437
+- Lepikhin et al., "GShard: Scaling Giant Models with Conditional Computation" (2021) — https://arxiv.org/abs/2006.16668
+
+</details>
+
+---
+
+### Q27：MoE 路由机制中 Top-K 选择与 Load Balancing Loss 的作用？
+
+<details>
+<summary>参考答案</summary>
+
+**路由器（Router）的工作机制**：MoE 层中的路由器通常是一个简单的线性层 `W_gate`，它将每个 token 的隐藏状态 h 映射为 N 个专家的得分向量 `s = W_gate · h`，然后通过 Top-K 选择激活得分最高的 K 个专家。被选中专家的输出按 softmax 归一化后的权重加权求和：
+
+```
+output = Σ_{i ∈ TopK} softmax(s_i) · Expert_i(x)
+```
+
+**Top-K 选择的意义**：K 值决定了稀疏程度和质量之间的平衡。K=1（Switch Transformer）最稀疏，计算最少但路由不稳定；K=2（GShard、DeepSeek-V3）是主流选择，兼顾稀疏性和稳定性；K 更大则趋向稠密，削弱 MoE 的计算优势。
+
+**专家坍塌问题（Expert Collapse）**：没有约束时，路由器倾向于将大部分 token 发送给少数"赢家"专家（马太效应），导致其他专家得不到训练、逐渐退化，最终整个 MoE 层退化为一两个活跃专家，浪费大量参数。
+
+**Load Balancing Loss（负载均衡损失）**：为解决专家坍塌，引入辅助损失函数：
+
+```
+L_balance = α · N · Σᵢ (fᵢ · Pᵢ)
+```
+
+其中：
+- N = 专家总数
+- fᵢ = 被路由到专家 i 的 token 比例（实际负载）
+- Pᵢ = 路由器分配给专家 i 的平均概率（路由概率）
+- α = 平衡系数（通常 0.01）
+
+直觉：当所有专家负载均匀时，fᵢ = Pᵢ = 1/N，此时 L_balance 最小。若某个专家同时拥有高 fᵢ 和高 Pᵢ，惩罚急剧增大，迫使路由器分散负载。
+
+**容量因子（Capacity Factor）与 Token 丢弃**：每个专家设定容量上限 C = CF × (tokens / N)，其中 CF（容量因子）通常 1.0~1.5。超过容量的 token 被丢弃（直接跳过 MoE 层，使用残差连接），防止单个专家过载。CF 过小导致 token 丢弃率高，CF 过大浪费内存。
+
+**DeepSeek-V3 的优化**：传统 Load Balancing Loss 在 token 级别均衡，但跨 GPU 的 All-to-All 通信更关心 device 级别均衡。DeepSeek-V3 引入 device-level load balancing：
+
+```
+L_device = α · D · Σⱼ (f'ⱼ · P'ⱼ)
+```
+
+其中 f'ⱼ 和 P'ⱼ 是第 j 张 GPU 上所有专家的聚合负载和概率。这确保每张 GPU 接收到的 token 数量大致相同，减少 All-to-All 通信中的等待时间。同时，DeepSeek-V3 取消了 token 丢弃策略，改用无辅助损失（auxiliary-loss-free）的 bias 调节方式微调路由偏好。
+
+**关键知识点**
+
+- 路由器 = 线性层 + Top-K + Softmax 归一化，结构简单但训练难度大
+- Load Balancing Loss 通过惩罚 fᵢ · Pᵢ 的乘积防止专家坍塌，α 通常取 0.01
+- DeepSeek-V3 的 device-level 均衡和无辅助损失路由是当前 MoE 训练的最新进展
+- 容量因子控制专家接受 token 的上限，过小丢 token，过大浪费内存
+
+**延伸阅读**
+
+- Fedus et al., "Switch Transformers" (2022) — https://arxiv.org/abs/2101.03961
+- Zoph et al., "ST-MoE: Designing Stable and Transferable Sparse Expert Models" (2022) — https://arxiv.org/abs/2202.08906
+- DeepSeek-AI, "DeepSeek-V3 Technical Report" (2024) — https://arxiv.org/abs/2412.19437
+
+</details>
+
+---
+
+### Q28：推理模型（o1/R1）的 Chain-of-Thought 训练与 test-time compute scaling？
+
+<details>
+<summary>参考答案</summary>
+
+**推理模型的核心范式转变**：传统 LLM 通过扩大预训练规模（更多参数、更多数据）提升能力，这是 **train-time compute scaling**。而 o1/R1 代表的推理模型引入了一个新维度——**test-time compute scaling**：在推理阶段投入更多计算（让模型"思考更久"）来提升回答质量，尤其在数学、编程、逻辑推理等需要多步推理的任务上效果显著。
+
+**Chain-of-Thought（CoT）训练方法**：
+
+1. **监督微调阶段**：用人类标注的详细推理过程（step-by-step reasoning traces）微调基础模型，让模型学会"展示思考过程"的格式。
+
+2. **强化学习阶段（GRPO/PPO）**：DeepSeek-R1 使用 Group Relative Policy Optimization（GRPO）进行强化学习训练。与传统 RLHF 不同，GRPO 不依赖 Critic 模型，而是从同一 prompt 采样一组回答，用组内相对排名作为奖励信号。奖励函数可以是结果正确性（数学答案是否正确）或过程奖励（Process Reward Model，PRM）。
+
+3. **"Aha moment"**：训练过程中模型自发学会了重新审视（"Wait, let me reconsider..."）、自我纠错、多角度验证等推理策略——这些行为不是人为设计的，而是通过 RL 激励自然涌现的。
+
+**Test-time Compute Scaling 的原理**：
+
+```
+传统 LLM：质量 ∝ f(训练计算量)          → 训练阶段投入
+推理模型：质量 ∝ f(训练计算量, 推理计算量) → 推理阶段也可投入
+```
+
+具体机制：模型在特殊的 `<think>` 标签内生成长篇推理过程（可能数千 token），通过多步推演、验证、回溯，最终给出高质量答案。推理 token 数量越多（thinking budget 越大），在复杂问题上的准确率越高。
+
+**DeepSeek-R1 的蒸馏策略**：大型 R1 模型（671B MoE）的推理能力可以通过蒸馏（Distillation）迁移到小模型。用 R1 生成的推理 traces 作为训练数据，微调 Qwen-1.5B/7B/32B 等小模型，在数学推理任务上甚至超越未经推理训练的同规模甚至更大规模模型。
+
+**代价与局限**：
+
+| 维度 | 传统 LLM | 推理模型（o1/R1） |
+|------|---------|----------------|
+| 推理延迟 | 低（直接输出） | 高（先思考再回答） |
+| 推理成本 | Token 价格 × 输出长度 | Token 价格 × (思考 + 输出)长度 |
+| 适用场景 | 通用对话、简单 QA | 数学、编程、复杂推理 |
+| 简单任务 | 高效 | 可能过度思考，反而慢且贵 |
+
+**关键知识点**
+
+- 推理模型 = 基础 LLM + CoT 数据 SFT + 强化学习（GRPO/PPO），核心是 RL 阶段
+- Test-time compute scaling：推理时更多计算 → 更好结果，与 train-time scaling 互补
+- DeepSeek-R1 证明推理能力可蒸馏到小模型，且 GRPO 不需要 Critic 模型
+- 简单任务不需要推理模型，test-time scaling 在简单问题上收益递减
+
+**追问链**
+
+1. **如何控制 thinking budget？** 可通过限制 `<think>` 段的 max_tokens、early stopping（检测到"因此答案是…"时截断）、或训练时引入 length penalty 来控制。
+2. **Test-time scaling 何时不再有效？** 当问题所需知识不在模型参数中（纯知识查询而非推理），或问题本身无确定性答案时，更多思考不会带来质量提升。
+3. **GRPO 相比 PPO 的优势？** GRPO 无需 Critic 模型，节省约 50% 显存；用组内相对排名代替绝对 value 估计，训练更稳定。
+
+**延伸阅读**
+
+- DeepSeek-AI, "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning" (2025) — https://arxiv.org/abs/2501.12948
+- OpenAI, "Learning to Reason with LLMs" (o1 Blog, 2024) — https://openai.com/index/learning-to-reason-with-llms/
+- Snell et al., "Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters" (2024) — https://arxiv.org/abs/2408.03314
+
+</details>
+
+---
+
+### Q29：RoPE 长度外推技术（NTK-aware、YaRN、Dynamic NTK）的原理对比？
+
+<details>
+<summary>参考答案</summary>
+
+**问题背景**：RoPE（Rotary Position Embedding）通过旋转矩阵编码位置信息，其频率基为 θᵢ = base^(-2i/d)（默认 base=10000）。模型在训练长度 L_train 内的位置编码是充分学习的，但超过 L_train 后旋转角度进入未见区域，注意力得分崩塌，表现为困惑度（PPL）急剧上升。
+
+**基线方法：Position Interpolation（PI）**
+
+Chen et al. (2023) 提出最朴素的外推方法：将位置索引线性缩放到训练范围内。即将位置 m 替换为 m × (L_train / L_target)，使所有旋转角度落在训练区间 [0, L_train] 内。
+
+缺点：高频分量被过度压缩，丢失相邻 token 的细粒度位置区分能力。
+
+**NTK-aware Scaling（Code Llama 使用）**
+
+核心思想：不缩放位置索引，而是**修改旋转频率基数** base：
+
+```python
+# NTK-aware RoPE 缩放
+scale = L_target / L_train
+base_new = base * (scale ** (d / (d - 2)))
+
+# 原始 RoPE 频率
+# theta_i = base^(-2i/d)
+# NTK-aware 频率
+# theta_i_new = base_new^(-2i/d)
+```
+
+直觉：增大 base 使低频分量（远距离信息）的旋转变慢，保留更多位置分辨能力；而高频分量（近距离信息）受影响较小。相当于在频域上做非均匀拉伸——低频拉伸多，高频拉伸少——符合信息论直觉。
+
+**YaRN（Yet another RoPE extensioN）**
+
+YaRN（Peng et al., 2023）在 NTK-aware 基础上做了三项改进：
+
+1. **NTK-by-parts**：将频率维度分为三个区间——高频维度不缩放（保留近距离精度），中频维度部分缩放，低频维度完全缩放（NTK-aware），实现更精细的频率控制。
+
+2. **注意力缩放（Attention Scaling）**：对注意力 logits 乘以温度因子 t = 0.1 × ln(s) + 1（s 为缩放因子），补偿因长序列导致的注意力分布熵增大。
+
+3. **温度校正**：针对不同频率维度应用不同的插值系数，避免一刀切。
+
+YaRN 在 128K 长度外推上效果优于 PI 和 NTK-aware，是目前最广泛使用的 RoPE 扩展方法之一。
+
+**Dynamic NTK**
+
+动态 NTK 不使用固定的缩放因子，而是根据当前实际输入长度动态调整 base：
+
+```python
+def dynamic_ntk_rope(seq_len, base=10000, d=128, L_train=4096):
+    if seq_len <= L_train:
+        # 训练长度内，使用原始 base
+        return base
+    else:
+        # 超出训练长度，动态缩放 base
+        scale = seq_len / L_train
+        base_new = base * (scale ** (d / (d - 2)))
+        return base_new
+```
+
+优势：短序列不受影响（保持原始精度），长序列按需缩放。无需预设最大长度。
+
+**方法对比**：
+
+| 方法 | 修改对象 | 是否需微调 | 外推能力 | 短序列影响 | 代表模型 |
+|------|---------|-----------|---------|-----------|---------|
+| Position Interpolation | 位置索引 | 需少量微调 | 中等（~4x） | 高频分辨率下降 | — |
+| NTK-aware | 频率 base | 可免微调 | 良好（~8x） | 轻微 | Code Llama |
+| YaRN | 频率 base + 注意力 | 需少量微调 | 优秀（~32x） | 极小 | InternLM2、Qwen |
+| Dynamic NTK | 频率 base（动态） | 可免微调 | 良好（按需） | 无 | 多种开源模型 |
+
+**关键知识点**
+
+- RoPE 外推的核心挑战：旋转角度超出训练分布 → 注意力得分失真
+- NTK-aware 修改 base 而非位置索引，保留高频分辨率，是外推的基础方法
+- YaRN 在 NTK 基础上加入分维度缩放和注意力温度校正，效果最佳但需微调
+- Dynamic NTK 无需预设目标长度，实际部署最灵活
+
+**追问链**
+
+1. **为什么 PI 的高频压缩是问题？** 相邻 token（距离 1-2）的位置区分主要靠高频分量，压缩后 cos(θ × 1) 和 cos(θ × 2) 的差异缩小，模型无法有效区分近距离位置。
+2. **YaRN 的 NTK-by-parts 如何划分频率区间？** 根据维度 i 对应的波长 λᵢ = 2π × base^(2i/d) 与 L_train 的比值，波长远小于 L_train 的维度归为高频（不缩放），远大于 L_train 的归为低频（完全缩放）。
+3. **InternLM2 如何实现 1M 上下文？** 渐进式训练（4K → 32K → 256K → 1M），每阶段使用 YaRN 扩展 + 长文本数据继续训练。
+
+**延伸阅读**
+
+- Chen et al., "Extending Context Window of Large Language Models via Positional Interpolation" (2023) — https://arxiv.org/abs/2306.15595
+- Peng et al., "YaRN: Efficient Context Window Extension of Large Language Models" (2023) — https://arxiv.org/abs/2309.00071
+- Reddit/bloc97, "NTK-Aware Scaled RoPE" (2023) — https://www.reddit.com/r/LocalLLaMA/comments/14lz7j5/
+
+</details>
+
+---
+
+### Q30：长上下文技术：Sliding Window Attention 与 ALiBi 的工程取舍？
+
+<details>
+<summary>参考答案</summary>
+
+**Sliding Window Attention（SWA，滑动窗口注意力）**
+
+以 Mistral 7B 为代表，SWA 限制每个 token 只关注最近的 W 个 token（如 W=4096），超出窗口的 token 不参与注意力计算：
+
+```
+Attention_mask(i, j) = 1 if |i - j| ≤ W else 0
+```
+
+**计算复杂度**从 O(n²) 降为 O(n × W)，对长序列（n >> W）节省巨大。
+
+多层叠加后信息可间接传播：L 层 SWA 的理论感受野为 L × W（如 32 层 × 4096 = 128K），高层的间接注意力覆盖更远距离。配合少量全局注意力层（如 Longformer 的 global tokens）可弥补局部视野的局限。
+
+SWA 的工程优势在于**恒定的每 token 内存开销**：KV Cache 只需保留最近 W 个 token 的 KV 对，支持流式生成（streaming inference），非常适合长对话和实时场景。
+
+**ALiBi（Attention with Linear Biases）**
+
+ALiBi 不修改注意力范围，而是在完整注意力得分上加一个与距离成正比的负偏置：
+
+```
+Score(i, j) = qᵢkⱼᵀ/√dₖ - m × |i - j|
+```
+
+其中 m 为每个 head 的固定斜率。ALiBi 的核心优势是**训短推长（Train Short, Test Long）**：在 1024 token 上训练的模型可以零样本外推到 2048+ token，因为线性偏置的归纳偏置在更长序列上仍然成立。ALiBi 无需位置编码参数，实现极其简单。
+
+**工程取舍对比**：
+
+| 维度 | Sliding Window Attention | ALiBi |
+|------|------------------------|-------|
+| 注意力范围 | 硬截断：只看最近 W 个 token | 软衰减：所有 token 可见，远处权重小 |
+| 计算复杂度 | O(n × W)，与 n 线性 | O(n²)，全注意力 |
+| 内存（KV Cache） | O(W)，恒定，支持流式 | O(n)，随序列增长 |
+| 长度外推 | 受限于感受野 L × W | 天然支持，零样本外推 |
+| 远距离依赖 | 需多层间接传播，可能丢失 | 理论可达但权重衰减快 |
+| 实现复杂度 | 需定制 attention mask 和 KV Cache 管理 | 仅需加一个偏置矩阵，极简 |
+| 代表模型 | Mistral、Mixtral | MPT、BLOOM |
+| 适用场景 | 长对话、流式推理、延迟敏感 | 训练资源有限、需要灵活外推 |
+
+**工程选型建议**：
+
+- **延迟敏感 + 流式生成**：选 SWA，恒定内存、可预测延迟
+- **训练短推理长**：选 ALiBi，无需长序列训练数据
+- **实际趋势**：主流模型（Llama-3、Qwen-2、DeepSeek-V3）选择 RoPE + YaRN 扩展，兼顾全注意力的质量和外推能力，SWA 和 ALiBi 更多作为辅助技术
+
+**关键知识点**
+
+- SWA 用硬截断实现 O(n×W) 复杂度和恒定 KV Cache，适合流式场景
+- ALiBi 用软偏置实现训短推长，但计算仍为 O(n²)
+- 两者均非主流选择（RoPE+扩展方案更常见），但在特定场景有不可替代的优势
+- 多层 SWA 的间接感受野 = 层数 × 窗口大小
+
+**延伸阅读**
+
+- Jiang et al., "Mistral 7B" (2023) — https://arxiv.org/abs/2310.06825
+- Press et al., "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation" (2022) — https://arxiv.org/abs/2108.12409
+- Beltagy et al., "Longformer: The Long-Document Transformer" (2020) — https://arxiv.org/abs/2004.05150
+
+</details>
+
+---
+
+## ⭐⭐⭐ 高级题·续（Q28–Q29, Q31–Q32, Q34–Q35）
+
+### Q31：多模态 LLM 的视觉编码器融合策略（Cross-Attention vs Linear Projection）？
+
+<details>
+<summary>参考答案</summary>
+
+**多模态 LLM 的核心架构问题**：如何将视觉信息（图像/视频）的特征融入语言模型的文本表示空间。这一"融合策略"直接决定了模型的视觉理解能力、参数效率和训练难度。
+
+**视觉编码器**：几乎所有多模态 LLM 使用预训练的视觉编码器（CLIP ViT、SigLIP、InternViT 等）将图像切分为 patch 并编码为一组 visual tokens（如 224×224 图像 → 14×14 = 196 个 patch tokens）。
+
+**融合策略一：Linear Projection（线性投影）**
+
+以 LLaVA 为代表，使用一个简单的 MLP（通常 2 层线性层 + GELU 激活）将视觉 token 直接映射到 LLM 的 embedding 空间，然后与文本 token 拼接后送入 LLM：
+
+```
+架构示意（LLaVA 风格）：
+
+Image → [ViT Encoder] → visual tokens (196×d_v)
+                              ↓
+                        [MLP Projector] → projected tokens (196×d_llm)
+                              ↓
+Text tokens ← 拼接 → [v1, v2, ..., v196, t1, t2, ..., tn]
+                              ↓
+                        [LLM Decoder] → output
+```
+
+优势：实现极简，训练高效（只需训练 projector + 微调 LLM），视觉 token 与文本 token 统一在同一序列中，LLM 的 self-attention 自然处理跨模态交互。
+
+劣势：196+ 个视觉 token 直接占用 LLM 上下文窗口，高分辨率图像（如 768×768 → 2304 个 patch）或视频（多帧）会消耗大量上下文。
+
+**融合策略二：Cross-Attention（交叉注意力）**
+
+以 Flamingo 为代表，在 LLM 的 Transformer 层中插入**交叉注意力层**（gated cross-attention），文本 token 作为 Query，视觉 token 作为 Key/Value：
+
+```
+架构示意（Flamingo 风格）：
+
+Image → [ViT Encoder] → visual tokens (作为 Cross-Attn 的 K, V)
+                                            ↓
+Text tokens → [Self-Attn] → [Cross-Attn] → [FFN] → output
+                              Q: text        (交叉注意力层)
+                              K,V: visual    每隔 N 层插入一次
+```
+
+优势：视觉 token 不占用 LLM 上下文窗口长度，LLM 通过交叉注意力"按需查询"视觉信息；更适合处理多图/视频输入。
+
+劣势：需修改 LLM 架构（插入新层），参数量增加，预训练 LLM 的权重与新 cross-attention 层的协调需要仔细设计。
+
+**融合策略三：Perceiver Resampler（感知器重采样）**
+
+用固定数量的可学习 query tokens（如 64 或 128 个）通过交叉注意力从视觉 token 中提取信息，**将可变数量的视觉 token 压缩为固定数量**的视觉摘要：
+
+```
+Visual tokens (196个) → [Perceiver Resampler] → compressed tokens (64个)
+                         Q: learnable queries
+                         K,V: visual tokens
+```
+
+Qwen-VL 和 InternVL 使用类似的 visual token 压缩策略。优势：控制 LLM 输入中视觉 token 的数量，平衡信息保留与计算效率。
+
+**策略对比**：
+
+| 维度 | Linear Projection | Cross-Attention | Perceiver Resampler |
+|------|-------------------|----------------|-------------------|
+| 代表模型 | LLaVA、LLaVA-NeXT | Flamingo、Qwen-VL v1 | Qwen-VL、InternVL |
+| LLM 架构修改 | 无 | 需插入 cross-attn 层 | 无（压缩后拼接） |
+| 视觉 token 数 | 与 patch 数相同 | 不占上下文 | 固定数量（可控） |
+| 训练复杂度 | 低 | 高 | 中 |
+| 视觉细节保留 | 高（全量 token） | 中（按需查询） | 中（压缩损失） |
+| 多图/视频支持 | 上下文压力大 | 天然支持 | 较好 |
+
+**关键知识点**
+
+- Linear Projection 最简单高效，是当前开源多模态 LLM 的主流选择（LLaVA 系列）
+- Cross-Attention 不占上下文窗口，适合多图/视频场景，但需修改 LLM 架构
+- Perceiver Resampler 是折中方案，用固定 query 压缩视觉信息
+- 高分辨率处理（如 LLaVA-NeXT 的动态分辨率）是当前多模态 LLM 的前沿方向
+
+**追问链**
+
+1. **为什么 LLaVA 的简单 MLP Projector 效果就很好？** 因为 CLIP ViT 已经在图文对比学习中对齐了视觉和语言表示空间，MLP 只需做一个"最后一公里"的空间映射。
+2. **视频理解中视觉 token 爆炸怎么解决？** 关键帧采样（每秒 1-2 帧）、时间维度 pooling、或 Perceiver 风格的压缩。LLaVA-Video 对每帧采样后做 2×2 spatial pooling 将 token 数降至 1/4。
+3. **InternVL2 的 Dynamic Resolution 如何工作？** 将高分辨率图像切分为多个 448×448 子图 + 一个缩略图，每个子图独立过 ViT，所有 patch token 拼接后送入 LLM。
+
+**延伸阅读**
+
+- Liu et al., "Visual Instruction Tuning" (LLaVA, 2023) — https://arxiv.org/abs/2304.08485
+- Alayrac et al., "Flamingo: a Visual Language Model for Few-Shot Learning" (2022) — https://arxiv.org/abs/2204.14198
+- Bai et al., "Qwen-VL: A Versatile Vision-Language Model" (2023) — https://arxiv.org/abs/2308.12966
+
+</details>
+
+---
+
+### Q32：KV Cache 优化：MLA 低秩压缩与 GQA/MQA 的对比？
+
+<details>
+<summary>参考答案</summary>
+
+**问题背景**：LLM 推理时的 KV Cache 是内存瓶颈。以 Llama-2-70B 为例，每个 token 的 KV Cache 占 80 层 × 8 KV heads × 128 dim × 2(K+V) × 2 bytes = 320KB，batch_size=32、序列长度 4096 时 KV Cache 总占用约 40GB，可能超过模型权重本身。
+
+**MHA（Multi-Head Attention，原始方案）**
+
+每个注意力头有独立的 K、V 投影，KV Cache 存储量 = n_heads × d_head × 2 × seq_len。这是基线方案，内存占用最大。
+
+**MQA（Multi-Query Attention，Shazeer 2019）**
+
+所有 Query heads 共享**同一组** K 和 V 投影。KV Cache 缩减为 1/n_heads，如 64 头的模型 KV Cache 减少到 1/64。
+
+```
+MHA: Q_heads=64, K_heads=64, V_heads=64  →  KV Cache = 64 × d × 2
+MQA: Q_heads=64, K_heads=1,  V_heads=1   →  KV Cache = 1 × d × 2
+```
+
+代价：模型质量有一定损失（K/V 共享过于激进），尤其在需要细粒度区分的任务上。
+
+**GQA（Grouped Query Attention，Ainslie et al. 2023）**
+
+折中方案：将 Query heads 分组，每组共享一组 K/V。Llama-2-70B 使用 GQA，64 个 Query heads 分为 8 组，每组 8 个 Q heads 共享 1 组 KV。
+
+```
+GQA: Q_heads=64, KV_groups=8  →  KV Cache = 8 × d × 2
+```
+
+KV Cache 减少 8 倍，质量几乎不受影响。GQA 已成为当前大模型的标配（Llama-2/3、Qwen-2 等）。
+
+**MLA（Multi-head Latent Attention，DeepSeek-V2/V3）**
+
+MLA 采用完全不同的思路——**低秩联合压缩**：不是减少 KV 头数，而是将所有头的 KV 联合压缩到一个低维潜在向量中。
+
+核心公式：
+
+```
+# 标准 MHA（每个头独立存储 KV）
+K_i = W_K_i · h,  V_i = W_V_i · h    →  存储: n_heads × d_head × 2
+
+# MLA 压缩
+c = W_down · h                        →  存储: d_c（远小于 n_heads × d_head × 2）
+K_i = W_UK_i · c,  V_i = W_UV_i · c   →  推理时从 c 恢复
+
+# 关键优化：吸收 W_UK 到注意力计算中
+# Q_i · K_i^T = Q_i · (W_UK_i · c)^T = (Q_i · W_UK_i^T) · c^T = Q'_i · c^T
+# 无需显式恢复 K/V，直接用 c 计算注意力
+```
+
+MLA 的精妙之处：将上投影矩阵 W_UK 和 W_UV "吸收"到 Q 的投影和输出投影中，推理时**只需缓存低维的 c 向量**，不需要显式解压回完整的 KV。DeepSeek-V2 中 d_c=512 而 n_heads × d_head = 16384，压缩比高达 32 倍。
+
+**KV Cache 内存对比**（假设 d_model=8192，n_heads=64，d_head=128）：
+
+| 方案 | 每 token KV Cache 大小 | 相对 MHA |
+|------|----------------------|---------|
+| MHA | 64 × 128 × 2 = 16384 | 1.0× |
+| GQA（8 组） | 8 × 128 × 2 = 2048 | 0.125× |
+| MQA | 1 × 128 × 2 = 256 | 0.016× |
+| MLA（d_c=512） | 512 | 0.031× |
+
+MLA 在压缩比上接近 MQA，但质量远优于 MQA（因为低秩压缩保留了头间差异的主要信息），甚至在某些基准上超过 GQA。
+
+**关键知识点**
+
+- MQA/GQA 通过减少 KV 头数来降低 Cache：MQA 最激进（1头），GQA 折中（分组）
+- MLA 通过低秩联合压缩所有头的 KV 到潜在向量 c，压缩比接近 MQA 但质量更好
+- MLA 的核心技巧：将解压矩阵吸收到 QKV 投影中，推理时直接用 c 计算，无显式解压
+- GQA 是当前工业界标配（Llama/Qwen），MLA 是 DeepSeek 的创新方案
+
+**追问链**
+
+1. **MLA 的吸收技巧为什么能工作？** 因为注意力计算 QKᵀ 是双线性的，W_UK 可被合并到 Q 的投影矩阵中：(Q·W_Q) · (c·W_UK)ᵀ = Q·(W_Q · W_UKᵀ)·cᵀ = Q'·cᵀ，只需预计算 W_Q · W_UKᵀ。
+2. **MLA 增加了训练成本吗？** 训练时需要完整的 KV 用于反向传播，但前向传播中 c 的计算是额外开销。总体训练成本增加约 5-10%，但推理时 KV Cache 大幅缩减。
+3. **GQA 的头数怎么选？** 经验值：Llama-2-70B 用 8 组（64/8），Llama-3-8B 用 8 组（32/4）。通常 KV 头数为 Q 头数的 1/4~1/8，在质量和内存之间取平衡。
+
+**延伸阅读**
+
+- DeepSeek-AI, "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model" (2024) — https://arxiv.org/abs/2405.04434
+- Ainslie et al., "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints" (2023) — https://arxiv.org/abs/2305.13245
+- Shazeer, "Fast Transformer Decoding: One Write-Head is All You Need" (MQA, 2019) — https://arxiv.org/abs/1911.02150
+
+</details>
+
+---
+
+### Q33：Scaling Laws 的实践意义：Chinchilla-optimal 训练与 compute-optimal 预算分配？
+
+<details>
+<summary>参考答案</summary>
+
+**Scaling Laws 的基本形式**：LLM 的测试损失 L 可以用模型参数量 N、训练数据量 D、计算量 C 的幂律函数预测：
+
+```
+L(N) ≈ A / N^α        （固定充足数据）
+L(D) ≈ B / D^β        （固定模型大小）
+L(C) ≈ C_0 / C^γ      （最优分配 N 和 D）
+```
+
+**Kaplan Scaling Law（OpenAI, 2020）**
+
+Kaplan 等人首次系统研究了 N、D、C 与损失的幂律关系，得出一个关键结论：**在固定计算预算下，应优先增大模型参数量 N，数据量 D 的增长可以较慢**。具体建议：当计算量增加 10×，N 应增大 5.5×，D 只需增大 1.8×。
+
+这一结论直接影响了 GPT-3（175B 参数，仅用 300B tokens 训练）的设计决策：巨大模型 + 相对少的数据。
+
+**Chinchilla Scaling Law（Hoffmann et al., 2022）**
+
+DeepMind 的 Chinchilla 论文挑战了 Kaplan 的结论，通过更大范围的实验发现：**最优的 N 和 D 应以大致相同的速率增长**。即 compute-optimal 训练应满足：
+
+```
+D_optimal ≈ 20 × N
+```
+
+70B 参数模型应使用约 1.4T tokens 训练。Chinchilla（70B, 1.4T tokens）在相同计算预算下击败了 Gopher（280B, 300B tokens），证明 Kaplan 时代的大模型训练严重数据不足（under-trained）。
+
+**实践影响**：
+
+| 决策 | Kaplan 时代 | Chinchilla 时代 | 当前实践 |
+|------|-----------|---------------|---------|
+| 模型大小 vs 数据量 | 优先加大模型 | N 和 D 同步增长 | 数据量远超 Chinchilla 建议 |
+| GPT-3 | 175B, 300B tokens | — | — |
+| Chinchilla | — | 70B, 1.4T tokens | — |
+| Llama-3 | — | — | 8B, 15T tokens（≈1875×N） |
+
+**超越 Chinchilla-optimal 的趋势**：实践中发现推理成本（inference cost）往往远超训练成本。一个更小但训练更充分的模型（over-trained）在部署时节省更多。Llama-3-8B 使用 15T tokens 训练（远超 Chinchilla 建议的 160B tokens），因为训练多花的计算可以被部署时的推理成本节省所抵消。这形成了新的 **inference-optimal scaling**。
+
+**Compute-Optimal 预算分配示例**：
+
+假设有 10²⁴ FLOPs 的训练预算：
+- Kaplan 建议：~300B 参数，~500B tokens
+- Chinchilla 建议：~67B 参数，~1.34T tokens
+- Inference-optimal：~10B 参数，~10T tokens（如果推理量大）
+
+**涌现能力（Emergent Abilities）的争议**：
+
+Wei et al. (2022) 发现某些能力（如 Chain-of-Thought 推理、多步算术）在模型规模达到某个阈值后突然出现。但 Schaeffer et al. (2023) 反驳称"涌现"可能是评估指标的假象——使用连续指标（如 Brier Score）而非离散指标（如 Exact Match）时，能力增长是平滑的。这场争论的实践意义：不应盲目期待"只要模型够大就会涌现新能力"，而需要更细致的 scaling 实验。
+
+**关键知识点**
+
+- Kaplan 建议优先增大 N，Chinchilla 纠正为 N 和 D 应同步增长（D ≈ 20N）
+- 当前实践已超越 Chinchilla-optimal，向 inference-optimal 演进（小模型 + 大数据）
+- Scaling Laws 的核心价值：用小实验预测大模型性能，指导计算预算分配
+- 涌现能力是否"真实"仍有争议，影响 scaling 投资决策
+
+**延伸阅读**
+
+- Kaplan et al., "Scaling Laws for Neural Language Models" (2020) — https://arxiv.org/abs/2001.08361
+- Hoffmann et al., "Training Compute-Optimal Large Language Models" (Chinchilla, 2022) — https://arxiv.org/abs/2203.15556
+- Schaeffer et al., "Are Emergent Abilities of Large Language Models a Mirage?" (2023) — https://arxiv.org/abs/2304.15004
+
+</details>
+
+---
+
+### Q34：场景题：设计一个多模态理解系统（图文+视频），需考虑哪些架构决策？
+
+<details>
+<summary>参考答案</summary>
+
+**需求分析**：构建一个能同时理解图像、文本和视频的多模态大模型系统，支持图文问答（VQA）、视频描述（Video Captioning）、跨模态检索等任务。
+
+**架构决策一：视觉编码器选型**
+
+| 选项 | 优势 | 劣势 | 代表 |
+|------|------|------|------|
+| CLIP ViT-L/14 | 图文对齐好，生态成熟 | 分辨率受限（224/336） | LLaVA |
+| SigLIP SO400M | 比 CLIP 更好的分类性能 | 多语言支持弱 | PaliGemma |
+| InternViT-6B | 高分辨率、强视觉理解 | 参数大，推理慢 | InternVL2 |
+
+对于需要细粒度视觉理解（如 OCR、图表解读）的场景，应选择支持高分辨率的编码器（如 InternViT 的动态分辨率或 LLaVA-NeXT 的 AnyRes 策略）。
+
+**架构决策二：视频处理策略**
+
+视频的核心挑战是**时序信息的高效表示**——1 分钟 30fps 视频有 1800 帧，每帧 196 个 patch token，总计 352800 个 token，远超任何 LLM 的上下文窗口。
+
+解决方案：
+
+1. **均匀采样（Uniform Sampling）**：等间隔采样 N 帧（如每秒 1 帧），简单但可能错过关键变化
+2. **关键帧提取（Keyframe Extraction）**：基于帧差/语义变化提取信息密度高的帧，减少冗余
+3. **时间注意力（Temporal Attention）**：在 ViT 输出上加时间维度的 attention 层（如 TimeSformer），建模帧间关系
+4. **时空压缩**：对每帧的 patch tokens 做 spatial pooling（如 2×2 → 1），再做 temporal pooling，将 token 数压缩到可控范围
+
+```python
+# 视频帧采样与 Token 压缩示例
+def process_video(video_frames, max_frames=64, spatial_pool=2):
+    """
+    video_frames: (T, C, H, W) 原始视频帧
+    返回: (N_tokens, d_model) 压缩后的视觉 tokens
+    """
+    # 1. 均匀采样到 max_frames 帧
+    T = video_frames.shape[0]
+    indices = torch.linspace(0, T - 1, max_frames).long()
+    sampled = video_frames[indices]           # (64, C, H, W)
+
+    # 2. 视觉编码
+    patch_tokens = vit_encoder(sampled)       # (64, 196, d_v)
+
+    # 3. 空间压缩: 2×2 pooling → 每帧 49 个 token
+    B, N, D = patch_tokens.shape
+    h = w = int(N ** 0.5)                     # 14
+    tokens_2d = patch_tokens.view(B, h, w, D)
+    pooled = F.avg_pool2d(
+        tokens_2d.permute(0, 3, 1, 2),
+        kernel_size=spatial_pool
+    )                                          # (64, d_v, 7, 7)
+    spatial_compressed = pooled.flatten(2).permute(0, 2, 1)  # (64, 49, d_v)
+
+    # 4. 投影到 LLM 空间
+    projected = mlp_projector(spatial_compressed)  # (64, 49, d_llm)
+
+    # 5. 展平为序列: 64 × 49 = 3136 个 token
+    return projected.reshape(-1, projected.shape[-1])
+```
+
+**架构决策三：模态融合方式**
+
+结合 Q31 的分析，推荐方案：
+- **图像**：Linear Projection（简单高效，LLaVA 风格）
+- **视频**：Perceiver Resampler 或 Q-Former 压缩后拼接（控制 token 数量）
+- 如果需要同时处理多图 + 视频，考虑 Cross-Attention 方案避免上下文爆炸
+
+**架构决策四：LLM 骨干选型**
+
+| 考量 | 建议 |
+|------|------|
+| 开源可控 | Qwen-2.5、Llama-3.1、InternLM2 |
+| 长上下文 | 支持 128K+ 的模型（视频场景必需） |
+| 推理能力 | 如需复杂视觉推理，考虑 R1 蒸馏模型 |
+
+**架构决策五：训练策略**
+
+三阶段训练：
+1. **预训练阶段**：冻结 ViT 和 LLM，只训练 projector（图文对齐）
+2. **指令微调阶段**：解冻 LLM，用多模态指令数据训练（图文+视频混合）
+3. **偏好对齐阶段**：用 DPO/RLHF 减少幻觉（如减少描述不存在的物体）
+
+**架构决策六：评估基准**
+
+| 任务类型 | 基准 | 说明 |
+|---------|------|------|
+| 图文理解 | MMBench、MME、SEED-Bench | 综合多模态理解 |
+| OCR/文档 | DocVQA、ChartQA | 细粒度视觉 |
+| 视频理解 | Video-MME、MVBench | 视频时序理解 |
+| 幻觉评估 | POPE、HallusionBench | 忠实性评估 |
+
+**关键知识点**
+
+- 视频处理的核心是 token 数量控制：采样 + 空间压缩 + 时间压缩
+- 视觉编码器选型需匹配任务精度需求（通用理解 vs OCR/细粒度）
+- 三阶段训练（对齐→指令→偏好）是多模态 LLM 的标准训练范式
+- 融合策略无绝对最优，需根据模态数量和延迟要求权衡
+
+**追问链**
+
+1. **如何处理超长视频（1小时+）？** 分段处理 + 层级摘要：先对每个片段（如 1 分钟）生成摘要 token，再将摘要 token 送入 LLM 做全局理解。或使用 Memory Bank 机制缓存历史帧信息。
+2. **多模态幻觉如何缓解？** 数据层面：高质量负样本训练；解码层面：Visual Contrastive Decoding（VCD）；评估层面：POPE 协议检测物体幻觉率。
+3. **音频模态如何加入？** 使用 Whisper 编码器提取音频特征，与视觉 token 一起做 early fusion 或 late fusion。Qwen-Audio 证明了音频-文本-视觉三模态融合的可行性。
+
+**延伸阅读**
+
+- Liu et al., "LLaVA-NeXT: Improved Reasoning, OCR, and World Knowledge" (2024) — https://llava-vl.github.io/blog/2024-01-30-llava-next/
+- Lin et al., "Video-LLaVA: Learning United Visual Representation by Alignment Before Projection" (2023) — https://arxiv.org/abs/2311.10122
+- Chen et al., "InternVL: Scaling up Vision Foundation Models and Aligning for Generic Visual-Linguistic Tasks" (2024) — https://arxiv.org/abs/2312.14238
+
+</details>
+
+---
+
+### Q35：场景题：100B 参数模型的低成本部署方案设计？
+
+<details>
+<summary>参考答案</summary>
+
+**需求场景**：将一个 100B 参数的 LLM 部署上线，要求在控制成本的前提下满足生产级 SLO（如 TTFT < 2s，TPOT < 50ms，QPS ≥ 10）。
+
+**Step 1：模型显存估算**
+
+```
+BF16 权重: 100B × 2 bytes = 200 GB
+INT4 量化: 100B × 0.5 bytes = 50 GB
+INT4 + 量化元数据: ≈ 55-60 GB
+
+KV Cache（per request, 4K context, GQA-8）:
+  80 layers × 8 KV heads × 128 dim × 2(K+V) × 2 bytes × 4096 tokens ≈ 2.6 GB
+Batch=32 时 KV Cache: ≈ 83 GB
+```
+
+**Step 2：量化方案选择**
+
+| 方案 | 权重大小 | 质量损失 | 速度 | 推荐场景 |
+|------|---------|---------|------|---------|
+| BF16（无量化） | 200 GB | 无 | 基准 | 质量最优先 |
+| GPTQ INT4 | ~55 GB | 轻微（~0.5% MMLU） | 快 | 批量推理 |
+| AWQ INT4 | ~55 GB | 轻微 | 快 | 通用推荐 |
+| GGUF Q4_K_M | ~58 GB | 轻微 | 中 | CPU+GPU 混合 |
+| FP8 | ~100 GB | 极小 | 快（H100） | H100/MI300X |
+
+推荐 **AWQ INT4**：量化后约 55GB，质量损失可控，且被 vLLM/TensorRT-LLM 原生支持。
+
+**Step 3：硬件配置方案**
+
+| 方案 | 硬件 | 模型存储 | KV Cache 余量 | 月成本（云） | 推荐度 |
+|------|------|---------|-------------|------------|-------|
+| A | 2×A100-80GB (TP=2) | 55GB / 160GB | 105GB | ~$15K | ⭐⭐⭐ |
+| B | 4×A100-40GB (TP=4) | 55GB / 160GB | 105GB | ~$14K | ⭐⭐ |
+| C | 8×L40S-48GB (TP=8) | 55GB / 384GB | 329GB | ~$10K | ⭐⭐⭐ |
+| D | 2×H100-80GB (TP=2, FP8) | 100GB / 160GB | 60GB | ~$22K | ⭐⭐ |
+
+分析：
+- **方案 A（2×A100-80GB）**：最简配置，TP=2 通信开销最小，KV Cache 余量充足（可支持 batch=32+），性价比高
+- **方案 C（8×L40S）**：总显存最大但单卡仅 48GB，TP=8 通信开销大；适合 KV Cache 需求极大的长上下文场景
+- **方案 B（4×A100-40GB）**：TP=4 需要 NVLink/NVSwitch，比 TP=2 通信开销增加 ~40%
+
+**Step 4：推理引擎与优化**
+
+```yaml
+# vLLM 部署配置示例
+engine_config:
+  model: "path/to/100B-AWQ-INT4"
+  tensor_parallel_size: 2
+  gpu_memory_utilization: 0.92
+  max_model_len: 8192
+  quantization: "awq"
+
+  # KV Cache 优化
+  enable_prefix_caching: true    # 相同 system prompt 的 KV 复用
+  block_size: 16
+
+  # 调度优化
+  max_num_seqs: 64               # 最大并发序列数
+  max_num_batched_tokens: 8192   # 每步最大 token 数
+
+  # 投机解码（可选）
+  speculative_model: "path/to/7B-draft"
+  num_speculative_tokens: 5
+```
+
+关键优化技术：
+1. **PagedAttention + Prefix Caching**：共享 system prompt 的 KV Cache，减少重复计算（多用户共用相同 system prompt 时效果显著，KV Cache 命中率可达 60-80%）
+2. **Continuous Batching**：动态增删请求，GPU 利用率从 ~30% 提升至 ~80%
+3. **投机解码**：用 7B 草稿模型加速，理论 2-3× 提速
+4. **Chunked Prefill**：将长 prompt 的 prefill 分块，避免阻塞 decode 请求
+
+**Step 5：Prefill-Decode 分离部署**
+
+Prefill（首 token 计算）是 compute-bound，Decode（后续 token 生成）是 memory-bandwidth-bound。两种工作负载特征完全不同：
+
+```
+Prefill 节点: 2×A100-80GB, 高算力利用率
+Decode 节点:  2×A100-80GB, 高内存带宽利用率
+
+Load Balancer → [Prefill Pool] → KV Cache Transfer → [Decode Pool]
+```
+
+DistServe/Splitwise 架构可让每种节点独立扩缩容，混合长短请求时吞吐提升 2-4×。
+
+**Step 6：成本优化策略**
+
+1. **Spot/Preemptible Instances**：AWS Spot p4d 实例比 On-Demand 便宜 60-70%，配合 checkpoint + 快速恢复机制
+2. **时段弹性扩缩**：业务低谷期（凌晨）缩减实例数，用自动扩缩组
+3. **多租户 LoRA**：不同客户/任务用 LoRA 适配器切换，共享基础模型权重，避免重复部署
+4. **KV Cache 量化**：将 KV Cache 从 FP16 量化到 FP8/INT8，内存再减半
+5. **On-prem vs Cloud**：月均 GPU 使用 >60% 时，自建机房 18 个月可收回硬件成本
+
+**部署架构全景**：
+
+```
+用户请求
+    ↓
+[API Gateway + Rate Limiter]
+    ↓
+[Request Router]  ←── 根据请求长度/优先级路由
+    ↓           ↓
+[Prefill Pool] [Decode Pool]    ←── 可独立扩缩容
+    ↓
+[Response Streaming]  ←── SSE/WebSocket 流式返回
+    ↓
+[监控: GPU Util / KV Cache Hit / Queue Depth / TTFT / TPOT]
+```
+
+**关键知识点**
+
+- 100B INT4 量化后约 55GB，2×A100-80GB（TP=2）是性价比最高的部署方案
+- PagedAttention + Prefix Caching + Continuous Batching 是推理优化三件套
+- Prefill-Decode 分离是混合负载下的进阶优化，可提升 2-4× 吞吐
+- 成本控制：Spot 实例、弹性扩缩、KV Cache 量化、多租户 LoRA
+
+**追问链**
+
+1. **如果延迟要求极严（TPOT < 20ms）怎么办？** 减小 batch size（牺牲吞吐换延迟）、使用 FP8 + H100（更高内存带宽）、或用投机解码减少 Target 模型前向次数。
+2. **如何监控和保障 SLO？** 核心指标：P50/P95/P99 的 TTFT 和 TPOT、队列深度、GPU 利用率、KV Cache 命中率。超过阈值时触发限流或扩容。
+3. **自建机房 vs 云的 break-even 点？** 假设 2×A100-80GB 硬件成本 ~$30K，云月租 ~$15K，如果 GPU 利用率 >60%（即月均使用 >18 天），约 2-3 个月自建即可收回。但需考虑运维成本、网络带宽、电力冷却等隐性成本。
+
+**延伸阅读**
+
+- Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention" (vLLM, 2023) — https://arxiv.org/abs/2309.06180
+- Zhong et al., "DistServe: Disaggregating Prefill and Decoding for Goodput-Optimized LLM Serving" (2024) — https://arxiv.org/abs/2401.09670
+- Lin et al., "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration" (2024) — https://arxiv.org/abs/2306.00978
+
+</details>
