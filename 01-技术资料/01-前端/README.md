@@ -16,6 +16,7 @@
 | 04   | [04-浏览器原理与性能优化.md](./04-浏览器原理与性能优化.md) | 多进程架构、渲染流水线（DOM→CSSOM→Layout→Paint→Composite）、V8 引擎执行管道与 JIT、内存管理与 GC、Core Web Vitals、性能优化实战 | [浏览器与性能面试题](../../02-面试指南/01-前端面试/04-浏览器与性能面试题.md) |
 | 05   | [05-TypeScript高级编程.md](./05-TypeScript高级编程.md)     | 类型系统原理、高级类型体操、泛型深度解析、工具类型源码、tsconfig 配置、TS 5.x 新特性、设计模式                                  | [TypeScript面试题](../../02-面试指南/01-前端面试/05-TypeScript面试题.md)     |
 | 06   | [06-Next.js与服务端渲染.md](./06-Next.js与服务端渲染.md)   | SSR/SSG/ISR 渲染策略、App Router、React Server Components、Server Actions、缓存机制、Next.js 15                                 | [Next.js面试题](../../02-面试指南/01-前端面试/06-Next.js面试题.md)           |
+| 07   | [07-状态管理与数据流.md](./07-状态管理与数据流.md)         | Redux/Redux Toolkit（RTK Query）、Zustand、Jotai、Recoil、TanStack Query、MobX、Context API 优化、XState 状态机                | [状态管理面试题](../../02-面试指南/01-前端面试/07-状态管理面试题.md)         |
 
 ## 主要内容方向
 
