@@ -24,6 +24,8 @@
 | 12 | [12-PEFT面试题.md](./12-PEFT面试题.md) | LoRA/QLoRA/Adapter/Prefix Tuning/PEFT 生态 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/12-参数高效微调PEFT.md) |
 | 13 | [13-TRL面试题.md](./13-TRL面试题.md) | RLHF/PPO/DPO/GRPO/SFT/奖励模型/TRL | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/13-对齐训练技术TRL.md) |
 | 14 | [14-深度学习框架面试题.md](./14-深度学习框架面试题.md) | 计算图/自动微分/TF vs PyTorch/分布式训练 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/14-深度学习框架与计算图.md) |
+| 15 | [15-LLM推理引擎面试题.md](./15-LLM推理引擎面试题.md) | PagedAttention/Continuous Batching/推测解码/量化/分布式推理/vLLM/SGLang | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/15-LLM推理引擎架构.md) |
+| 16 | [16-LLM网关与模型管理面试题.md](./16-LLM网关与模型管理面试题.md) | LLM网关架构/多模型路由/成本管理/可观测性/评估体系/MCP·A2A协议互操作 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/16-LLM网关与模型管理.md) |
 
 ## 高频考点速查
 

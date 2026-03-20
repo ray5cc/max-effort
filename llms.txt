@@ -13,6 +13,7 @@
 - [.agent-docs/operations.md](./.agent-docs/operations.md): 详细操作规范（命名、日志、目录更新）
 - [CHANGELOG/2026-03.md](./CHANGELOG/2026-03.md): 2026年3月操作记录
 - [CHANGELOG/2026-03-part2.md](./CHANGELOG/2026-03-part2.md): 2026年3月操作记录（续）
+- [CHANGELOG/2026-03-part3.md](./CHANGELOG/2026-03-part3.md): 2026年3月操作记录（续 Part 3）
 
 ## 01-技术资料
 
@@ -63,11 +64,13 @@
 - [07-前端渲染与流式UI](./01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md): Fetch Streaming/React 18并发渲染/Next.js App Router/Vercel AI SDK/rAF批量Markdown渲染/Chat状态机/Zustand
 - [08-LLM微调技术](./01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md): LoRA/QLoRA/RLHF/DPO/GRPO 微调全链路技术资料
 - [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作；通信协议与消息标准化；生产级可靠性（故障隔离/超时降级/幂等性/监控告警/限流背压）；成本控制（Token预算/模型分层/缓存复用/动态伸缩）；五种编排模式对比（层级/对等/市场/流水线/辩论）；常见陷阱与最佳实践
-- [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/browser-use 架构解析、沙箱安全机制与 Prompt Injection 防护
+- [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/Claude Code/OpenHands/browser-use 架构解析、沙箱安全机制、CLAUDE.md分层上下文、Sub-agent分发、Agent SDK、MCP集成、Headless CI/CD模式、编码Agent通用四层架构、生产级工程挑战（成本控制/并发/评估/可靠性）
 - [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理
 - [12-参数高效微调PEFT](./01-技术资料/07-AI-Agent全栈开发/12-参数高效微调PEFT.md): LoRA数学原理/QLoRA/Adapter Tuning/Prefix Tuning/HuggingFace PEFT生态
 - [13-对齐训练技术TRL](./01-技术资料/07-AI-Agent全栈开发/13-对齐训练技术TRL.md): RLHF/PPO/DPO/GRPO/SFT/奖励模型/TRL参考实现
 - [14-深度学习框架与计算图](./01-技术资料/07-AI-Agent全栈开发/14-深度学习框架与计算图.md): 计算图/自动微分/Eager vs 图执行/TensorFlow工程实践(tf.data/分布式/TF Serving)/PyTorch深度解析(Autograd/torch.compile/DDP/FSDP)/TF vs PyTorch选型
+- [15-LLM推理引擎架构](./01-技术资料/07-AI-Agent全栈开发/15-LLM推理引擎架构.md): PagedAttention(vLLM虚拟内存分页)/RadixAttention(SGLang前缀缓存)/Continuous Batching与Chunked Prefill/量化技术(GPTQ/AWQ/FP8/GGUF K-Quant混合精度)/推测解码(Draft-Verify/Self-Speculative/Medusa/N-gram)/分布式推理(TP/PP/DP/EP)/vLLM V1多进程架构(ZMQ IPC)/SGLang零开销CPU调度器/Prefill-Decode分离/结构化输出(Compressed FSM/GBNF Grammar)/TensorRT-LLM FP8+Sparse Attention/llama.cpp GGUF CPU+GPU混合推理/Ollama模型管理/GB200 NVL72大规模EP部署/生产部署实践与成本优化
+- [16-LLM网关与模型管理](./01-技术资料/07-AI-Agent全栈开发/16-LLM网关与模型管理.md): Proxy Gateway架构(请求生命周期/8ms P95)/统一API适配层(OpenAI兼容格式/100+提供商)/SDK vs Proxy模式对比/多模型路由策略(延迟优先/成本优先/负载均衡/智能路由)/Fallback与重试(指数退避+Jitter/Circuit Breaker)/Virtual Keys多租户管理(速率限制/预算上限/模型访问控制)/成本追踪与分摊/可观测性三大支柱(Tracing/Metrics/Logging)/Langfuse架构(ClickHouse/Eval Pipeline/Dataset Management)/Prompt版本控制与A/B测试/LLM-as-Judge评估/Golden Dataset回归测试/MCP协议桥接/A2A Agent互操作/Responses API vs Chat Completions/安全合规(PII过滤/Guardrails/审计日志)/成本优化(Prompt Caching 90%降本/模型级联/Batch API 50%折扣/Semantic Caching)/生产部署(Docker/K8s/多区域高可用)/企业级网关实战案例
 - [08-编码题](./01-技术资料/08-编码题/README.md): 手写代码方法论与解题策略
 - [编码技巧与解题策略](./01-技术资料/08-编码题/01-编码技巧与解题策略.md): 四步解题法/常见代码模式(双指针/哈希表/栈/递归/动态规划/二分/位运算)/代码规范/时间管理/调试技巧/实战案例
 
@@ -124,6 +127,8 @@
 - [12-PEFT面试题](./02-面试指南/07-AI-Agent全栈开发面试/12-PEFT面试题.md): LoRA/QLoRA/Adapter/Prefix Tuning/PEFT工程实践 26道分层面试题
 - [13-TRL面试题](./02-面试指南/07-AI-Agent全栈开发面试/13-TRL面试题.md): RLHF/DPO/PPO/GRPO/KL散度/对齐工程实践 26道分层面试题
 - [14-深度学习框架面试题](./02-面试指南/07-AI-Agent全栈开发面试/14-深度学习框架面试题.md): 计算图/自动微分/TF vs PyTorch/分布式训练 30+道面试题
+- [15-LLM推理引擎面试题](./02-面试指南/07-AI-Agent全栈开发面试/15-LLM推理引擎面试题.md): PagedAttention/Continuous Batching/推测解码/量化/分布式推理/PD分离/vLLM/SGLang/TensorRT-LLM/llama.cpp 34道分层面试题
+- [16-LLM网关与模型管理面试题](./02-面试指南/07-AI-Agent全栈开发面试/16-LLM网关与模型管理面试题.md): LLM网关架构/多模型路由/成本管理/可观测性/评估体系/MCP·A2A协议互操作/LiteLLM/Langfuse/Guardrails/语义缓存/模型级联/CI评估集成 27道分层面试题
 - [08-编码题面试](./02-面试指南/08-编码题面试/README.md): 各领域手写代码题目集合
 - [前端编码题](./02-面试指南/08-编码题面试/01-前端编码题.md): JavaScript/DOM操作/异步编程/设计模式 16+题(map/debounce/throttle/deepClone/Promise.all/EventEmitter/curry/instanceof/new/async-await/虚拟DOM diff/LazyMan/懒加载/无限滚动/拖拽排序)
 - [后端编码题](./02-面试指南/08-编码题面试/02-后端编码题.md): 多线程/网络编程/设计模式/并发控制 20+题(单例/线程安全计数器/LRU/生产者消费者/HTTP服务器/线程池/Snowflake ID/限流器/分布式锁/对象池/秒杀库存/分布式事务)

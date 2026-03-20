@@ -19,11 +19,13 @@
 | 07 | [07-前端渲染与流式UI.md](./07-前端渲染与流式UI.md) | Fetch Streaming/React并发渲染/Vercel AI SDK/rAF批量渲染/Chat状态机/Zustand | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/07-前端渲染面试题.md) |
 | 08 | [08-LLM微调技术.md](./08-LLM微调技术.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md) |
 | 09 | [09-多Agent系统.md](./09-多Agent系统.md) | AutoGen/GroupChat/Hub-Spoke/P2P/分层架构/任务调度 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md) |
-| 10 | [10-AI-CLI与代码Agent.md](./10-AI-CLI与代码Agent.md) | CLI Agent 架构/沙箱技术/Prompt Injection/代码执行反馈 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md) |
+| 10 | [10-AI-CLI与代码Agent.md](./10-AI-CLI与代码Agent.md) | CLI Agent 架构/沙箱技术/Prompt Injection/代码执行反馈/Claude Code/OpenHands/通用架构模式/生产级工程挑战 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md) |
 | 11 | [11-Transformers与模型架构.md](./11-Transformers与模型架构.md) | RMSNorm/RoPE/GQA/KV Cache/FlashAttention/量化/投机解码 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/11-Transformers与模型架构面试题.md) |
 | 12 | [12-参数高效微调PEFT.md](./12-参数高效微调PEFT.md) | LoRA 数学原理/QLoRA/Adapter/Prefix Tuning/PEFT 生态 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/12-PEFT面试题.md) |
 | 13 | [13-对齐训练技术TRL.md](./13-对齐训练技术TRL.md) | RLHF/PPO/DPO/GRPO/SFT/奖励模型/TRL 参考实现 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/13-TRL面试题.md) |
 | 14 | [14-深度学习框架与计算图.md](./14-深度学习框架与计算图.md) | 计算图/自动微分/Eager vs 图执行/TensorFlow工程实践/PyTorch深度解析(Autograd/torch.compile/DDP/FSDP)/TF vs PyTorch选型 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/14-深度学习框架面试题.md) |
+| 15 | [15-LLM推理引擎架构.md](./15-LLM推理引擎架构.md) | PagedAttention/RadixAttention/Continuous Batching/Chunked Prefill/量化技术(GPTQ/AWQ/FP8/GGUF)/推测解码(Draft-Verify/Medusa)/分布式推理(TP/PP/DP/EP)/Prefill-Decode分离/结构化输出(FSM/Grammar)/vLLM V1多进程架构/SGLang零开销调度/TensorRT-LLM FP8优化/llama.cpp GGUF混合推理/Ollama模型管理/GB200 NVL72大规模部署 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/15-LLM推理引擎面试题.md) |
+| 16 | [16-LLM网关与模型管理.md](./16-LLM网关与模型管理.md) | Proxy Gateway架构/统一API适配(100+提供商)/多模型路由(延迟/成本/智能路由)/Fallback与Circuit Breaker/Virtual Keys多租户/Langfuse可观测性/Prompt版本控制与A/B测试/LLM评估体系/MCP与A2A协议/安全合规/成本优化(Prompt Caching/模型级联/Batch API/Semantic Caching)/K8s生产部署 | [面试题](../../02-面试指南/07-AI-Agent全栈开发面试/16-LLM网关与模型管理面试题.md) |
 
 ## 说明
 
