@@ -39,7 +39,7 @@
 - [PostgreSQL 核心技术](./01-技术资料/03-数据库/03-PostgreSQL核心技术.md): 多进程架构 / 堆表页面布局 / B-tree 索引(High Key/HOT) / MVCC 快照与可见性 / WAL 与流式复制 / 火山模型执行器 / VACUUM 与 XID 冻结（postgres/postgres 源码）
 - [MySQL/InnoDB 核心技术](./01-技术资料/03-数据库/04-MySQL-InnoDB核心技术.md): Buffer Pool LRU 分区 / B+树聚簇索引 / MVCC(Read View/Undo 版本链) / Next-Key Lock / Redo Log / Doublewrite Buffer / Change Buffer（MariaDB/server storage/innobase/ 源码）
 - [MongoDB 核心技术](./01-技术资料/03-数据库/05-MongoDB核心技术.md): 文档模型与 BSON / WiredTiger 存储引擎 / 查询规划器 / 复制集与 oplog / 分片与 Chunk Balancer / Read/Write Concern / 事务 / Embedding vs Referencing / 聚合管道 / 索引设计 / 性能调优
-- [Elasticsearch 核心技术](./01-技术资料/03-数据库/06-Elasticsearch核心技术.md): 倒排索引原理 / Analyzer与分词(IK中文分词) / Mapping映射设计 / Query DSL / Aggregation聚合框架 / 分布式架构 / 副本与故障恢复 / 性能优化 / Dense Vector与kNN搜索 / Hybrid Search / RAG系统集成 / ELK Stack
+- [Elasticsearch 全文搜索](./01-技术资料/03-数据库/06-Elasticsearch全文搜索.md): 倒排索引原理 / Analyzer与分词(IK中文分词) / Mapping映射设计 / Query DSL / Aggregation聚合框架 / 分布式架构 / 副本与故障恢复 / 性能优化 / Dense Vector与kNN搜索 / Hybrid Search / RAG系统集成 / ELK Stack
 - [04-算法与数据结构](./01-技术资料/04-算法与数据结构/README.md): 算法与数据结构文档目录
 - [排序与搜索算法](./01-技术资料/04-算法与数据结构/01-排序与搜索算法.md): Big O/冒泡/选择/插入排序/归并/快排/堆排序/二分搜索变体/DFS/BFS/TimSort
 - [动态规划](./01-技术资料/04-算法与数据结构/02-动态规划.md): DP五步法/背包问题/LCS/编辑距离/区间DP/状态压缩/空间优化
@@ -141,4 +141,4 @@
 ## Optional
 
 - [CHANGELOG/](./CHANGELOG/): 操作记录目录，按月份分文件
-- [docs/](./docs/): 详细规范文档目录
+- [.agent-docs/](./.agent-docs/): 详细规范文档目录
