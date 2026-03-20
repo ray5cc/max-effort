@@ -60,12 +60,12 @@
 - [03-工具调用与Function-Calling](./01-技术资料/07-AI-Agent全栈开发/03-工具调用与Function-Calling.md): OpenAI/Anthropic/Google三大Function Calling协议对比/LangChain BaseTool源码/StructuredTool/@tool装饰器/MCP协议JSON-RPC传输层/LangGraph工具编排/AgentExecutor执行循环/Computer Use自主操作/屏幕理解与坐标定位/浏览器自动化Agent/视觉工具集成/OCR文档理解/Tool RAG/语义缓存/成本感知路由
 - [04-记忆系统与RAG](./01-技术资料/07-AI-Agent全栈开发/04-记忆系统与RAG.md): RAG全链路/向量数据库/HNSW/语义分块/HyDE/Self-RAG/RAGAS评估/Graph RAG/混合搜索(BM25+向量RRF融合)/Neo4j知识图谱/Microsoft GraphRAG/Cross-Encoder与ColBERT重排序/Query Rewriting与Routing/Contextual Retrieval/多路召回架构/生产级最佳实践
 - [05-Agent框架与编排](./01-技术资料/07-AI-Agent全栈开发/05-Agent框架与编排.md): ReAct/LangGraph StateGraph/AutoGen ConversableAgent/Dify工作流/Plan-and-Solve/Supervisor模式/A2A通信协议/Agent评估体系/可观测性/Human-in-the-Loop/可靠性工程
-- [06-后端服务与API设计](./01-技术资料/07-AI-Agent全栈开发/06-后端服务与API设计.md): SSE流式API/LiteLLM网关/Redis会话管理/Langfuse可观测性/tiktoken成本控制/Circuit Breaker/K8s部署
-- [07-前端渲染与流式UI](./01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md): Fetch Streaming/React 18并发渲染/Next.js App Router/Vercel AI SDK/rAF批量Markdown渲染/Chat状态机/Zustand
-- [08-LLM微调技术](./01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md): LoRA/QLoRA/RLHF/DPO/GRPO 微调全链路技术资料
+- [06-后端服务与API设计](./01-技术资料/07-AI-Agent全栈开发/06-后端服务与API设计.md): SSE流式API/LiteLLM网关/Redis会话管理/Langfuse可观测性/tiktoken成本控制/Circuit Breaker/K8s部署/FastAPI统治地位(vLLM/SGLang/Open WebUI/Dify/LiteLLM架构分析)/流式深度实现(SSE错误处理/背压控制/WebSocket双向/AG-UI协议)/认证授权(Virtual Keys/多租户隔离/RBAC/SSO)/七层中间件架构(LiteLLM管线/Dify工作流引擎)/数据库设计(对话存储/树形分支/游标分页/向量存储统一接口/混合会话管理)/生产部署进阶(深度健康检查/优雅关闭/有状态扩展/OpenTelemetry追踪/Langfuse集成/成本看板)/8条陷阱最佳实践
+- [07-前端渲染与流式UI](./01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md): Fetch Streaming/React 18并发渲染/Next.js App Router/Vercel AI SDK(useAgent/Agent循环/Generative UI/结构化输出)/rAF批量Markdown渲染/Chat状态机/Zustand/AG-UI协议(事件驱动/状态同步/HITL/CopilotKit发起/Google ADK+AWS Strands+LangGraph等采用)/CopilotKit(Agent-Native应用/共享状态/三种Generative UI模式/HITL确认)/Ant Design X(RICH范式/Bubble/ThoughtChain/流式Markdown)/LobeChat架构(Agent Builder/Agent Groups/MCP Marketplace/Zustand)/Open WebUI架构(SvelteKit+FastAPI/Artifact Storage/BYOF/9向量库/RBAC+LDAP)/常见陷阱与最佳实践
+- [08-LLM微调技术](./01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md): LoRA/QLoRA/RLHF/DPO/GRPO/KTO微调全链路/Unsloth极速训练/Axolotl YAML管线/LLaMA-Factory一站式平台/数据策展工程(MinHash去重/LLM-as-Judge质量过滤/合成数据Magpie)/强化学习深度解析(PPO四模型/DPO变体/GRPO组内优势)/端到端实战(Qwen2.5电商客服Agent从训练到vLLM部署)/评估体系(MMLU/MT-Bench/AlpacaEval/领域专项/A-B测试)/10条常见陷阱速查表
 - [09-多Agent系统](./01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md): AutoGen/GroupChat/Dify/Hub-Spoke/P2P 多 Agent 协作；通信协议与消息标准化；生产级可靠性（故障隔离/超时降级/幂等性/监控告警/限流背压）；成本控制（Token预算/模型分层/缓存复用/动态伸缩）；五种编排模式对比（层级/对等/市场/流水线/辩论）；常见陷阱与最佳实践
-- [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/Claude Code/OpenHands/browser-use 架构解析、沙箱安全机制、CLAUDE.md分层上下文、Sub-agent分发、Agent SDK、MCP集成、Headless CI/CD模式、编码Agent通用四层架构、生产级工程挑战（成本控制/并发/评估/可靠性）
-- [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理
+- [10-AI-CLI与代码Agent](./01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md): Gemini CLI/Codex CLI/Claude Code/OpenHands/browser-use 架构解析、沙箱安全机制、CLAUDE.md分层上下文、Sub-agent分发、Agent SDK、MCP集成、Headless CI/CD模式、编码Agent通用四层架构、生产级工程挑战（成本控制/并发/评估/可靠性）、Claude Code工程最佳实践（上下文管理/验证驱动开发/四阶段工作流/CLAUDE.md写作原则/记忆系统五级层级/Skills系统/Subagent配置/Hooks确定性执行/GitHub Actions深度集成）、Codex Harness Engineering规范（AGENTS.md体系/模块500LoC约束/快照测试insta/API命名约定/分层CI流程）、AI代码Agent工程范式总结（三大工具对比矩阵/五大共性模式）
+- [11-Transformers与模型架构](./01-技术资料/07-AI-Agent全栈开发/11-Transformers与模型架构.md): LLaMA 架构/RMSNorm/RoPE/GQA/SwiGLU/KV Cache/FlashAttention/量化/投机解码/连续批处理/2026开源模型全景图(14大模型家族对比)/DeepSeek-V3 MLA低秩KV压缩/Qwen2.5-Qwen3思考模式/Gemma知识蒸馏/Phi数据工程/GLM填空架构/InternLM工具调用与1M上下文/Command R+ Grounded Generation/代码模型对比(StarCoder2/Codestral/DeepSeek-Coder)/模型选型指南(场景-资源决策树)/评估基准对比(MMLU/HumanEval/GSM8K/MATH)/模型选型7大常见陷阱
 - [12-参数高效微调PEFT](./01-技术资料/07-AI-Agent全栈开发/12-参数高效微调PEFT.md): LoRA数学原理/QLoRA/Adapter Tuning/Prefix Tuning/HuggingFace PEFT生态
 - [13-对齐训练技术TRL](./01-技术资料/07-AI-Agent全栈开发/13-对齐训练技术TRL.md): RLHF/PPO/DPO/GRPO/SFT/奖励模型/TRL参考实现
 - [14-深度学习框架与计算图](./01-技术资料/07-AI-Agent全栈开发/14-深度学习框架与计算图.md): 计算图/自动微分/Eager vs 图执行/TensorFlow工程实践(tf.data/分布式/TF Serving)/PyTorch深度解析(Autograd/torch.compile/DDP/FSDP)/TF vs PyTorch选型
@@ -119,7 +119,7 @@
 - [04-记忆系统面试题](./02-面试指南/07-AI-Agent全栈开发面试/04-记忆系统面试题.md): RAG全链路/向量数据库/语义分块/混合检索/RAGAS评估/Graph RAG 25道分层面试题
 - [05-Agent框架面试题](./02-面试指南/07-AI-Agent全栈开发面试/05-Agent框架面试题.md): ReAct/LangGraph/AutoGen/Dify/多Agent编排模式/生产工程化 25道分层面试题
 - [06-后端服务面试题](./02-面试指南/07-AI-Agent全栈开发面试/06-后端服务面试题.md): 流式API/LLM网关/会话管理/Langfuse可观测性/生产部署 25道分层面试题
-- [07-前端渲染面试题](./02-面试指南/07-AI-Agent全栈开发面试/07-前端渲染面试题.md): SSE/WebSocket流式传输/React并发渲染/Vercel AI SDK/Markdown实时渲染/Chat UI 25道分层面试题
+- [07-前端渲染面试题](./02-面试指南/07-AI-Agent全栈开发面试/07-前端渲染面试题.md): SSE/WebSocket流式传输/React并发渲染/Vercel AI SDK/Markdown实时渲染/Chat UI/AG-UI协议/CopilotKit Generative UI/Ant Design X RICH范式/LobeChat架构/Open WebUI Artifact/Human-in-the-Loop 44道分层面试题
 - [08-LLM微调技术面试题](./02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md): LoRA/QLoRA/RLHF/DPO/GRPO 25道分层面试题
 - [09-多Agent系统面试题](./02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md): AutoGen/GroupChat/多Agent架构/任务调度 28道分层面试题
 - [10-AI-CLI与代码Agent面试题](./02-面试指南/07-AI-Agent全栈开发面试/10-AI-CLI与代码Agent面试题.md): CLI Agent架构/沙箱选型/Prompt Injection/代码执行反馈/浏览器Agent稳定性 28道分层面试题

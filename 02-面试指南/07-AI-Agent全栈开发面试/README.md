@@ -16,7 +16,7 @@
 | 04 | [04-记忆系统面试题.md](./04-记忆系统面试题.md) | RAG、向量检索、持久化记忆、Fine-tuning | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/04-记忆系统与RAG.md) |
 | 05 | [05-Agent框架面试题.md](./05-Agent框架面试题.md) | LangChain、LangGraph、AutoGen、多 Agent | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/05-Agent框架与编排.md) |
 | 06 | [06-后端服务面试题.md](./06-后端服务面试题.md) | 流式 API、会话管理、编排架构 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/06-后端服务与API设计.md) |
-| 07 | [07-前端渲染面试题.md](./07-前端渲染面试题.md) | SSE、WebSocket、流式 UI、React | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md) |
+| 07 | [07-前端渲染面试题.md](./07-前端渲染面试题.md) | SSE、WebSocket、流式 UI、React、AG-UI 协议、CopilotKit、Generative UI、Ant Design X、LobeChat、Open WebUI | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/07-前端渲染与流式UI.md) |
 | 08 | [08-LLM微调技术面试题.md](./08-LLM微调技术面试题.md) | LoRA/QLoRA/RLHF/DPO/GRPO/分布式微调 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md) |
 | 09 | [09-多Agent系统面试题.md](./09-多Agent系统面试题.md) | AutoGen/GroupChat/Hub-Spoke/P2P/分层架构/任务调度 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md) |
 | 10 | [10-AI-CLI与代码Agent面试题.md](./10-AI-CLI与代码Agent面试题.md) | CLI Agent 架构/沙箱技术选型/Prompt Injection/代码执行反馈 | [技术资料](../../01-技术资料/07-AI-Agent全栈开发/10-AI-CLI与代码Agent.md) |

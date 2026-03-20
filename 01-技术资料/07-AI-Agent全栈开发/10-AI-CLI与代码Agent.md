@@ -21,7 +21,10 @@
 11. [OpenHands 架构解析](#11-openhands-架构解析)
 12. [编码 Agent 的通用架构模式](#12-编码-agent-的通用架构模式)
 13. [生产级编码 Agent 的工程挑战](#13-生产级编码-agent-的工程挑战)
-14. [常见陷阱与最佳实践（编码 Agent 篇）](#14-常见陷阱与最佳实践编码-agent-篇)
+14. [Claude Code 工程最佳实践（官方文档总结）](#14-claude-code-工程最佳实践官方文档总结)
+15. [Codex Harness Engineering 规范](#15-codex-harness-engineering-规范)
+16. [AI 代码 Agent 的工程范式总结](#16-ai-代码-agent-的工程范式总结)
+17. [常见陷阱与最佳实践（编码 Agent 篇）](#17-常见陷阱与最佳实践编码-agent-篇)
 
 ---
 
@@ -1695,7 +1698,772 @@ jobs:
 
 ---
 
-## 14. 常见陷阱与最佳实践（编码 Agent 篇）
+## 14. Claude Code 工程最佳实践（官方文档总结）
+
+前面第 10 节介绍了 Claude Code 的架构设计——CLAUDE.md 分层、Sub-agent、MCP 集成等。本节进一步深入 **工程实践层面**：如何写出高效的 Prompt、如何管理上下文、如何利用 Hooks/Skills/Agents 扩展能力、如何在 CI/CD 中大规模集成。这些最佳实践来自 Anthropic 官方文档和大量社区实战总结。
+
+### 14.1 上下文管理是核心约束
+
+Claude 的上下文窗口是最关键的资源。与传统软件中 CPU 或内存不同，上下文窗口是一个 **随使用量增长而性能下降** 的资源。
+
+**类比**：上下文窗口就像你的 **工作台面**——台面上东西太多，你就找不到需要的工具了。最好的工匠不是台面最大的那个，而是最会整理台面的那个。
+
+**性能退化曲线：**
+
+```
+Agent 输出质量
+│
+│  ████████
+│  ████████
+│  ████████████
+│  ████████████████
+│  ████████████████████
+│  █████████████████████████
+│  ██████████████████████████████
+│  ██████████████████████████████████████
+│  ██████████████████████████████████████████████
+└──────────────────────────────────────────────► 上下文使用量
+   10%    30%    50%    70%    90%   100%
+                              ↑
+                        性能开始显著下降
+```
+
+**关键策略：**
+
+| 策略 | 操作 | 效果 |
+|------|------|------|
+| **监控上下文使用量** | 关注 Claude Code 底部的上下文使用百分比 | 避免在不知情中超载 |
+| **主动压缩** | 使用 `/compact` 命令压缩对话历史 | 释放上下文空间 |
+| **任务拆分** | 一个复杂任务拆成多个会话，每个会话聚焦一件事 | 保持每个会话上下文清洁 |
+| **及时新建会话** | 感觉 Agent 变慢或答非所问时，开新会话 | 避免"上下文腐败" |
+| **精准提供文件** | 只告诉 Agent 需要看的文件，而非"看整个 src/" | 减少无关 token 消耗 |
+
+### 14.2 验证驱动开发
+
+这是 Claude Code 最重要的使用原则：**Claude 在能验证自己工作时表现显著更好**。
+
+**类比**：想象你雇了一个装修工。如果你只说"把厨房弄好看"，结果不可预测。但如果你说"安装这款白色石英石台面，高度 85cm，台面下方留洗碗机位，完成后拍照给我确认"——结果就精确多了。Claude 也一样：**可验证的任务描述 = 更高质量的输出**。
+
+**对比示例：**
+
+```
+❌ 模糊描述（Claude 只能"猜"什么是对的）:
+   "实现一个验证邮箱的函数"
+
+✅ 可验证描述（Claude 可以自我检查）:
+   "写一个 validateEmail(email: string): boolean 函数，
+    满足：
+    - test@example.com → true
+    - user.name+tag@domain.co → true  
+    - invalid → false
+    - @no-local.com → false
+    写完后运行 npm test -- --grep 'email' 验证通过"
+```
+
+**验证金字塔：**
+
+```
+                 ┌─────────────┐
+                 │  视觉验证    │  Chrome MCP 扩展截图对比
+                 ├─────────────┤
+                │  集成测试     │  运行端到端测试套件
+                ├───────────────┤
+               │  单元测试      │  运行目标函数的测试用例
+              ├─────────────────┤
+             │  静态分析        │  TypeScript 编译 / ESLint / cargo check
+            ├───────────────────┤
+           │  类型检查          │  编译通过即基本正确
+          └─────────────────────┘
+```
+
+**根因修复而非症状修复：**
+
+当 Claude 遇到测试失败时，应引导它寻找根因：
+
+```
+❌ "测试报了 TypeError，帮我修一下"
+   → Claude 可能加一个 if null check 绕过，没有解决真正问题
+
+✅ "测试报了 TypeError: Cannot read property 'id' of undefined
+    在 src/user.ts:42。请先分析 userObject 为什么是 undefined——
+    是上游没传？还是数据库查询返回了 null？找到根因后修复。"
+   → Claude 会追溯调用链，找到真正的问题
+```
+
+### 14.3 先探索，再规划，再编码
+
+Claude Code 最有效的使用模式是 **四阶段工作流**，而非直接让它"去写代码"：
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    四阶段工作流                                       │
+│                                                                     │
+│  Phase 1: EXPLORE（探索）                                            │
+│  ┌───────────────────────────────────────────────────────────┐      │
+│  │  "阅读 src/auth/ 下所有文件，理解当前的认证流程"            │      │
+│  │  "找出所有调用 getUserById 的地方"                          │      │
+│  │  "解释 middleware/rateLimit.ts 的实现逻辑"                  │      │
+│  └───────────────────────────────────────────────────────────┘      │
+│                          ↓                                          │
+│  Phase 2: PLAN（规划）——使用 Plan Mode（Shift+Tab 切换）             │
+│  ┌───────────────────────────────────────────────────────────┐      │
+│  │  "基于你对认证模块的理解，列出添加 OAuth 支持需要的步骤"    │      │
+│  │   Claude 输出计划，但不执行任何修改                         │      │
+│  │   你审核计划，提出调整意见                                  │      │
+│  └───────────────────────────────────────────────────────────┘      │
+│                          ↓                                          │
+│  Phase 3: CODE（编码）                                              │
+│  ┌───────────────────────────────────────────────────────────┐      │
+│  │  "按照计划的步骤 1-3，先实现 OAuth provider 抽象层"         │      │
+│  │   Claude 开始写代码、修改文件                               │      │
+│  └───────────────────────────────────────────────────────────┘      │
+│                          ↓                                          │
+│  Phase 4: VERIFY（验证）                                            │
+│  ┌───────────────────────────────────────────────────────────┐      │
+│  │  "运行 npm test 验证所有测试通过"                           │      │
+│  │  "运行 npm run lint 确认无警告"                             │      │
+│  │  "用 Chrome MCP 打开 /login 页面截图确认 UI 正确"           │      │
+│  └───────────────────────────────────────────────────────────┘      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Plan Mode 的价值**：分离"思考"与"执行"。在 Plan Mode 下，Claude 只会分析和规划，不会修改任何文件。这让你能在 Claude 动手之前审核方案、纠正方向，避免大量无效的代码变更。
+
+### 14.4 CLAUDE.md 写作原则
+
+CLAUDE.md 是 Claude Code 最核心的配置机制——写得好坏直接影响输出质量。以下是 **应该放什么** 和 **不该放什么** 的精确界定：
+
+**✅ 应该放入 CLAUDE.md 的内容：**
+
+| 类别 | 示例 | 理由 |
+|------|------|------|
+| **构建/测试命令** | `pnpm test --coverage` | Claude 无法猜到你的项目用什么命令 |
+| **非标准代码风格** | "使用 Result 类型代替 try/catch" | 与语言默认惯例不同 |
+| **架构决策** | "使用 Event Sourcing，所有状态变更通过事件" | 影响代码生成的全局约束 |
+| **仓库结构约定** | "API 路由在 src/routes/，Service 在 src/services/" | 知道放哪里 |
+| **开发环境特殊配置** | "需要先 export DATABASE_URL=... 才能跑测试" | 环境依赖 |
+| **强调规则** | "IMPORTANT: 所有 PR 必须包含测试" | 用 `IMPORTANT`/`YOU MUST` 提高遵循度 |
+
+**❌ 不应该放入 CLAUDE.md 的内容：**
+
+| 类别 | 示例 | 理由 |
+|------|------|------|
+| **语言默认惯例** | "JavaScript 用 const 声明常量" | Claude 已经知道 |
+| **代码能推断的** | "这个项目用 React" (package.json 里有) | 读代码就知道 |
+| **详细 API 文档** | 完整的 REST API 说明 | 太长，应链接到外部 |
+| **经常变化的信息** | "当前版本是 2.3.1" | 容易过期 |
+| **逐文件描述** | "auth.ts 负责认证, user.ts 负责用户管理" | Claude 读代码就知道 |
+| **显而易见的要求** | "写干净的代码" "遵循最佳实践" | 没有信息量 |
+
+**维护原则：**
+
+```
+CLAUDE.md 维护清单:
+
+□ 保持 200 行以内（精炼 > 啰嗦）
+□ 像代码一样维护：定期修剪过时内容
+□ 测试是否有效：观察 Claude 是否遵循，不遵循就调整措辞
+□ 用 @path/to/file 语法引入其他文件，避免复制粘贴
+□ 在关键规则前加 "IMPORTANT" 或 "YOU MUST" 提高遵循度
+□ 团队共享的规则放项目级，个人偏好放用户级
+```
+
+### 14.5 记忆系统完整层级
+
+第 10 节介绍了三层 CLAUDE.md（用户/项目/目录）。实际上，Claude Code 的记忆系统比这更丰富，共有 **五个层级 + 两个扩展机制**：
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Claude Code 记忆系统全景                          │
+│                                                                     │
+│  ┌─ L0: 系统级（IT 管理员设置）────────────────────────────────┐    │
+│  │  /Library/Application Support/ClaudeCode/CLAUDE.md           │    │
+│  │  • 企业 IT 强制的全局规则（安全策略、合规要求）               │    │
+│  │  • 所有用户、所有项目生效                                    │    │
+│  └──────────────────────────────────────────────────────────────┘    │
+│                          ↓ 被覆盖                                   │
+│  ┌─ L1: 用户级 ─────────────────────────────────────────────────┐   │
+│  │  ~/.claude/CLAUDE.md                                          │   │
+│  │  • 个人编码偏好（缩进风格、语言偏好、常用别名）               │   │
+│  │  • 跨所有项目生效                                             │   │
+│  └───────────────────────────────────────────────────────────────┘   │
+│                          ↓ 被覆盖                                   │
+│  ┌─ L2: 项目级 ─────────────────────────────────────────────────┐   │
+│  │  /project/CLAUDE.md                                           │   │
+│  │  • 团队共享的项目规范（提交到 Git）                            │   │
+│  │  • 构建命令、代码风格、架构约定                                │   │
+│  └───────────────────────────────────────────────────────────────┘   │
+│                          ↓ 补充                                     │
+│  ┌─ L3: 子目录级 ────────────────────────────────────────────────┐  │
+│  │  /project/src/api/CLAUDE.md                                    │  │
+│  │  • 仅操作该目录下文件时才加载                                  │  │
+│  │  • 模块特定的规范（API 命名、错误处理策略）                    │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  ┌─ 扩展: .claude/rules/ 目录 ──────────────────────────────────┐  │
+│  │  模块化规则文件，支持 path-specific frontmatter                │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  ┌─ 扩展: Auto Memory ──────────────────────────────────────────┐  │
+│  │  ~/.claude/projects/<hash>/MEMORY.md                           │  │
+│  │  Claude 自动记录的跨会话知识（前 200 行每次加载）              │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**`.claude/rules/` 目录——模块化规则：**
+
+当项目规则太多不适合塞进一个 CLAUDE.md 时，可以拆分到 `.claude/rules/` 目录下。每个规则文件支持 `paths` frontmatter，指定仅在编辑匹配路径的文件时才加载：
+
+```yaml
+# .claude/rules/api-standards.md
+---
+paths:
+  - "src/api/**/*.ts"
+  - "src/routes/**/*.ts"
+---
+# API 开发规则
+
+- 所有路由函数签名：`async (req: Request, res: Response, next: NextFunction)`
+- 响应格式统一使用 `{ data, error, meta }` 三字段结构
+- 错误码遵循 RFC 9110 语义，不自定义非标准状态码
+- 分页使用 cursor + limit 模式，禁止 offset
+```
+
+**类比**：这就像 ESLint 的 `overrides` 配置——不同目录可以有不同的规则，按需加载，互不干扰。
+
+**Auto Memory（自动记忆）：**
+
+Claude 在交互过程中会自动将重要发现存储到 `~/.claude/projects/<project-hash>/MEMORY.md`。这些记忆在后续会话中自动加载（前 200 行），实现 **跨会话的知识积累**。典型的自动记忆内容包括：
+
+- 项目使用的包管理器是 pnpm（不是 npm）
+- 数据库迁移命令是 `npx prisma migrate dev`
+- 测试文件放在 `__tests__/` 目录而非 `test/`
+
+### 14.6 Skills 系统
+
+`.claude/skills/` 目录用于扩展 Claude 的 **领域知识**——让 Claude 学会它原本不具备的特定工作流。
+
+```
+.claude/skills/
+├── deploy-to-k8s.md        # 部署到 K8s 的标准流程
+├── create-db-migration.md   # 创建数据库迁移的规范步骤
+└── generate-api-docs.md     # 生成 API 文档的自动化脚本
+```
+
+**Skill 文件示例：**
+
+```markdown
+# deploy-to-k8s
+
+## 步骤
+1. 运行 `docker build -t app:$(git rev-parse --short HEAD) .`
+2. 推送到 ECR: `docker push $ECR_REPO:$TAG`
+3. 更新 k8s/deployment.yaml 中的镜像版本
+4. 执行 `kubectl apply -f k8s/`
+5. 等待 rollout: `kubectl rollout status deployment/app`
+```
+
+**关键配置选项：**
+
+```yaml
+---
+disable-model-invocation: true
+---
+# 当 skill 涉及有副作用的操作（如部署、数据库迁移）时，
+# 设置此标志可防止 Claude 自动执行，仅作为参考手册。
+```
+
+使用方式：在对话中输入 `/skill-name` 即可调用对应 skill。
+
+### 14.7 Subagent 系统
+
+`.claude/agents/` 目录允许定义 **独立上下文的专用 Agent**——每个 Agent 有自己的工具集、模型选择和行为约束。
+
+**配置示例：**
+
+```markdown
+# .claude/agents/security-reviewer.md
+
+---
+name: security-reviewer
+description: 专注于安全审查的 Agent，检查代码中的安全漏洞
+model: claude-opus-4-5
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+---
+
+## 审查清单
+- SQL 注入：检查所有数据库查询是否使用参数化
+- XSS：检查所有用户输入是否经过转义
+- 认证绕过：检查所有 API 路由是否有认证中间件
+- 敏感数据泄露：检查日志中是否包含密码、token 等
+- 依赖漏洞：运行 `npm audit` 检查已知 CVE
+```
+
+**与 Sub-agent 的区别：**
+
+| 维度 | Sub-agent (explore/task) | Subagent (.claude/agents/) |
+|------|--------------------------|---------------------------|
+| 定义方式 | 内置，由系统分发 | 用户自定义配置文件 |
+| 上下文 | 独立上下文窗口 | 独立上下文窗口 |
+| 模型选择 | 系统决定（Haiku/Sonnet） | 用户指定（可选 Opus） |
+| 工具集 | 预设（只读 or 全部） | 用户定义 |
+| 触发方式 | 系统自动分发 | 用户手动调用 |
+| 使用场景 | 通用任务分解 | 特定领域专家 |
+
+### 14.8 Hooks 系统
+
+Hooks 让你在 Claude Code 工作流的特定节点 **自动运行脚本**——区别于 CLAUDE.md 中的"建议性指令"，Hooks 是 **确定性的、必定执行的**。
+
+**类比**：CLAUDE.md 像给实习生的"建议"（可能被忽略），Hooks 像公司的"门禁系统"（必须通过，不可绕过）。
+
+**Hook 类型与触发时机：**
+
+| Hook | 触发时机 | 典型用途 |
+|------|----------|----------|
+| `PreToolUse` | 工具调用前 | 阻止写入特定目录 |
+| `PostToolUse` | 工具调用后 | 文件保存后自动格式化/lint |
+| `Notification` | Claude 想通知用户时 | 发送桌面通知、写日志 |
+| `Stop` | Claude 完成任务时 | 运行最终验证、生成报告 |
+
+**配置示例（settings.json）：**
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "command": "eslint --fix $CLAUDE_FILE_PATH 2>/dev/null || true"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "command": "if echo $CLAUDE_FILE_PATH | grep -q 'migrations/'; then echo 'BLOCKED: 禁止直接修改 migrations 目录，请使用 prisma migrate' >&2; exit 1; fi"
+      }
+    ]
+  }
+}
+```
+
+**Hooks vs CLAUDE.md 指令：**
+
+```
+CLAUDE.md: "请不要修改 migrations/ 目录下的文件"
+→ Claude 大概率遵守，但不是 100%
+
+Hook (PreToolUse): 检测到写入 migrations/ → 直接阻止 + 报错
+→ 100% 执行，无论 Claude 怎么想
+```
+
+### 14.9 GitHub Actions 深度集成
+
+Claude Code 通过 `claude-code-action@v1` 实现了与 GitHub 的原生集成，支持在 PR 和 Issue 中直接 @claude 触发 AI 操作。
+
+**核心能力：**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              claude-code-action@v1 工作流                        │
+│                                                                 │
+│  触发方式:                                                       │
+│  ├── PR 评论中 @claude → 代码审查/修改/解释                     │
+│  ├── Issue 中 @claude → 分析问题/自动创建 PR                    │
+│  └── PR 打开时自动触发 → 自动代码审查                           │
+│                                                                 │
+│  输出方式:                                                       │
+│  ├── PR 评论（审查意见）                                        │
+│  ├── PR 提交（代码修改）                                        │
+│  ├── 创建新 PR（从 Issue 到代码）                               │
+│  └── 添加 Label/Close Issue                                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**完整 GitHub Actions 配置示例：**
+
+```yaml
+# .github/workflows/claude-code.yml
+name: Claude Code
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--max-turns 25 --model claude-sonnet-4-20250514"
+          prompt: |
+            请用中文回复。审查代码时关注：
+            1. 逻辑错误和潜在 bug
+            2. 安全漏洞
+            3. 性能问题
+            不要评论代码风格（已有 ESLint 处理）。
+```
+
+**企业部署选项：**
+
+| 部署方式 | 配置 | 适用场景 |
+|----------|------|----------|
+| **Anthropic API 直连** | `anthropic_api_key` | 小团队/个人项目 |
+| **AWS Bedrock** | `aws_access_key_id` + `aws_region` | AWS 企业客户 |
+| **Google Vertex AI** | `gcp_project_id` + `gcp_region` | GCP 企业客户 |
+
+**成本优化策略：**
+
+```yaml
+# 控制成本的关键参数
+claude_args: >-
+  --max-turns 15              # 限制最大对话轮数（默认无限）
+  --model claude-sonnet-4-20250514  # 用 Sonnet 而非 Opus（成本降 5x）
+
+# 在 workflow 层面设置超时
+jobs:
+  claude:
+    timeout-minutes: 30        # 防止 Agent 无限运行
+```
+
+---
+
+## 15. Codex Harness Engineering 规范
+
+如果说 Claude Code 的核心特色是 **CLAUDE.md 分层上下文**，那 Codex CLI 的核心特色就是 **AGENTS.md 工程规范体系**。Codex 团队（OpenAI）自身使用的 AGENTS.md 是目前公开可见的最详细、最可执行的 AI Agent 工程规范之一。本节提炼其中的关键模式。
+
+### 15.1 AGENTS.md 规范体系
+
+与 CLAUDE.md 更偏向"指导方针"不同，Codex 的 AGENTS.md 像一份 **严格的工程手册**——每条规则都具体到可以机械化检查。
+
+**AGENTS.md 的典型结构：**
+
+```markdown
+# AGENTS.md
+
+## Code Style
+- Always collapse if/match statements when possible
+  → 引用具体 lint 规则（如 Clippy 的 collapsible_if）
+- Avoid bool parameters; prefer enums for clarity
+- Target modules under 500 LoC (excluding tests)
+- When possible, make match statements exhaustive
+- Don't create small helper methods only referenced once
+
+## Testing
+- Use insta for snapshot tests; any UI change needs snapshots
+- Prefer assert_eq! over field-by-field assertions
+- Use pretty_assertions for clearer diff output
+- Never modify process env vars in tests (causes flaky tests)
+
+## API Conventions
+- Request types: *Params (e.g., CreateUserParams)
+- Response types: *Response
+- Notification types: *Notification
+- RPC methods: <resource>/<method>, singular resource names
+
+## CI Commands
+- Run affected tests: cargo test -p <project>
+- Format: just fmt (auto-run, never ask)
+- Lint fix: just fix -p <project>
+```
+
+**与 CLAUDE.md 的核心差异：**
+
+| 维度 | CLAUDE.md | AGENTS.md |
+|------|-----------|-----------|
+| **粒度** | 方向性指导 + 具体规则 | 几乎全部是具体、可执行的规则 |
+| **链接** | 可用 `@path` 引用文件 | 引用外部 lint 规则和工具文档 |
+| **作用域** | 分层（系统/用户/项目/目录） | 通常单文件，放在仓库根目录 |
+| **执行方式** | 建议性（靠 LLM 理解） | 建议性（靠 LLM 理解）+ 配合 CI 强制 |
+
+### 15.2 模块化与代码质量
+
+Codex 团队对代码模块大小有明确的量化约束：
+
+```
+模块大小规范:
+
+┌────────────────────────────────────────────────────────────────┐
+│                                                                │
+│  目标：500 LoC（不含测试）                                      │
+│  警告线：800 LoC                                                │
+│  强制拆分：超过 800 LoC 必须拆分                                │
+│                                                                │
+│  优先拆分对象：                                                 │
+│  • 高频修改的文件（git log --stat 查看）                        │
+│  • 包含多个不相关功能的文件                                     │
+│  • 有明确领域边界的代码段                                       │
+│                                                                │
+│  拆分原则：                                                     │
+│  • 提取代码时同时迁移对应的测试和文档                           │
+│  • 不创建只被引用一次的小辅助方法（避免碎片化）                 │
+│  • 拆分后每个模块应能独立理解                                   │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**类比**：这就像"一个函数不超过一屏"的经典原则，但推广到了模块级别。500 行大约是一个工程师 15-20 分钟能完整审查的代码量——这不是随意定的数字。
+
+### 15.3 测试哲学
+
+Codex 的测试策略强调 **快照测试 + 深度比较**，而非传统的"断言每个字段"：
+
+**快照测试（insta 框架）：**
+
+```rust
+// ✅ Codex 推荐：快照测试捕获完整输出
+#[test]
+fn test_render_chat_widget() {
+    let widget = ChatWidget::new(test_config());
+    let rendered = widget.render();
+    
+    // insta 自动将 rendered 与已保存的快照文件对比
+    // 如果不匹配，测试失败并显示 diff
+    insta::assert_snapshot!(rendered);
+}
+
+// ❌ 避免：逐字段断言（脆弱且不完整）
+#[test]
+fn test_render_chat_widget_bad() {
+    let widget = ChatWidget::new(test_config());
+    let rendered = widget.render();
+    assert!(rendered.contains("Send"));
+    assert!(rendered.contains("input"));
+    // 遗漏了其他重要元素的检查
+}
+```
+
+**深度相等比较：**
+
+```rust
+// ✅ 比较整个对象（任何字段变化都会被捕获）
+assert_eq!(actual_response, expected_response);
+
+// ✅ 使用 pretty_assertions 获得更清晰的 diff
+use pretty_assertions::assert_eq;
+assert_eq!(actual_config, expected_config);
+// 输出:
+//   left:  Config { timeout: 30, retries: 3 }
+//   right: Config { timeout: 60, retries: 3 }
+//                            ^^
+```
+
+**测试环境隔离：**
+
+```rust
+// ❌ 不要在测试中修改进程级环境变量（导致并行测试 flaky）
+#[test]
+fn test_with_env() {
+    std::env::set_var("API_KEY", "test-key");  // 影响其他并行测试！
+    // ...
+}
+
+// ✅ 使用依赖注入或 test fixture
+#[test]
+fn test_with_config() {
+    let config = Config::test_default().with_api_key("test-key");
+    let service = Service::new(config);
+    // ...
+}
+```
+
+### 15.4 API 开发约定
+
+Codex 定义了一套严格的 API 命名和序列化规范：
+
+| 约定 | 规则 | 示例 |
+|------|------|------|
+| **请求类型** | `*Params` | `CreateUserParams`, `ListOrdersParams` |
+| **响应类型** | `*Response` | `CreateUserResponse`, `ListOrdersResponse` |
+| **通知类型** | `*Notification` | `OrderShippedNotification` |
+| **RPC 方法名** | `<resource>/<method>`，resource 用单数 | `user/create`, `order/list` |
+| **字段序列化** | camelCase（配置用 snake_case） | `userId`, `createdAt`（配置: `max_retries`） |
+| **ID 类型** | API 边界用 String，内部转 UUID | 外部: `"abc-123"` → 内部: `Uuid::parse` |
+| **时间戳** | Unix 秒（i64），字段名 `*_at` | `created_at: 1711234567` |
+| **分页** | cursor + limit 模式 | `{ cursor: "abc", limit: 20 }` |
+| **实验性 API** | `#[experimental("method/name")]` 注解 | 标记未稳定的 API |
+
+**为什么 ID 在 API 边界用 String？**
+
+```
+客户端 → API Gateway → 微服务
+
+  "user-id-abc"      →   Uuid::parse("user-id-abc")
+  (String, 通用兼容)       (强类型, 内部使用)
+
+原因：
+1. String 在 JSON 中无精度损失（大数 ID 在 JS 中会溢出）
+2. 未来可从 UUID 迁移到其他 ID 格式，不影响 API 合约
+3. 客户端不需要知道 ID 的内部表示
+```
+
+### 15.5 构建与 CI 流程
+
+Codex 的 CI 策略强调 **分层测试** 和 **自动化格式化**：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Codex CI 流程                                 │
+│                                                                 │
+│  Step 1: 格式化（自动执行，无需询问）                            │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  just fmt                                                 │  │
+│  │  → rustfmt + prettier + 其他格式化工具                    │  │
+│  │  → 直接修改文件，不产生 diff 讨论                         │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                          ↓                                      │
+│  Step 2: Lint 修复（作用域化）                                   │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  just fix -p <affected-project>                           │  │
+│  │  → 只 lint 受影响的项目，不做全量扫描                      │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                          ↓                                      │
+│  Step 3: 受影响项目测试                                         │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  cargo test -p codex-tui                                  │  │
+│  │  → 只测试被修改的 crate                                   │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                          ↓                                      │
+│  Step 4: 全量测试（仅修改共享 crate 时）                        │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  cargo test --workspace                                   │  │
+│  │  → 共享 crate 变更可能影响所有依赖者                      │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                          ↓                                      │
+│  Step 5: Schema/依赖变更（按需）                                │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  just write-config-schema    # Schema 变更后               │  │
+│  │  just bazel-lock-update      # 依赖变更后                  │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**关键原则**：格式化是自动的（不讨论、不 PR），lint 是作用域化的（不做全量），测试是分层的（先局部再全量）。这最大化了开发效率，同时保证了代码质量。
+
+---
+
+## 16. AI 代码 Agent 的工程范式总结
+
+经过前面对 Claude Code（§10, §14）、Codex CLI（§3, §15）、Gemini CLI（§2）、OpenHands（§11）的深入分析，我们可以提炼出 AI 代码 Agent 领域的 **共性工程范式**。
+
+### 16.1 三大工具对比矩阵
+
+| 维度 | Claude Code | Codex CLI | Gemini CLI |
+|------|------------|-----------|-----------|
+| **上下文管理** | CLAUDE.md 四级层级 + Auto Memory + .claude/rules/ | AGENTS.md + sandbox 内隔离 | .gemini/ 配置 + 1M token 长上下文 |
+| **验证策略** | 测试 + 截图 + Chrome MCP 扩展 | 快照测试（insta）+ CI 集成 | 自动化验证 + gVisor 沙箱 |
+| **工作流** | 探索→规划→编码→验证（四阶段） | sandbox 内自主执行 | 交互式 + 自动化 |
+| **扩展机制** | Skills + Hooks + Subagents + MCP | tools + sandbox 工具链 | tools + extensions |
+| **CI/CD** | claude-code-action@v1 | GitHub Actions + 自定义 workflow | gemini-cli-action@v1 |
+| **安全模型** | 分层权限 + Git 回滚 + 注入检测 | 网络禁用沙箱（Seatbelt/Docker） | gVisor 容器沙箱 |
+| **记忆持久化** | Auto Memory（MEMORY.md 跨会话） | 无内建跨会话记忆 | 会话内记忆 |
+
+### 16.2 五大共性模式
+
+**模式一：配置文件即知识**
+
+```
+Claude Code:  CLAUDE.md + .claude/rules/
+Codex CLI:    AGENTS.md
+Gemini CLI:   .gemini/ + GEMINI.md (社区约定)
+OpenHands:    .openhands/ 配置
+
+共同点：用 Markdown 文件向 Agent 注入项目知识，
+       而非依赖 Agent "自己理解"代码库。
+       这些文件本质上是"给 AI 看的项目文档"。
+```
+
+**模式二：沙箱隔离是安全基线**
+
+所有生产级 AI 代码 Agent 都将沙箱隔离作为默认安全策略，而非可选项。区别只在于沙箱的实现方式：
+
+| 工具 | 沙箱技术 | 隔离级别 |
+|------|----------|----------|
+| Codex CLI | macOS Seatbelt / Docker | 文件系统 + 网络 |
+| Gemini CLI | gVisor (runsc) | 系统调用级 |
+| Claude Code | 权限分层 + Git 回滚 | 操作级 |
+| OpenHands | Docker 容器 | 完全隔离 |
+
+**模式三：验证能力决定 Agent 质量上限**
+
+```
+Agent 质量 = f(验证能力)
+
+验证层次（从低到高）:
+
+Level 0: 无验证         → 输出不可靠
+Level 1: 编译通过       → 语法正确，逻辑不保证
+Level 2: 测试通过       → 覆盖的逻辑正确
+Level 3: Lint + 类型检查 → 符合规范
+Level 4: 视觉验证       → UI 也正确
+Level 5: 人工审查       → 最终兜底
+
+每提升一个验证层次，Agent 输出的可信度提升一个量级。
+```
+
+**模式四：工具调用是核心能力**
+
+所有编码 Agent 的工具集都收敛到了同一组核心工具：
+
+```
+必备工具集:
+├── Shell 执行（Bash/PowerShell）     → 运行任意命令
+├── 文件读写（Read/Write/Edit）       → 修改代码
+├── 代码搜索（Grep/Glob/LSP）       → 理解代码库
+├── Web 访问（Fetch/Browse）         → 查文档、测 API
+└── MCP 桥接                        → 连接外部服务
+
+差异化工具:
+├── 快照测试（Codex/insta）          → 自动化回归检测
+├── 截图验证（Claude/Chrome MCP）    → UI 变更验证
+├── 容器管理（OpenHands/Docker）     → 环境隔离
+└── Sub-agent 分发（Claude Code）    → 任务分解
+```
+
+**模式五：CI/CD 集成是生产化的关键路径**
+
+从"开发者的个人助手"到"团队的基础设施"，CI/CD 集成是必经之路：
+
+```
+成熟度阶段:
+
+Stage 1: 交互式使用
+  开发者在终端手动调用 → 个人生产力工具
+
+Stage 2: 脚本化集成
+  在 Makefile/npm scripts 中调用 → 团队自动化
+
+Stage 3: CI/CD 原生集成
+  GitHub Actions 触发 → PR 审查/Issue 处理/自动修复
+
+Stage 4: 完全自主
+  Agent 自主监控 → 发现问题 → 创建 PR → 请求审查 → 合并
+  （2026 年大多数团队在 Stage 2-3，少数到 Stage 4）
+```
+
+---
+
+## 17. 常见陷阱与最佳实践（编码 Agent 篇）
 
 以下是在实际使用和构建编码 Agent 时最常见的陷阱，总结自 Gemini CLI、Claude Code、Codex CLI 和 OpenHands 的实践经验。
 
