@@ -1,0 +1,18 @@
+/*
+ * Chinese (CJK) font support
+ *
+ * The default VitePress theme loads Inter (Latin-only web font) as the primary
+ * font. On systems / browsers that lack CJK fallback fonts, Chinese characters
+ * render as empty boxes (tofu).
+ *
+ * We prepend widely-available CJK system fonts so Chinese text always renders,
+ * and keep Inter for Latin characters.
+ */
+
+:root {
+  --vp-font-family-base: 'Inter', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial,
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei',
+    'Source Han Sans SC', 'Noto Sans SC', 'WenQuanYi Micro Hei', sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}

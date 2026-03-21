@@ -5,7 +5,7 @@
 ## 相关链接
 
 - 对应技术资料：[CI/CD与GitOps](../../01-技术资料/06-DevOps与云计算/03-CICD与GitOps.md)
-- 所属分类：[DevOps与云计算面试](./README.md)
+- 所属分类：[DevOps与云计算面试](./)
 
 ---
 

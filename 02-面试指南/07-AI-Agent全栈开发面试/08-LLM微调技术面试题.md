@@ -793,5 +793,5 @@ engine = LLMEngine.from_engine_args(EngineArgs(
 
 ## 导航
 
-- ← [面试指南总目录](../README.md)
+- ← [面试指南总目录](../)
 - ↔ [对应技术资料](../../01-技术资料/07-AI-Agent全栈开发/08-LLM微调技术.md)

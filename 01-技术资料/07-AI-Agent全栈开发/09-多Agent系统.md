@@ -2291,5 +2291,5 @@ async def pipeline_with_protection(task: str) -> str:
 
 ## 导航
 
-- ← [技术资料总目录](../README.md)
+- ← [技术资料总目录](../)
 - ↔ [对应面试题](../../02-面试指南/07-AI-Agent全栈开发面试/09-多Agent系统面试题.md)

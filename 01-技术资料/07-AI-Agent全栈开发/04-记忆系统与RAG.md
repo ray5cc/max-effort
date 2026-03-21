@@ -3003,4 +3003,4 @@ def contextual_retrieval_pipeline(documents: list[str], llm, splitter):
 
 ---
 
-*导航：← [03-工具调用与Function-Calling](./03-工具调用与Function-Calling.md) | [技术资料总目录](../README.md) | ↔ [对应面试题](../../02-面试指南/07-AI-Agent全栈开发面试/04-记忆系统面试题.md)*
+*导航：← [03-工具调用与Function-Calling](./03-工具调用与Function-Calling.md) | [技术资料总目录](../) | ↔ [对应面试题](../../02-面试指南/07-AI-Agent全栈开发面试/04-记忆系统面试题.md)*

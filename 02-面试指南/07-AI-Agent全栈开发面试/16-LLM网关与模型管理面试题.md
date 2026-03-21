@@ -3960,5 +3960,5 @@ python scripts/check_eval_results.py ci_results/ --threshold correctness=0.85
 
 ## 导航
 
-- ← [面试指南总目录](../README.md)
+- ← [面试指南总目录](../)
 - ↔ [对应技术资料](../../01-技术资料/07-AI-Agent全栈开发/16-LLM网关与模型管理.md)
