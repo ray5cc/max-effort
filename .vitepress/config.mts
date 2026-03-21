@@ -46,39 +46,6 @@ function generateSidebar(rootDir: string) {
 /*  2. 转义 {{ }} 双花括号（避免 Vue 将其当作模板插值）                    */
 /* ------------------------------------------------------------------ */
 
-const STANDARD_HTML_TAGS = new Set([
-  'a','abbr','address','area','article','aside','audio',
-  'b','base','bdi','bdo','blockquote','body','br','button',
-  'canvas','caption','cite','code','col','colgroup',
-  'data','datalist','dd','del','details','dfn','dialog','div','dl','dt',
-  'em','embed',
-  'fieldset','figcaption','figure','footer','form',
-  'h1','h2','h3','h4','h5','h6','head','header','hgroup','hr','html',
-  'i','iframe','img','input','ins',
-  'kbd','label','legend','li','link',
-  'main','map','mark','menu','meta','meter',
-  'nav','noscript',
-  'object','ol','optgroup','option','output',
-  'p','param','picture','pre','progress',
-  'q','rp','rt','ruby',
-  's','samp','script','search','section','select','slot','small',
-  'source','span','strong','style','sub','summary','sup',
-  'table','tbody','td','template','textarea','tfoot','th','thead',
-  'time','title','tr','track',
-  'u','ul',
-  'var','video','wbr',
-])
-
-function escapeNonStandardTag(html: string): string {
-  return html.replace(
-    /<\/?([a-zA-Z][a-zA-Z0-9-]*)/g,
-    (match, tag) => {
-      if (STANDARD_HTML_TAGS.has(tag.toLowerCase())) return match
-      return match.replace(/</g, '&lt;')
-    },
-  )
-}
-
 function escapeBraces(s: string): string {
   return s.replace(/\{\{/g, '&#123;&#123;').replace(/\}\}/g, '&#125;&#125;')
 }
@@ -94,8 +61,7 @@ function safeContentPlugin(md: MarkdownIt) {
   }
 
   // 2) 文本中的 {{ }} 转义（代码块不受影响，因为 fence/code_block 有自己的渲染器）
-  const defaultTextRender = md.renderer.rules.text
-  md.renderer.rules.text = (tokens, idx, options, env, self) => {
+  md.renderer.rules.text = (tokens, idx) => {
     const content = tokens[idx].content
     const escaped = md.utils.escapeHtml(content)
     return escapeBraces(escaped)
