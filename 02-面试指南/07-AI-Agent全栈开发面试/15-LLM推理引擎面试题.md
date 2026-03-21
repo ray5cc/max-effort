@@ -5306,6 +5306,6 @@ curl -s http://localhost:8080/metrics | grep -E "tokens|slots|queue"
 | GPU 利用率 < 50% | batch 太小 | 增大 -b / 增加并发 |
 ## 导航
 
-- ← [面试指南目录](./README.md)
+- ← [面试指南目录](./)
 - ↔ [对应技术资料：15-LLM推理引擎架构](../../01-技术资料/07-AI-Agent全栈开发/15-LLM推理引擎架构.md)
 - ← [14-深度学习框架面试题](./14-深度学习框架面试题.md)

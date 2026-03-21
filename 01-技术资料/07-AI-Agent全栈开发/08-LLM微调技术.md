@@ -1925,5 +1925,5 @@ def check_contamination(train_texts, test_texts, n=10):
 
 ## 导航
 
-- ← [技术资料总目录](../README.md)
+- ← [技术资料总目录](../)
 - ↔ [对应面试题](../../02-面试指南/07-AI-Agent全栈开发面试/08-LLM微调技术面试题.md)

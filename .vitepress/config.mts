@@ -112,6 +112,10 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '技术资料', link: '/01-技术资料/' },
       { text: '面试指南', link: '/02-面试指南/' },
+      {
+        text: 'llms.txt',
+        link: 'https://github.com/ray5cc/max-effort/blob/main/llms.txt',
+      },
     ],
 
     sidebar: {

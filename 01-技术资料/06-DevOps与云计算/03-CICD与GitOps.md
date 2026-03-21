@@ -7,7 +7,7 @@
 
 - 对应面试题：[CI/CD 面试题](../../02-面试指南/06-DevOps与云计算面试/03-CICD面试题.md)
 - 上一篇：[Kubernetes 核心技术](./02-Kubernetes核心技术.md)
-- [DevOps 与云计算总目录](./README.md)
+- [DevOps 与云计算总目录](./)
 
 ---
 
@@ -1334,4 +1334,4 @@ SLSA Level 4: 两人审查，密封构建（Hermetic）
 
 ---
 
-*最后更新：2025 年 | 相关资料：[DevOps 总目录](./README.md) | [CI/CD 面试题](../../02-面试指南/06-DevOps与云计算面试/03-CICD面试题.md)*
+*最后更新：2025 年 | 相关资料：[DevOps 总目录](./) | [CI/CD 面试题](../../02-面试指南/06-DevOps与云计算面试/03-CICD面试题.md)*

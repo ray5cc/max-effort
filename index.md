@@ -12,6 +12,9 @@ hero:
     - theme: alt
       text: 🎯 面试指南
       link: /02-面试指南/
+    - theme: alt
+      text: 🤖 llms.txt
+      link: https://github.com/ray5cc/max-effort/blob/main/llms.txt
 
 features:
   - icon: 💻

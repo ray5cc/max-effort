@@ -783,5 +783,5 @@ def compress_history(messages: list, keep_last: int = 5) -> list:
 
 ## 导航
 
-- ← [面试指南总目录](../README.md)
+- ← [面试指南总目录](../)
 - ↔ [对应技术资料](../../01-技术资料/07-AI-Agent全栈开发/09-多Agent系统.md)
