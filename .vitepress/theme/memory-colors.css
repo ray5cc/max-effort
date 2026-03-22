@@ -1,0 +1,249 @@
+/*
+ * Memory-Optimized Color System
+ *
+ * Based on cognitive psychology principles:
+ * - Warm colors (red/orange) for warnings/important items → increases alertness
+ * - Cool colors (blue) for information → reduces anxiety, aids comprehension
+ * - Green for success/correct answers → positive reinforcement
+ * - Purple for recall/practice → distinctive, non-threatening
+ * - Limited brand color usage → prevents visual fatigue
+ * - High contrast ratios → better readability and retention
+ */
+
+:root {
+  /* ============================================
+   * BRAND COLORS - Used sparingly for key UI elements only
+   * ============================================ */
+  --vp-c-brand-1: #5b8ce1;
+  --vp-c-brand-2: #4a7ac7;
+  --vp-c-brand-3: #3968ad;
+  --vp-c-brand-soft: rgba(91, 140, 225, 0.14);
+
+  /* ============================================
+   * SEMANTIC COLORS - Light Mode
+   * Establish predictable color→meaning associations
+   * ============================================ */
+
+  /* Recall/Self-test blocks - Purple tones for memory practice */
+  --memory-recall-bg: #f5f3ff;
+  --memory-recall-border: #9f7aea;
+  --memory-recall-text: #553c9a;
+  --memory-recall-heading: #6b46c1;
+
+  /* Important concepts - Blue tones for core knowledge */
+  --memory-concept-bg: #eff6ff;
+  --memory-concept-border: #3b82f6;
+  --memory-concept-text: #1e40af;
+  --memory-concept-heading: #2563eb;
+
+  /* Warnings/Pitfalls - Warm orange/red for alertness */
+  --memory-warning-bg: #fff7ed;
+  --memory-warning-border: #f97316;
+  --memory-warning-text: #c2410c;
+  --memory-warning-heading: #ea580c;
+
+  /* Practice/Examples - Green tones for positive reinforcement */
+  --memory-practice-bg: #f0fdf4;
+  --memory-practice-border: #10b981;
+  --memory-practice-text: #047857;
+  --memory-practice-heading: #059669;
+
+  /* Tips/Hints - Cyan tones for supplementary info */
+  --memory-tip-bg: #ecfeff;
+  --memory-tip-border: #06b6d4;
+  --memory-tip-text: #0e7490;
+  --memory-tip-heading: #0891b2;
+
+  /* ============================================
+   * INTERACTION COLORS
+   * ============================================ */
+
+  /* Bookmark/Review feature */
+  --bookmark-inactive: #94a3b8;
+  --bookmark-active: #f59e0b;
+  --bookmark-hover: #fbbf24;
+
+  /* Code blocks - Slightly tinted for better visual distinction */
+  --vp-code-block-bg: #f8f9fa;
+  --vp-code-bg: #f1f3f5;
+}
+
+.dark {
+  /* ============================================
+   * BRAND COLORS - Dark Mode
+   * ============================================ */
+  --vp-c-brand-1: #6fa0ff;
+  --vp-c-brand-2: #5b8ce1;
+  --vp-c-brand-3: #4a7ac7;
+  --vp-c-brand-soft: rgba(111, 160, 255, 0.16);
+
+  /* ============================================
+   * SEMANTIC COLORS - Dark Mode
+   * Maintains same hue associations with adjusted lightness
+   * ============================================ */
+
+  /* Recall/Self-test blocks */
+  --memory-recall-bg: #2d1b4e;
+  --memory-recall-border: #9f7aea;
+  --memory-recall-text: #d6bcfa;
+  --memory-recall-heading: #b794f6;
+
+  /* Important concepts */
+  --memory-concept-bg: #1e293b;
+  --memory-concept-border: #60a5fa;
+  --memory-concept-text: #bfdbfe;
+  --memory-concept-heading: #93c5fd;
+
+  /* Warnings/Pitfalls */
+  --memory-warning-bg: #431407;
+  --memory-warning-border: #fb923c;
+  --memory-warning-text: #fed7aa;
+  --memory-warning-heading: #fdba74;
+
+  /* Practice/Examples */
+  --memory-practice-bg: #14532d;
+  --memory-practice-border: #34d399;
+  --memory-practice-text: #a7f3d0;
+  --memory-practice-heading: #6ee7b7;
+
+  /* Tips/Hints */
+  --memory-tip-bg: #164e63;
+  --memory-tip-border: #22d3ee;
+  --memory-tip-text: #cffafe;
+  --memory-tip-heading: #a5f3fc;
+
+  /* Bookmark/Review feature */
+  --bookmark-inactive: #64748b;
+  --bookmark-active: #fbbf24;
+  --bookmark-hover: #fcd34d;
+
+  /* Code blocks */
+  --vp-code-block-bg: #1e1e1e;
+  --vp-code-bg: #2a2a2a;
+}
+
+/* ============================================
+ * CUSTOM CONTAINER STYLES
+ * VitePress custom containers with memory-optimized styling
+ * ============================================ */
+
+/* Recall/Self-test container */
+.vp-doc .custom-block.recall {
+  background-color: var(--memory-recall-bg);
+  border-color: var(--memory-recall-border);
+  color: var(--memory-recall-text);
+}
+
+.vp-doc .custom-block.recall .custom-block-title {
+  color: var(--memory-recall-heading);
+  font-weight: 600;
+}
+
+.vp-doc .custom-block.recall::before {
+  content: "🧠";
+  margin-right: 0.5rem;
+}
+
+/* Concept container */
+.vp-doc .custom-block.concept {
+  background-color: var(--memory-concept-bg);
+  border-color: var(--memory-concept-border);
+  color: var(--memory-concept-text);
+}
+
+.vp-doc .custom-block.concept .custom-block-title {
+  color: var(--memory-concept-heading);
+  font-weight: 600;
+}
+
+.vp-doc .custom-block.concept::before {
+  content: "💡";
+  margin-right: 0.5rem;
+}
+
+/* Warning/Pitfall container - Override default warning style */
+.vp-doc .custom-block.warning {
+  background-color: var(--memory-warning-bg);
+  border-color: var(--memory-warning-border);
+  color: var(--memory-warning-text);
+}
+
+.vp-doc .custom-block.warning .custom-block-title {
+  color: var(--memory-warning-heading);
+  font-weight: 600;
+}
+
+/* Practice/Example container */
+.vp-doc .custom-block.practice {
+  background-color: var(--memory-practice-bg);
+  border-color: var(--memory-practice-border);
+  color: var(--memory-practice-text);
+}
+
+.vp-doc .custom-block.practice .custom-block-title {
+  color: var(--memory-practice-heading);
+  font-weight: 600;
+}
+
+.vp-doc .custom-block.practice::before {
+  content: "✅";
+  margin-right: 0.5rem;
+}
+
+/* Tip container - Override default tip style */
+.vp-doc .custom-block.tip {
+  background-color: var(--memory-tip-bg);
+  border-color: var(--memory-tip-border);
+  color: var(--memory-tip-text);
+}
+
+.vp-doc .custom-block.tip .custom-block-title {
+  color: var(--memory-tip-heading);
+  font-weight: 600;
+}
+
+/* ============================================
+ * VISUAL CONSISTENCY & MEMORY AIDS
+ * ============================================ */
+
+/* Consistent spacing for custom blocks */
+.vp-doc .custom-block {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border-left-width: 4px;
+  border-radius: 4px;
+}
+
+/* Subtle background for code blocks to distinguish from text */
+.vp-doc div[class*='language-'] {
+  background-color: var(--vp-code-block-bg);
+  border-radius: 6px;
+  margin: 1rem 0;
+}
+
+/* Tables - subtle zebra striping for easier scanning */
+.vp-doc table tr:nth-child(2n) {
+  background-color: var(--vp-c-bg-soft);
+}
+
+/* ============================================
+ * REDUCED MOTION SUPPORT
+ * Respect user preferences for accessibility
+ * ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+ * FOCUS INDICATORS
+ * Enhanced keyboard navigation for accessibility
+ * ============================================ */
+:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
