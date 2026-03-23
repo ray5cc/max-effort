@@ -93,8 +93,7 @@
 }
 
 .vp-diagram code {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono',
-    'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace !important;
+  font-family: var(--vp-font-family-mono) !important;
   font-size: 13px !important;
   line-height: 1.65 !important;
   color: #334155 !important;
