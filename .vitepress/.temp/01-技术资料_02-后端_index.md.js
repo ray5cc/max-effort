@@ -1,0 +1,19 @@
+import { ssrRenderAttrs } from "vue/server-renderer";
+import { useSSRContext } from "vue";
+import { _ as _export_sfc } from "./plugin-vue_export-helper.1tPrXgE0.js";
+const __pageData = JSON.parse('{"title":"02-后端 — 技术资料","description":"","frontmatter":{},"headers":[],"relativePath":"01-技术资料/02-后端/index.md","filePath":"01-技术资料/02-后端/README.md","lastUpdated":1774066204000}');
+const _sfc_main = { name: "01-技术资料/02-后端/index.md" };
+function _sfc_ssrRender(_ctx, _push, _parent, _attrs, $props, $setup, $data, $options) {
+  _push(`<div${ssrRenderAttrs(_attrs)}><h1 id="_02-后端-—-技术资料" tabindex="-1">02-后端 — 技术资料 <a class="header-anchor" href="#_02-后端-—-技术资料" aria-label="Permalink to &quot;02-后端 — 技术资料&quot;">&amp;ZeroWidthSpace;</a></h1><blockquote><p>后端技术学习文档，涵盖主流后端语言、框架及服务端核心概念。</p></blockquote><h2 id="相关链接" tabindex="-1">相关链接 <a class="header-anchor" href="#相关链接" aria-label="Permalink to &quot;相关链接&quot;">&amp;ZeroWidthSpace;</a></h2><ul><li>对应面试指南：<a href="./../../02-面试指南/02-后端面试/">02-后端面试</a></li></ul><h2 id="文档列表" tabindex="-1">文档列表 <a class="header-anchor" href="#文档列表" aria-label="Permalink to &quot;文档列表&quot;">&amp;ZeroWidthSpace;</a></h2><table tabindex="0"><thead><tr><th>序号</th><th>文件</th><th>描述</th><th>对应面试题</th></tr></thead><tbody><tr><td>01</td><td><a href="./01-Java核心与JVM.html">01-Java核心与JVM.md</a></td><td>JVM 内存模型 / 垃圾收集器（CMS/G1/ZGC）/ 类加载双亲委派 / synchronized 锁升级 / AQS 框架 / volatile/JMM 内存屏障（OpenJDK HotSpot 源码）</td><td><a href="./../../02-面试指南/02-后端面试/01-Java核心面试题.html">面试题</a></td></tr><tr><td>02</td><td><a href="./02-Go核心与并发模型.html">02-Go核心与并发模型.md</a></td><td>GMP 调度模型（runtime2.go / proc.go）/ Channel（hchan/sudog）/ 三级内存分配器（mcache/mcentral/mheap）/ 三色 GC 与混合写屏障 / iface/eface 接口实现</td><td><a href="./../../02-面试指南/02-后端面试/02-Go核心面试题.html">面试题</a></td></tr><tr><td>03</td><td><a href="./03-网络协议与HTTP.html">03-网络协议与HTTP.md</a></td><td>TCP 三次握手/四次挥手/拥塞控制/滑动窗口 / HTTP/1.1/2/3 演进 / QUIC 协议 / TLS 1.2/1.3 握手与密钥派生 / WebSocket 帧格式</td><td><a href="./../../02-面试指南/02-后端面试/03-网络协议面试题.html">面试题</a></td></tr><tr><td>04</td><td><a href="./04-Python核心与异步编程.html">04-Python核心与异步编程.md</a></td><td>GIL 原理与绕过 / PyObject 对象模型 / 引用计数与分代 GC / 生成器与迭代器 / 装饰器与描述符 / asyncio 事件循环 / TaskGroup / FastAPI ASGI / Python 3.13 Free-threaded / JIT 编译器</td><td><a href="./../../02-面试指南/02-后端面试/04-Python面试题.html">面试题</a></td></tr><tr><td>05</td><td><a href="./05-微服务架构.html">05-微服务架构.md</a></td><td>单体→微服务演进 / DDD 服务拆分 / gRPC vs REST / API 网关 / 服务发现 / Saga 分布式事务 / 断路器与限流 / 可观测性(OTel) / Service Mesh(Istio/Envoy) / 云原生实践(Dapr/Serverless)</td><td><a href="./../../02-面试指南/02-后端面试/05-微服务架构面试题.html">面试题</a></td></tr><tr><td>06</td><td><a href="./06-Node.js核心与Web框架.html">06-Node.js核心与Web框架.md</a></td><td>事件循环 6 阶段深度解析 / libuv 异步 I/O 架构（线程池 vs epoll/kqueue）/ V8 引擎集成 / async/await 错误处理 / Express.js 中间件模式 / Koa.js 洋葱模型 / NestJS 依赖注入 / Worker Threads / Cluster 集群 / Stream 流处理 / 性能优化策略</td><td><a href="./../../02-面试指南/02-后端面试/06-Node.js面试题.html">面试题</a></td></tr></tbody></table><h2 id="主要内容方向" tabindex="-1">主要内容方向 <a class="header-anchor" href="#主要内容方向" aria-label="Permalink to &quot;主要内容方向&quot;">&amp;ZeroWidthSpace;</a></h2><ul><li>Java（JVM、并发、Spring）</li><li>Go（协程、标准库、框架）</li><li>Python（Django/FastAPI）</li><li>Node.js（事件循环、Express/Koa）</li><li>网络协议（HTTP/HTTPS/TCP/WebSocket）</li><li>微服务架构</li></ul><h2 id="导航" tabindex="-1">导航 <a class="header-anchor" href="#导航" aria-label="Permalink to &quot;导航&quot;">&amp;ZeroWidthSpace;</a></h2><ul><li>← <a href="./../">技术资料总目录</a></li><li>↔ <a href="./../../02-面试指南/02-后端面试/">后端面试指南</a></li></ul></div>`);
+}
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("01-技术资料/02-后端/README.md");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+const README = /* @__PURE__ */ _export_sfc(_sfc_main, [["ssrRender", _sfc_ssrRender]]);
+export {
+  __pageData,
+  README as default
+};

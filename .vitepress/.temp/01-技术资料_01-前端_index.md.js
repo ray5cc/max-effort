@@ -1,0 +1,19 @@
+import { ssrRenderAttrs } from "vue/server-renderer";
+import { useSSRContext } from "vue";
+import { _ as _export_sfc } from "./plugin-vue_export-helper.1tPrXgE0.js";
+const __pageData = JSON.parse('{"title":"01-前端 — 技术资料","description":"","frontmatter":{},"headers":[],"relativePath":"01-技术资料/01-前端/index.md","filePath":"01-技术资料/01-前端/README.md","lastUpdated":1774066204000}');
+const _sfc_main = { name: "01-技术资料/01-前端/index.md" };
+function _sfc_ssrRender(_ctx, _push, _parent, _attrs, $props, $setup, $data, $options) {
+  _push(`<div${ssrRenderAttrs(_attrs)}><h1 id="_01-前端-—-技术资料" tabindex="-1">01-前端 — 技术资料 <a class="header-anchor" href="#_01-前端-—-技术资料" aria-label="Permalink to &quot;01-前端 — 技术资料&quot;">&amp;ZeroWidthSpace;</a></h1><blockquote><p>前端技术学习文档，涵盖 HTML/CSS/JavaScript 基础、主流框架及工程化工具。</p></blockquote><h2 id="相关链接" tabindex="-1">相关链接 <a class="header-anchor" href="#相关链接" aria-label="Permalink to &quot;相关链接&quot;">&amp;ZeroWidthSpace;</a></h2><ul><li>对应面试指南：<a href="./../../02-面试指南/01-前端面试/">01-前端面试</a></li></ul><h2 id="文档列表" tabindex="-1">文档列表 <a class="header-anchor" href="#文档列表" aria-label="Permalink to &quot;文档列表&quot;">&amp;ZeroWidthSpace;</a></h2><table tabindex="0"><thead><tr><th>序号</th><th>文件</th><th>描述</th><th>对应面试题</th></tr></thead><tbody><tr><td>01</td><td><a href="./01-React核心原理.html">01-React核心原理.md</a></td><td>Fiber 架构、并发渲染、Hooks 原理、虚拟 DOM、React Compiler 源码解析</td><td><a href="./../../02-面试指南/01-前端面试/01-React面试题.html">React 核心面试题</a></td></tr><tr><td>02</td><td><a href="./02-JavaScript核心与ES6+.html">02-JavaScript核心与ES6+.md</a></td><td>执行机制、事件循环、原型链、ES6+ 特性、TypeScript 核心</td><td><a href="./../../02-面试指南/01-前端面试/02-JavaScript面试题.html">JavaScript 面试题</a></td></tr><tr><td>03</td><td><a href="./03-前端工程化.html">03-前端工程化.md</a></td><td>Webpack/Vite/Rollup 打包器原理、性能优化、包管理（pnpm/Monorepo）、代码质量工具链、微前端架构</td><td><a href="./../../02-面试指南/01-前端面试/03-前端工程化面试题.html">前端工程化面试题</a></td></tr><tr><td>04</td><td><a href="./04-浏览器原理与性能优化.html">04-浏览器原理与性能优化.md</a></td><td>多进程架构、渲染流水线（DOM→CSSOM→Layout→Paint→Composite）、V8 引擎执行管道与 JIT、内存管理与 GC、Core Web Vitals、性能优化实战</td><td><a href="./../../02-面试指南/01-前端面试/04-浏览器与性能面试题.html">浏览器与性能面试题</a></td></tr><tr><td>05</td><td><a href="./05-TypeScript高级编程.html">05-TypeScript高级编程.md</a></td><td>类型系统原理、高级类型体操、泛型深度解析、工具类型源码、tsconfig 配置、TS 5.x 新特性、设计模式</td><td><a href="./../../02-面试指南/01-前端面试/05-TypeScript面试题.html">TypeScript面试题</a></td></tr><tr><td>06</td><td><a href="./06-Next.js与服务端渲染.html">06-Next.js与服务端渲染.md</a></td><td>SSR/SSG/ISR 渲染策略、App Router、React Server Components、Server Actions、缓存机制、Next.js 15</td><td><a href="./../../02-面试指南/01-前端面试/06-Next.js面试题.html">Next.js面试题</a></td></tr><tr><td>07</td><td><a href="./07-状态管理与数据流.html">07-状态管理与数据流.md</a></td><td>Redux/Redux Toolkit（RTK Query）、Zustand、Jotai、Recoil、TanStack Query、MobX、Context API 优化、XState 状态机</td><td><a href="./../../02-面试指南/01-前端面试/07-状态管理面试题.html">状态管理面试题</a></td></tr></tbody></table><h2 id="主要内容方向" tabindex="-1">主要内容方向 <a class="header-anchor" href="#主要内容方向" aria-label="Permalink to &quot;主要内容方向&quot;">&amp;ZeroWidthSpace;</a></h2><ul><li>HTML / CSS 基础与进阶</li><li>JavaScript 核心（ES6+、异步、原型链）</li><li>主流框架（Vue / React / Angular）</li><li>工程化工具（Webpack / Vite / Babel）</li><li>性能优化与浏览器原理</li><li>TypeScript</li></ul><h2 id="导航" tabindex="-1">导航 <a class="header-anchor" href="#导航" aria-label="Permalink to &quot;导航&quot;">&amp;ZeroWidthSpace;</a></h2><ul><li>← <a href="./../">技术资料总目录</a></li><li>↔ <a href="./../../02-面试指南/01-前端面试/">前端面试指南</a></li></ul></div>`);
+}
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("01-技术资料/01-前端/README.md");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+const README = /* @__PURE__ */ _export_sfc(_sfc_main, [["ssrRender", _sfc_ssrRender]]);
+export {
+  __pageData,
+  README as default
+};
