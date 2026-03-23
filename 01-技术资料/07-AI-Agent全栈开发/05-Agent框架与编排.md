@@ -69,22 +69,14 @@ context_{t+1} = context_t ⊕ r_t ⊕ a_t ⊕ o_t  // 更新上下文
 
 ### 1.3 Thought-Action-Observation 循环
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        ReAct Loop                           │
-│                                                             │
-│  ┌──────────┐    ┌──────────┐    ┌──────────────────────┐  │
-│  │  Input   │───▶│ Thought  │───▶│       Action         │  │
-│  │  + Ctx   │    │(Reasoning)│   │  (Tool Call / Done)  │  │
-│  └──────────┘    └──────────┘    └──────────┬───────────┘  │
-│        ▲                                     │              │
-│        │         ┌──────────┐               │              │
-│        └─────────│Observation│◀──────────────┘              │
-│                  │(Tool Resp)│    env(action)               │
-│                  └──────────┘                               │
-│                                                             │
-│  终止条件：action = "Final Answer" 或 达到最大步数限制         │
-└─────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: ReAct Loop cycle: Input+Ctx → Thought → Action → Observation → loop back -->
+```mermaid
+graph LR
+    A["Input + Ctx"] --> B["Thought (Reasoning)"]
+    B --> C["Action (Tool Call / Done)"]
+    C -->|"env(action)"| D["Observation (Tool Resp)"]
+    D --> A
+    C -.->|"Final Answer 或 最大步数"| FIN(("终止"))
 ```
 
 ### 1.4 经典 Prompt 模板
@@ -118,24 +110,22 @@ Thought: {agent_scratchpad}
 
 ### 2.1 类层次结构
 
-```
-BaseLanguageModel
-    └── BaseChatModel
-            └── ChatOpenAI / ChatAnthropic / ...
-
-Runnable (LCEL 基类)
-    └── RunnableSerializable
-            └── BaseSingleActionAgent
-            │       └── ZeroShotAgent (legacy)
-            └── BaseMultiActionAgent
-            └── RunnableAgent          ◀── 现代推荐方式
-                    └── RunnableMultiActionAgent
-
-AgentExecutor (继承 Chain → Runnable)
-    ├── agent: Union[BaseSingleActionAgent, BaseMultiActionAgent, Runnable]
-    ├── tools: Sequence[BaseTool]
-    ├── max_iterations: int
-    └── _call() / _acall()
+<!-- ORIGINAL: LangChain Agent class hierarchy: BaseLanguageModel, Runnable, AgentExecutor -->
+```mermaid
+graph TD
+    A["BaseLanguageModel"] --> B["BaseChatModel"]
+    B --> C["ChatOpenAI / ChatAnthropic / ..."]
+    D["Runnable (LCEL 基类)"] --> E["RunnableSerializable"]
+    E --> F["BaseSingleActionAgent"]
+    F --> G["ZeroShotAgent (legacy)"]
+    E --> H["BaseMultiActionAgent"]
+    E --> I["RunnableAgent (现代推荐方式)"]
+    I --> J["RunnableMultiActionAgent"]
+    K["AgentExecutor (继承 Chain → Runnable)"]
+    K --> L["agent: Runnable"]
+    K --> M["tools: Sequence"]
+    K --> N["max_iterations: int"]
+    K --> O["_call() / _acall()"]
 ```
 
 ### 2.2 `create_react_agent()` 源码解析
@@ -246,29 +236,13 @@ class AgentExecutor(Chain):
 
 ### 2.4 Tool 选择机制
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Tool Selection Flow                        │
-│                                                             │
-│  LLM Output: "Action: search\nAction Input: python async"   │
-│                         │                                   │
-│                         ▼                                   │
-│              ReActOutputParser.parse()                      │
-│                         │                                   │
-│              ┌──────────┴──────────┐                        │
-│              │  AgentAction        │                        │
-│              │  tool = "search"    │                        │
-│              │  tool_input = "..." │                        │
-│              └──────────┬──────────┘                        │
-│                         │                                   │
-│                         ▼                                   │
-│           name_to_tool_map["search"]                        │
-│                  = Tool(func=search_fn)                     │
-│                         │                                   │
-│                         ▼                                   │
-│              tool.run(tool_input)                           │
-│              → observation (str)                            │
-└─────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Tool Selection Flow: LLM Output → Parser → AgentAction → tool lookup → tool.run → observation -->
+```mermaid
+graph TD
+    A["LLM Output: Action: search"] --> B["ReActOutputParser.parse()"]
+    B --> C["AgentAction (tool=search, tool_input=...)"]
+    C --> D["name_to_tool_map 查找 search"]
+    D --> E["tool.run(tool_input) → observation"]
 ```
 
 工具注册方式：
@@ -313,12 +287,13 @@ class CustomTool(BaseTool):
 
 LangGraph 将 Agent 工作流建模为**有状态的有向图（Stateful DAG）**，核心概念：
 
-```
-StateGraph
-    ├── State Schema (TypedDict / Pydantic)
-    ├── Nodes (callable: State → State update dict)
-    ├── Edges (无条件 / 条件)
-    └── Checkpointer (持久化状态快照)
+<!-- ORIGINAL: StateGraph composition: Schema, Nodes, Edges, Checkpointer -->
+```mermaid
+graph TD
+    SG["StateGraph"] --> SS["State Schema (TypedDict / Pydantic)"]
+    SG --> SN["Nodes (callable: State → State update dict)"]
+    SG --> SE["Edges (无条件 / 条件)"]
+    SG --> SC["Checkpointer (持久化状态快照)"]
 ```
 
 ### 3.2 StateGraph 内部结构
@@ -398,36 +373,14 @@ graph = graph_builder.compile(checkpointer=memory)
 
 ### 3.4 状态传播机制
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   LangGraph State Propagation                   │
-│                                                                 │
-│  Initial State: {messages: [HumanMessage("...")]}               │
-│                      │                                          │
-│                      ▼                                          │
-│  ┌──────────────────────────────────────────────────┐           │
-│  │  agent node                                       │           │
-│  │  input:  {messages: [...]}                        │           │
-│  │  output: {messages: [AIMessage(tool_calls=[...])]}│           │
-│  └──────────────────┬─────────────────────────────┘           │
-│                      │  add_messages reducer 追加消息            │
-│                      ▼                                          │
-│  State: {messages: [Human, AI(tool_calls)]}                     │
-│                      │                                          │
-│          should_continue → "tools"                              │
-│                      │                                          │
-│                      ▼                                          │
-│  ┌──────────────────────────────────────────────────┐           │
-│  │  tools node (ToolNode)                            │           │
-│  │  input:  {messages: [..., AI(tool_calls)]}        │           │
-│  │  执行每个 tool_call，生成 ToolMessage               │           │
-│  │  output: {messages: [ToolMessage(...), ...]}      │           │
-│  └──────────────────┬─────────────────────────────┘           │
-│                      │                                          │
-│  State: {messages: [Human, AI(tool_calls), ToolMessage(s)]}     │
-│                      │                                          │
-│                      └──────────────▶ agent node (下一轮)        │
-└─────────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: LangGraph State Propagation: Initial State → agent node → tools node → loop back -->
+```mermaid
+graph TD
+    INIT["Initial State: messages"] --> AGENT["agent node"]
+    AGENT -->|"add_messages reducer"| STATE1["State: messages + AI(tool_calls)"]
+    STATE1 -->|"should_continue → tools"| TOOLS["tools node (ToolNode)"]
+    TOOLS --> STATE2["State: messages + ToolMessages"]
+    STATE2 -->|"下一轮"| AGENT
 ```
 
 ### 3.5 Checkpointing 与 MemorySaver
@@ -498,29 +451,14 @@ graph.add_edge("branch_b", "aggregator")
 
 基于 [langgenius/dify](https://github.com/langgenius/dify) 源码分析：
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Dify Workflow Engine                       │
-│                                                                 │
-│  ┌─────────────┐    ┌──────────────────────────────────────┐   │
-│  │  API Layer   │───▶│         WorkflowEntry               │   │
-│  │  (Flask)    │    │  api/services/workflow_service.py    │   │
-│  └─────────────┘    └───────────────┬──────────────────────┘   │
-│                                     │                           │
-│                                     ▼                           │
-│                      ┌──────────────────────────┐              │
-│                      │    WorkflowEngineManager  │              │
-│                      │  core/workflow/workflow_  │              │
-│                      │  engine_manager.py        │              │
-│                      └──────────────┬────────────┘              │
-│                                     │                           │
-│                    ┌────────────────┼────────────────┐          │
-│                    ▼                ▼                ▼          │
-│             ┌──────────┐   ┌──────────┐   ┌──────────────┐    │
-│             │ Graph    │   │  Node    │   │  Variable    │    │
-│             │ Engine   │   │ Factory  │   │  Pool        │    │
-│             └──────────┘   └──────────┘   └──────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Dify Workflow Engine architecture: API → WorkflowEntry → Manager → Engine/Factory/Pool -->
+```mermaid
+graph TD
+    API["API Layer (Flask)"] --> WE["WorkflowEntry"]
+    WE --> WEM["WorkflowEngineManager"]
+    WEM --> GE["Graph Engine"]
+    WEM --> NF["Node Factory"]
+    WEM --> VP["Variable Pool"]
 ```
 
 ### 4.2 WorkflowEntry 入口
@@ -657,39 +595,28 @@ class LLMNode(BaseNode):
 
 #### ReAct（在线规划）
 
-```
-┌─────────────────────────────────────────────────────┐
-│  ReAct：交错推理与行动（Online Planning）              │
-│                                                     │
-│  Thought1 → Action1 → Obs1                         │
-│                 ↓ (基于 Obs1 重新规划)                │
-│  Thought2 → Action2 → Obs2                         │
-│                 ↓                                   │
-│  Thought3 → Final Answer                           │
-│                                                     │
-│  优点：灵活自适应，错误可恢复                          │
-│  缺点：短视，无长程规划                               │
-└─────────────────────────────────────────────────────┘
+<!-- ORIGINAL: ReAct online planning: Thought → Action → Observation iterative loop -->
+```mermaid
+graph LR
+    T1["Thought1"] --> A1["Action1"]
+    A1 --> O1["Obs1"]
+    O1 -->|"基于 Obs1 重新规划"| T2["Thought2"]
+    T2 --> A2["Action2"]
+    A2 --> O2["Obs2"]
+    O2 --> T3["Thought3"]
+    T3 --> FA["Final Answer"]
 ```
 
 #### Plan-and-Solve（离线规划）
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Plan-and-Solve：先规划后执行（Offline Planning）     │
-│                                                     │
-│  Step 1: Planner LLM                               │
-│    → Plan: [Step1, Step2, Step3, ...]               │
-│                                                     │
-│  Step 2: Executor                                  │
-│    → Execute Step1 → Execute Step2 → ...            │
-│                                                     │
-│  Step 3: Summarizer                                │
-│    → Final Answer                                   │
-│                                                     │
-│  优点：全局视角，适合复杂长任务                         │
-│  缺点：计划刚性，难以应对中途变化                       │
-└─────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Plan-and-Solve offline planning: Planner → Executor → Summarizer -->
+```mermaid
+graph TD
+    A["Step 1: Planner LLM"] -->|"生成计划"| B["Plan: Step1, Step2, Step3, ..."]
+    B --> C["Step 2: Executor"]
+    C --> D["Execute Step1 → Step2 → ..."]
+    D --> E["Step 3: Summarizer"]
+    E --> F["Final Answer"]
 ```
 
 **LangGraph 实现 Plan-and-Solve**：
@@ -737,19 +664,12 @@ workflow.add_edge("summarize", END)
 
 Reflexion 通过**语言强化**让 Agent 从失败中学习，核心机制：
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Reflexion Architecture                   │
-│                                                             │
-│  ┌──────────┐    ┌──────────┐    ┌──────────────────────┐  │
-│  │  Actor   │───▶│ Evaluator│───▶│  Self-Reflection LLM │  │
-│  │ (ReAct)  │    │(外部/LLM)│    │  "我哪里做错了？"      │  │
-│  └──────────┘    └──────────┘    └──────────┬────────────┘  │
-│       ▲                                      │               │
-│       └──────────────────────────────────────┘               │
-│                  Verbal Reinforcement                         │
-│              (反思存入 episodic memory)                        │
-└─────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Reflexion Architecture: Actor → Evaluator → Self-Reflection → loop back -->
+```mermaid
+graph LR
+    A["Actor (ReAct)"] --> B["Evaluator (外部/LLM)"]
+    B --> C["Self-Reflection LLM"]
+    C -->|"Verbal Reinforcement (反思存入 episodic memory)"| A
 ```
 
 ```python
@@ -791,27 +711,17 @@ def actor_with_reflection(state: ReflexionState) -> dict:
 
 #### Supervisor 模式
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                     Supervisor Pattern                        │
-│                                                              │
-│                    ┌─────────────┐                           │
-│                    │  Supervisor │◀─── 用户输入               │
-│                    │     LLM     │                           │
-│                    └──────┬──────┘                           │
-│           ┌───────────────┼───────────────┐                  │
-│           ▼               ▼               ▼                  │
-│    ┌────────────┐  ┌────────────┐  ┌────────────┐           │
-│    │  Researcher│  │   Coder    │  │  Reviewer  │           │
-│    │   Agent    │  │   Agent    │  │   Agent    │           │
-│    └────────────┘  └────────────┘  └────────────┘           │
-│           │               │               │                  │
-│           └───────────────┴───────────────┘                  │
-│                           ▼                                  │
-│                    ┌─────────────┐                           │
-│                    │  Supervisor │ 汇总结果 → 最终输出         │
-│                    └─────────────┘                           │
-└──────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Supervisor Pattern: Supervisor dispatches to Researcher/Coder/Reviewer, then aggregates -->
+```mermaid
+graph TD
+    INPUT["用户输入"] --> SUP1["Supervisor LLM"]
+    SUP1 --> R["Researcher Agent"]
+    SUP1 --> CO["Coder Agent"]
+    SUP1 --> RE["Reviewer Agent"]
+    R --> SUP2["Supervisor 汇总结果"]
+    CO --> SUP2
+    RE --> SUP2
+    SUP2 --> OUT["最终输出"]
 ```
 
 ```python
@@ -953,30 +863,15 @@ class GroupChatManager(ConversableAgent):
 
 ### 6.3 AutoGen GroupChat 架构图
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                     AutoGen GroupChat                            │
-│                                                                  │
-│  User ──▶ UserProxyAgent ──▶ GroupChatManager                    │
-│                                      │                           │
-│                           ┌──────────┴──────────┐               │
-│                           │    GroupChat         │               │
-│                           │  messages: [...]     │               │
-│                           │  agents: [A, B, C]  │               │
-│                           └──────────┬──────────┘               │
-│                                      │                           │
-│                    select_speaker()  │  (LLM 决策)               │
-│                                      │                           │
-│          ┌───────────────────────────┼───────────────────┐       │
-│          ▼                           ▼                   ▼       │
-│   ┌────────────┐             ┌────────────┐       ┌────────────┐ │
-│   │  Assistant │             │  Coder     │       │  Critic    │ │
-│   │   Agent    │             │  Agent     │       │   Agent    │ │
-│   │(llm_config)│             │(code exec) │       │(llm_config)│ │
-│   └────────────┘             └────────────┘       └────────────┘ │
-│                                                                  │
-│  消息广播：每个 agent 发言后，消息同步到所有 agent 的上下文            │
-└──────────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: AutoGen GroupChat: User → UserProxy → Manager → select_speaker → Agents -->
+```mermaid
+graph TD
+    U["User"] --> UPA["UserProxyAgent"]
+    UPA --> GCM["GroupChatManager"]
+    GCM --> GC["GroupChat (messages, agents)"]
+    GC -->|"select_speaker() LLM 决策"| AA["Assistant Agent"]
+    GC -->|"select_speaker() LLM 决策"| CA["Coder Agent"]
+    GC -->|"select_speaker() LLM 决策"| CR["Critic Agent"]
 ```
 
 ### 6.4 代码执行沙箱
@@ -1038,16 +933,15 @@ Dify:      横向扩展，Worker 队列（Celery）
 
 ### 7.3 选型决策树
 
-```
-是否需要可视化编辑？
-    ├── 是 → Dify
-    └── 否
-          ├── 是否需要多智能体对话协作？
-          │       ├── 是 → AutoGen
-          │       └── 否
-          │             ├── 是否需要复杂状态管理/循环/并行？
-          │             │       ├── 是 → LangGraph
-          │             │       └── 否 → LangChain AgentExecutor
+<!-- ORIGINAL: Framework selection decision tree -->
+```mermaid
+graph TD
+    Q1{"是否需要可视化编辑?"} -->|"是"| DIFY["Dify"]
+    Q1 -->|"否"| Q2{"是否需要多智能体对话协作?"}
+    Q2 -->|"是"| AG["AutoGen"]
+    Q2 -->|"否"| Q3{"是否需要复杂状态管理/循环/并行?"}
+    Q3 -->|"是"| LG["LangGraph"]
+    Q3 -->|"否"| LC["LangChain AgentExecutor"]
 ```
 
 ---
@@ -1184,25 +1078,12 @@ autogen.runtime_logging.start(logger_type="sqlite", config={"dbname": "agent.db"
 
 这是一个高频混淆点，值得在一开始就厘清：
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                        Agent 通信生态                                │
-│                                                                      │
-│  ┌─────────────────┐     A2A 协议      ┌─────────────────┐          │
-│  │   Agent A        │◄════════════════►│   Agent B        │          │
-│  │ (LangGraph)      │   Agent 间通信   │ (AutoGen)        │          │
-│  │                  │  能力发现/任务协商 │                  │          │
-│  └──────┬───────────┘                  └──────┬───────────┘          │
-│         │ MCP                                 │ MCP                  │
-│         ▼                                     ▼                      │
-│  ┌─────────────┐                       ┌─────────────┐              │
-│  │  Tools       │                       │  Tools       │              │
-│  │  数据库/API   │                       │  搜索/文件   │              │
-│  └─────────────┘                       └─────────────┘              │
-│                                                                      │
-│  MCP = Agent 如何使用工具（人 ↔ 工具）                                │
-│  A2A = Agent 如何找到并与其他 Agent 对话（人 ↔ 人）                    │
-└──────────────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Agent communication ecosystem: A2A between agents, MCP to tools -->
+```mermaid
+graph TD
+    AA["Agent A (LangGraph)"] <-->|"A2A 协议"| AB["Agent B (AutoGen)"]
+    AA -->|"MCP"| TA["Tools: 数据库/API"]
+    AB -->|"MCP"| TB["Tools: 搜索/文件"]
 ```
 
 一句话总结：**MCP 管的是 Agent 与工具之间的"手脚"，A2A 管的是 Agent 与 Agent 之间的"对话"。**
@@ -1253,24 +1134,20 @@ Agent Card 通常托管在 `/.well-known/agent.json` 路径下，便于其他 Ag
 
 A2A 中的核心交互单位是 **Task**（任务）。一个 Task 的完整生命周期如下：
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                   Task 生命周期                           │
-│                                                          │
-│  submitted ──► working ──► completed                     │
-│                  │  ▲           │                         │
-│                  │  │           ▼                         │
-│                  │  └─── input-required                   │
-│                  │       (需要更多输入)                    │
-│                  │                                        │
-│                  ├──► failed (执行失败)                    │
-│                  └──► canceled (被取消)                    │
-│                                                          │
-│  关键特性：                                               │
-│  • 每个 Task 有唯一 ID，支持异步轮询                       │
-│  • 支持长时间运行的任务（分钟到小时级别）                   │
-│  • 支持 SSE 流式推送中间结果                               │
-└──────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: A2A Task lifecycle state diagram -->
+```mermaid
+stateDiagram-v2
+    [*] --> submitted
+    submitted --> working
+    working --> completed
+    completed --> inputRequired
+    inputRequired --> working
+    working --> failed
+    working --> canceled
+
+    inputRequired : input-required (需要更多输入)
+    failed : failed (执行失败)
+    canceled : canceled (被取消)
 ```
 
 #### 消息与 Artifact
@@ -1369,29 +1246,20 @@ async def discover_and_delegate(task_description: str):
 
 A2A 的最大价值在于让不同框架构建的 Agent 能无缝协作。以下是一个典型场景：
 
-```
 用户请求："分析上周的服务器故障，生成修复方案，并创建 Jira 工单"
 
-┌──────────────────────────────────────────────────────────────┐
-│                    A2A 跨框架协作                              │
-│                                                              │
-│  ┌─────────────┐   A2A    ┌─────────────┐   A2A    ┌────────┐│
-│  │ 故障分析Agent│ ═══════► │ 方案生成Agent│ ═══════► │工单Agent││
-│  │ (AutoGen)    │         │ (LangGraph) │         │ (Dify) ││
-│  │              │         │             │         │        ││
-│  │ • 日志分析   │         │ • 方案规划  │         │• Jira  ││
-│  │ • 根因定位   │         │ • 代码修复  │         │  集成  ││
-│  └─────────────┘         └─────────────┘         └────────┘│
-│        ▲                       ▲                      ▲     │
-│        │ MCP                   │ MCP                  │ MCP │
-│   ┌─────────┐            ┌─────────┐           ┌─────────┐ │
-│   │ELK/Prom │            │ GitHub  │           │Jira API │ │
-│   └─────────┘            └─────────┘           └─────────┘ │
-└──────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: A2A cross-framework collaboration: 故障分析 → 方案生成 → 工单, each with MCP tools -->
+```mermaid
+graph LR
+    FA["故障分析Agent (AutoGen)"] -->|"A2A"| GA["方案生成Agent (LangGraph)"]
+    GA -->|"A2A"| WA["工单Agent (Dify)"]
+    FA -.->|"MCP"| ELK["ELK/Prometheus"]
+    GA -.->|"MCP"| GH["GitHub"]
+    WA -.->|"MCP"| JIRA["Jira API"]
+```
 
 每个 Agent 由不同团队用不同框架构建，
 但通过 A2A 协议实现标准化通信。
-```
 
 **关键要点**：A2A 不替代任何框架，而是在框架**之上**提供互操作层。就像 HTTP 不关心你的服务器用 Java 还是 Python 实现，A2A 不关心你的 Agent 用 LangGraph 还是 AutoGen 构建。
 
@@ -1425,24 +1293,13 @@ Agent 评估的核心难题总结：
 
 一个全面的 Agent 评估框架应覆盖以下维度：
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                   Agent 评估金字塔                        │
-│                                                          │
-│                    ┌──────────┐                          │
-│                    │ 业务价值 │  ← 最终目标               │
-│                    │ (ROI)    │                          │
-│                 ┌──┴──────────┴──┐                       │
-│                 │  任务完成质量    │  ← 结果正确吗？        │
-│                 │ (Accuracy)     │                       │
-│              ┌──┴────────────────┴──┐                    │
-│              │   执行效率 (Efficiency)│ ← 花了多少步/Token？│
-│           ┌──┴──────────────────────┴──┐                 │
-│           │  工具使用准确性 (Tool Use)    │ ← 调对工具了吗？ │
-│        ┌──┴──────────────────────────────┴──┐            │
-│        │     安全与合规 (Safety & Compliance)  │ ← 有风险吗│
-│        └───────────────────────────────────────┘         │
-└──────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Agent evaluation pyramid: Safety → Tool Use → Efficiency → Accuracy → ROI -->
+```mermaid
+graph BT
+    E["安全与合规 (Safety & Compliance)"] -->|"有风险吗?"| D["工具使用准确性 (Tool Use)"]
+    D -->|"调对工具了吗?"| C["执行效率 (Efficiency)"]
+    C -->|"花了多少步/Token?"| B["任务完成质量 (Accuracy)"]
+    B -->|"结果正确吗?"| A["业务价值 (ROI) ← 最终目标"]
 ```
 
 ```python
@@ -1924,10 +1781,14 @@ Human-in-the-Loop 不是"Agent 不够聪明"的补丁，而是**系统设计中�
 
 最简单的 Human-in-the-Loop 模式：Agent 在关键决策点**暂停**，等待人类批准后再继续。
 
-```
-用户请求 → Agent 规划 → [审批点] → 人类确认 → Agent 执行 → 结果
-                           │
-                           └── 人类拒绝 → Agent 重新规划
+<!-- ORIGINAL: Approval mode flow: request → plan → approval → execute or reject → replan -->
+```mermaid
+graph LR
+    A["用户请求"] --> B["Agent 规划"]
+    B --> C["审批点"]
+    C -->|"人类确认"| D["Agent 执行"]
+    D --> E["结果"]
+    C -->|"人类拒绝"| B
 ```
 
 ```python
@@ -1982,30 +1843,17 @@ final = graph.invoke(None, config)  # 从断点继续
 
 比审批模式更灵活：人类可以在 Agent 运行的**任意步骤**观察并修正其方向。
 
-```
-┌────────────────────────────────────────────────────────┐
-│                   干预模式流程                           │
-│                                                        │
-│  Agent Step 1 ──► Agent Step 2 ──► Agent Step 3       │
-│       │                │                │              │
-│       ▼                ▼                ▼              │
-│  [人类可观察]      [人类可观察]      [人类可观察]         │
-│       │                │                │              │
-│       │           人类发现偏差           │              │
-│       │                │                │              │
-│       │                ▼                │              │
-│       │         [人类修正指令]           │              │
-│       │          "不要用方案A,           │              │
-│       │           改用方案B"             │              │
-│       │                │                │              │
-│       │                ▼                │              │
-│       │         Agent Step 2'           │              │
-│       │         (根据修正调整)            │              │
-│       │                │                │              │
-│       │                ▼                │              │
-│       │         Agent Step 3'           │              │
-│       │         (后续步骤自适应)          │              │
-└────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Intervention mode: Agent steps with human observation, correction at Step 2 -->
+```mermaid
+graph TD
+    S1["Agent Step 1"] --> S2["Agent Step 2"]
+    S2 --> S3["Agent Step 3"]
+    S1 --> O1["人类可观察"]
+    S2 --> O2["人类可观察"]
+    S3 --> O3["人类可观察"]
+    O2 -->|"人类发现偏差"| FIX["人类修正指令"]
+    FIX --> S2P["Agent Step 2' (根据修正调整)"]
+    S2P --> S3P["Agent Step 3' (后续步骤自适应)"]
 ```
 
 ```python
@@ -2046,22 +1894,18 @@ class InterventionAgent:
 
 人类和 Agent **交替**执行任务，各自负责自己擅长的部分。这是当前最常见的 Human-in-the-Loop 形态：
 
-```
-协作模式（以代码开发为例）：
-
-人类：描述需求 "实现一个用户认证模块，支持 OAuth2"
-  ↓
-Agent：生成代码骨架和单元测试
-  ↓
-人类：审查代码，指出 "Token 刷新逻辑不对，应该用滑动窗口"
-  ↓
-Agent：修正 Token 刷新逻辑，更新相关测试
-  ↓
-人类：确认代码 OK，手动部署到测试环境
-  ↓
-Agent：运行集成测试，报告结果
-  ↓
-人类：确认测试通过，合并到主分支
+<!-- ORIGINAL: Human-Agent collaboration sequence for code development -->
+```mermaid
+sequenceDiagram
+    participant H as 人类
+    participant A as Agent
+    H->>A: 描述需求: 实现用户认证模块，支持 OAuth2
+    A->>H: 生成代码骨架和单元测试
+    H->>A: Token 刷新逻辑不对，应该用滑动窗口
+    A->>H: 修正 Token 刷新逻辑，更新相关测试
+    H-->>H: 确认代码 OK，手动部署到测试环境
+    A->>H: 运行集成测试，报告结果
+    H-->>H: 确认测试通过，合并到主分支
 ```
 
 **协作模式的关键设计原则**：
@@ -2077,32 +1921,14 @@ Agent：运行集成测试，报告结果
 
 所有 Human-in-the-Loop 模式的底层都依赖**状态持久化**和**中断/恢复**机制：
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│            Human-in-the-Loop 架构                            │
-│                                                              │
-│  ┌──────────┐     ┌────────────┐     ┌──────────────┐       │
-│  │  Agent    │────►│ State Store │◄────│ Human UI     │       │
-│  │  Runtime  │     │ (持久化)    │     │ (Web/Slack)  │       │
-│  └──────────┘     └────────────┘     └──────────────┘       │
-│       │                │                     │               │
-│       │           ┌────┴────┐                │               │
-│       │           │Checkpoint│               │               │
-│       │           │  (快照)  │               │               │
-│       │           └─────────┘                │               │
-│       │                                      │               │
-│       ├── 1. Agent 运行到中断点               │               │
-│       ├── 2. 状态序列化 → State Store         │               │
-│       ├── 3. 通知人类（WebSocket/Webhook）──────►               │
-│       ├── 4. 人类审批/干预/修改                │               │
-│       ├── 5. 状态反序列化 ← State Store        │               │
-│       └── 6. Agent 从中断点恢复执行            │               │
-│                                                              │
-│  关键要求：                                                   │
-│  • State Store 必须支持持久化（非内存）                        │
-│  • 中断到恢复可能间隔数秒到数天                               │
-│  • Agent 进程可能在中断期间被回收和重启                        │
-└──────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Human-in-the-Loop architecture: Agent Runtime ↔ State Store ↔ Human UI -->
+```mermaid
+graph LR
+    AR["Agent Runtime"] -->|"状态序列化"| SS["State Store (持久化)"]
+    SS -->|"状态反序列化"| AR
+    SS <-->|"审批/干预/修改"| HU["Human UI (Web/Slack)"]
+    CP["Checkpoint (快照)"] --- SS
+    AR -->|"通知人类 (WebSocket)"| HU
 ```
 
 ---
@@ -2279,24 +2105,13 @@ tool_breakers = {
 
 当 Agent 系统的某些组件不可用时，不应直接返回错误，而应**降级**到能力较弱但仍可用的模式：
 
-```
-┌───────────────────────────────────────────────────────────────┐
-│                    Agent 降级策略                              │
-│                                                               │
-│  Level 0 (正常):     完整 Multi-Agent + 工具调用               │
-│       │                                                       │
-│       ▼ 某个 Agent 不可用                                      │
-│  Level 1 (轻度降级): 单 Agent + 工具调用                       │
-│       │                                                       │
-│       ▼ 工具 API 不可用                                        │
-│  Level 2 (中度降级): 单 Agent + 有限工具（缓存/本地工具）        │
-│       │                                                       │
-│       ▼ 主模型不可用                                           │
-│  Level 3 (重度降级): 备用小模型直接回答（无工具调用）             │
-│       │                                                       │
-│       ▼ 所有 LLM 不可用                                       │
-│  Level 4 (最终兜底): 返回预设模板回复 + 人工客服入口             │
-└───────────────────────────────────────────────────────────────┘
+<!-- ORIGINAL: Agent degradation strategy: Level 0-4 progressive fallback -->
+```mermaid
+graph TD
+    L0["Level 0 (正常): 完整 Multi-Agent + 工具调用"] -->|"某个 Agent 不可用"| L1["Level 1 (轻度降级): 单 Agent + 工具调用"]
+    L1 -->|"工具 API 不可用"| L2["Level 2 (中度降级): 单 Agent + 有限工具"]
+    L2 -->|"主模型不可用"| L3["Level 3 (重度降级): 备用小模型直接回答"]
+    L3 -->|"所有 LLM 不可用"| L4["Level 4 (最终兜底): 预设模板回复 + 人工客服"]
 ```
 
 ```python
