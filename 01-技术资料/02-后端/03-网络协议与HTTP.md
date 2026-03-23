@@ -45,20 +45,18 @@
 
 TCP 三次握手建立连接，确保双方都有发送和接收能力：
 
-```
-客户端                                    服务器
-  │                                         │
-  │  ①  SYN, seq=x                          │
-  │ ─────────────────────────────────────→  │  SYN_RCVD 状态
-  │                                         │
-  │  ②  SYN+ACK, seq=y, ack=x+1            │
-  │ ←─────────────────────────────────────  │
-  │ ESTABLISHED 状态                        │
-  │                                         │
-  │  ③  ACK, seq=x+1, ack=y+1              │
-  │ ─────────────────────────────────────→  │  ESTABLISHED 状态
-  │                                         │
-  │  (可以开始传输数据)                       │
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant S as 服务器
+
+    C->>S: ① SYN, seq=x
+    Note over S: SYN_RCVD 状态
+    S->>C: ② SYN+ACK, seq=y, ack=x+1
+    Note over C: ESTABLISHED 状态
+    C->>S: ③ ACK, seq=x+1, ack=y+1
+    Note over S: ESTABLISHED 状态
+    Note over C,S: 可以开始传输数据
 ```
 
 **TCP 头部关键字段（RFC 793）：**
@@ -97,24 +95,23 @@ TCP Header:
 
 TCP 连接是全双工的，关闭需要双方各自关闭：
 
-```
-主动关闭方                               被动关闭方
-  │                                         │
-  │  ①  FIN, seq=u                          │
-  │ ─────────────────────────────────────→  │  CLOSE_WAIT 状态
-  │  FIN_WAIT_1 状态                        │
-  │                                         │
-  │  ②  ACK, ack=u+1                        │
-  │ ←─────────────────────────────────────  │
-  │  FIN_WAIT_2 状态                        │  (被动方继续发送剩余数据)
-  │                                         │
-  │  ③  FIN, seq=v                          │
-  │ ←─────────────────────────────────────  │  LAST_ACK 状态
-  │                                         │
-  │  ④  ACK, ack=v+1                        │
-  │ ─────────────────────────────────────→  │  CLOSED
-  │  TIME_WAIT 状态（2MSL）                  │
-  │  (2MSL 后 → CLOSED)                     │
+```mermaid
+sequenceDiagram
+    participant A as 主动关闭方
+    participant B as 被动关闭方
+
+    A->>B: ① FIN, seq=u
+    Note over A: FIN_WAIT_1
+    Note over B: CLOSE_WAIT
+    B->>A: ② ACK, ack=u+1
+    Note over A: FIN_WAIT_2
+    Note over B: 继续发送剩余数据...
+    B->>A: ③ FIN, seq=v
+    Note over B: LAST_ACK
+    A->>B: ④ ACK, ack=v+1
+    Note over A: TIME_WAIT (2MSL)
+    Note over B: CLOSED
+    Note over A: CLOSED (2MSL后)
 ```
 
 **TIME_WAIT 的作用（2MSL = 2 × Maximum Segment Lifetime，通常 60s-120s）：**
@@ -146,20 +143,20 @@ sysctl -w net.ipv4.ip_local_port_range="1024 65535"
 
 **序列号（Sequence Number）与确认号（ACK）：**
 
-```
-发送方                                   接收方
-  │  seq=1, data[1-1000]                  │
-  │ ─────────────────────────────────→    │
-  │  seq=1001, data[1001-2000]            │
-  │ ─────────────────────────────────→    │
-  │                                       │  收到两个包
-  │             ack=2001                  │
-  │ ←─────────────────────────────────    │  累积确认：期望下一个字节是 2001
+```mermaid
+sequenceDiagram
+    participant S as 发送方
+    participant R as 接收方
+
+    S->>R: seq=1, data[1-1000]
+    S->>R: seq=1001, data[1001-2000]
+    Note over R: 收到两个包
+    R->>S: ACK=2001（累积确认：期望下一字节是 2001）
 ```
 
 **滑动窗口（Sliding Window）：**
 
-```
+```diagram
 发送缓冲区：
           ←───已发送已确认──→←──已发送未确认──→←──可发送──→←──暂不可发送──→
          |     (released)    |   (in flight)   | (window) |   (blocked)   |
@@ -182,7 +179,7 @@ sysctl -w net.ipv4.ip_local_port_range="1024 65535"
 
 TCP 拥塞控制防止网络过载，四个核心算法（RFC 5681）：
 
-```
+```diagram
 cwnd（拥塞窗口）变化曲线：
 
 cwnd
@@ -248,19 +245,20 @@ HTTP/1.1: 持久连接（Connection: keep-alive，默认开启）
 
 **HTTP/1.1 的队头阻塞（Head-of-Line Blocking）：**
 
-```
-HTTP/1.1 管道化（Pipelining）：
-  客户端可以连续发送多个请求，但服务器必须按序响应
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant S as 服务器
 
-  ─── GET /a ──→
-  ─── GET /b ──→
-  ─── GET /c ──→
-
-  ←── /a 响应（慢，需要 500ms）─── 阻塞！
-  ←── /b 响应（本来只需 10ms）────  等 /a 完成
-  ←── /c 响应 ────────────────────  等 /b 完成
-
-结果：一个慢响应阻塞后续所有请求
+    C->>S: GET /a
+    C->>S: GET /b
+    C->>S: GET /c
+    Note over S: /a 处理需 500ms → 阻塞！
+    S->>C: /a 响应 (500ms)
+    Note over C,S: /b 本只需10ms，但被/a阻塞
+    S->>C: /b 响应 (等 /a 完成)
+    S->>C: /c 响应 (等 /b 完成)
+    Note over C,S: ⚠️ 队头阻塞：一个慢响应阻塞后续所有请求
 ```
 
 ### 2.2 HTTP/2 核心特性
@@ -269,7 +267,7 @@ HTTP/2（RFC 7540）基于 SPDY，彻底解决了 HTTP/1.1 的性能问题。
 
 **1. 二进制分帧（Binary Framing）：**
 
-```
+```diagram
 HTTP/1.1 是文本协议:
   GET /index.html HTTP/1.1\r\n
   Host: example.com\r\n
@@ -286,15 +284,22 @@ HTTP/2 是二进制帧:
 
 **2. 多路复用（Multiplexing）：** 单条 TCP 连接上并行传输多个请求/响应（每个请求有独立的 Stream ID），真正解决 HTTP 层的队头阻塞：
 
-```
-HTTP/2 单连接多路复用:
+```mermaid
+flowchart TD
+    CONN["TCP 连接（单连接多路复用）"]
+    S1["Stream 1: GET /a\n→ /a 响应 (500ms)"]
+    S3["Stream 3: GET /b\n→ /b 响应 (10ms) ← 不被 Stream1 阻塞！"]
+    S5["Stream 5: GET /c\n→ /c 响应 (20ms)"]
+    FRAME["所有 stream 共享同一 TCP 连接\n帧交错传输（多路复用）"]
 
-TCP 连接
-  ├── Stream 1: GET /a ──→  /a 响应（500ms）
-  ├── Stream 3: GET /b ──→  /b 响应（10ms）  ← 不被 Stream 1 阻塞！
-  └── Stream 5: GET /c ──→  /c 响应（20ms）
+    CONN --> S1 & S3 & S5
+    S1 & S3 & S5 -.-> FRAME
 
-所有 stream 共享同一 TCP 连接，帧交错传输
+    style CONN fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style S1 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style S3 fill:#10b981,color:#fff,stroke:#059669
+    style S5 fill:#10b981,color:#fff,stroke:#059669
+    style FRAME fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 **3. 头部压缩（HPACK）：** 使用静态表 + 动态表压缩 HTTP 头部：
@@ -313,7 +318,7 @@ TCP 连接
 
 **HTTP/2 的残留问题：TCP 层队头阻塞**
 
-```
+```diagram
 HTTP/2 解决了 HTTP 层的队头阻塞，但 TCP 层仍存在:
 
 TCP 连接上的丢包:
@@ -357,7 +362,7 @@ HTTP/3 + QUIC（再次连接）:  直接发送带数据的 QUIC 包（使用缓�
 
 **QUIC 数据包格式（简化）：**
 
-```
+```diagram
 QUIC Long Header Packet:
 ┌──────────────────────────────────────────────┐
 │ Header Form (1) │ Fixed Bit (1) │ ...        │
@@ -391,43 +396,21 @@ QUIC Long Header Packet:
 
 ### 3.1 TLS 1.2 握手流程
 
-```
-客户端                                    服务器
-  │                                         │
-  │  ClientHello                            │
-  │  - TLS 版本 (1.2)                       │
-  │  - 客户端随机数 (client_random)          │
-  │  - 支持的加密套件列表                    │
-  │  - 支持的压缩算法                        │
-  │ ─────────────────────────────────────→  │
-  │                                         │
-  │  ServerHello                            │
-  │  - 选择的 TLS 版本                       │
-  │  - 服务器随机数 (server_random)          │
-  │  - 选择的加密套件（如 TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384）│
-  │  Certificate                            │
-  │  - 服务器证书（含公钥）                  │
-  │  ServerKeyExchange                      │
-  │  - ECDHE 临时公钥（DH 参数）             │
-  │  - 用服务器私钥对 DH 参数签名            │
-  │  ServerHelloDone                        │
-  │ ←─────────────────────────────────────  │
-  │                                         │
-  │  (客户端验证证书)                         │
-  │                                         │
-  │  ClientKeyExchange                      │
-  │  - 客户端 ECDHE 临时公钥                 │
-  │  ChangeCipherSpec                       │
-  │  - 通知：后续消息开始加密                │
-  │  Finished                               │
-  │  - 握手消息的 MAC（用协商好的密钥）       │
-  │ ─────────────────────────────────────→  │
-  │                                         │
-  │  ChangeCipherSpec                       │
-  │  Finished                               │
-  │ ←─────────────────────────────────────  │
-  │                                         │
-  │  (加密的应用数据传输)                     │
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant S as 服务器
+
+    C->>S: ClientHello\n(TLS版本, client_random, 加密套件列表)
+    S->>C: ServerHello\n(选择的TLS版本, server_random, 加密套件)
+    S->>C: Certificate (服务器证书)
+    S->>C: ServerKeyExchange (ECDHE 参数)
+    S->>C: ServerHelloDone
+    C->>S: ClientKeyExchange (客户端 DH 公钥)
+    Note over C,S: 双方计算 Pre-Master Secret\n→ Master Secret → 会话密钥
+    C->>S: ChangeCipherSpec + Finished
+    S->>C: ChangeCipherSpec + Finished
+    Note over C,S: 握手完成，开始加密通信 (2 RTT)
 ```
 
 **密钥派生过程：**
@@ -454,26 +437,17 @@ Master Secret = PRF(Pre-Master Secret, "master secret",
 
 TLS 1.3（RFC 8446）大幅简化握手，只需 **1 RTT**（甚至 0 RTT）：
 
-```
-TLS 1.3 握手:
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant S as 服务器
 
-客户端                                    服务器
-
-  │  ClientHello                            │
-  │  + key_share (ECDHE 公钥)               │  ← 第一次就发 DH 公钥
-  │  + supported_versions (TLS 1.3)        │
-  │ ─────────────────────────────────────→  │
-  │                                         │
-  │  ServerHello + key_share               │
-  │  {EncryptedExtensions}                 │  ← 大括号表示加密传输
-  │  {Certificate}                         │
-  │  {CertificateVerify}                   │
-  │  {Finished}                            │
-  │ ←─────────────────────────────────────  │
-  │                                         │  ← 服务器可以立刻发应用数据！
-  │  {Finished}                            │
-  │  [Application Data]                    │
-  │ ─────────────────────────────────────→  │
+    C->>S: ClientHello\n+ key_share (ECDHE公钥)\n+ supported_versions (TLS 1.3)
+    Note over S: 直接计算会话密钥
+    S->>C: ServerHello + key_share\n{EncryptedExtensions}\n{Certificate}\n{CertificateVerify}\n{Finished}
+    Note over C: 验证证书，计算会话密钥
+    C->>S: {Finished}
+    Note over C,S: 握手完成 (1 RTT)\n可选: 0-RTT 复用会话密钥
 ```
 
 **TLS 1.3 的主要变化：**
@@ -484,19 +458,22 @@ TLS 1.3 握手:
 
 ### 3.3 证书链验证
 
-```
-信任链:
-Root CA（内置于操作系统/浏览器）
-    └─ Intermediate CA（Root CA 签发）
-           └─ End-Entity Certificate（网站证书，Intermediate CA 签发）
+```mermaid
+flowchart TD
+    ROOT["Root CA\n（内置于操作系统/浏览器）"]
+    INTER["Intermediate CA\n（Root CA 签发）"]
+    CERT["End-Entity Certificate\n网站证书（Intermediate CA 签发）"]
 
-验证过程:
-1. 客户端收到服务器证书链
-2. 从服务器证书开始，逐级用上级证书的公钥验证签名
-3. 直到找到本地信任的 Root CA
-4. 验证每个证书的有效期（NotBefore/NotAfter）
-5. 验证证书撤销状态（OCSP/CRL）
-6. 验证 Subject CN/SAN 与请求的域名匹配
+    ROOT -->|"签发"| INTER -->|"签发"| CERT
+
+    VERIFY["验证过程\n① 客户端收到服务器证书链\n② 从服务器证书逐级验证上级证书签名\n③ 直到找到本地信任的 Root CA\n④ 验证每个证书有效期 (NotBefore/NotAfter)\n⑤ 验证证书撤销状态 (OCSP/CRL)\n⑥ 验证 Subject CN/SAN 与请求域名匹配"]
+
+    CERT -.->|"验证"| VERIFY
+
+    style ROOT fill:#10b981,color:#fff,stroke:#059669
+    style INTER fill:#4a9eff,color:#fff,stroke:#2563eb
+    style CERT fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style VERIFY fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 **证书透明度（Certificate Transparency, CT）：** 所有受信任的 CA 必须将签发的证书记录到公开的 CT Log（Merkle 树结构），浏览器检查 SCT（Signed Certificate Timestamp），防止 CA 伪造证书。
@@ -736,7 +713,7 @@ curl --http3-only https://example.com
 
 HTTP/3 支持 0-RTT 连接恢复（客户端重连时无需等待握手即可发送数据），但存在**重放攻击（Replay Attack）**风险：
 
-```
+```diagram
 0-RTT 安全风险:
 
   客户端 ──[0-RTT: GET /transfer?amount=100]──→ 服务器
@@ -757,7 +734,7 @@ HTTP/3 支持 0-RTT 连接恢复（客户端重连时无需等待握手即可发
 
 QUIC 基于**连接 ID**（而非 TCP 的四元组）标识连接，实现了无感知的连接迁移：
 
-```
+```diagram
 场景：用户在地铁中从 WiFi 切换到 4G
 
 TCP/HTTP/2:

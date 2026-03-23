@@ -64,24 +64,24 @@ Node.js 自 2009 年由 Ryan Dahl 创建以来,已成为现代后端开发的核
 
 Node.js 是一个基于 **Chrome V8 引擎**的 JavaScript 运行时,其架构可以分为三层:
 
-```
-┌─────────────────────────────────────────┐
-│  JavaScript 层                           │
-│  • 用户代码、Node.js 标准库(fs、http)    │
-└──────────────┬──────────────────────────┘
-               │ Node.js Bindings (C++)
-┌──────────────┴──────────────────────────┐
-│  C++ 层                                  │
-│  • Node.js 核心(node::)                  │
-│  • V8 引擎(JavaScript 执行)              │
-│  • libuv(异步 I/O 与事件循环)            │
-└──────────────┬──────────────────────────┘
-               │ 系统调用
-┌──────────────┴──────────────────────────┐
-│  操作系统层                              │
-│  • 网络(epoll/kqueue/IOCP)               │
-│  • 文件系统、子进程                       │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    JS_LAYER["JavaScript 层\n用户代码 · Node.js 标准库 (fs · http · path)"]
+    BINDING["Node.js Bindings (C++)\nNode.js 核心 (node::) · V8 引擎 · libuv"]
+    SYSCALL["操作系统\n系统调用 (Linux epoll / macOS kqueue / Windows IOCP)"]
+
+    JS_LAYER -->|"Node.js Bindings"| BINDING -->|"系统调用"| SYSCALL
+
+    V8["V8 引擎\nJavaScript 执行 · JIT 编译"]
+    LIBUV["libuv\n异步 I/O 与事件循环\n线程池 (4线程)"]
+
+    BINDING --> V8 & LIBUV
+
+    style JS_LAYER fill:#4a9eff,color:#fff,stroke:#2563eb
+    style BINDING fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style SYSCALL fill:#6b7280,color:#fff,stroke:#4b5563
+    style V8 fill:#10b981,color:#fff,stroke:#059669
+    style LIBUV fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 ### 2.2 核心组件
@@ -123,25 +123,25 @@ Node.js 是一个基于 **Chrome V8 引擎**的 JavaScript 运行时,其架构�
 
 ### 3.2 六阶段模型
 
-```
-   ┌───────────────────────────┐
-┌─>│           timers          │  执行 setTimeout/setInterval 回调
-│  └─────────────┬─────────────┘
-│  ┌─────────────┴─────────────┐
-│  │     pending callbacks     │  执行 I/O 回调(TCP 错误等)
-│  └─────────────┬─────────────┘
-│  ┌─────────────┴─────────────┐
-│  │       idle, prepare       │  内部使用
-│  └─────────────┬─────────────┘
-│  ┌─────────────┴─────────────┐      ┌───────────────┐
-│  │           poll            │<─────┤  incoming:    │  执行 I/O 回调(文件读取、网络)
-│  └─────────────┬─────────────┘      │  connections, │
-│  ┌─────────────┴─────────────┐      │  data, etc.   │
-│  │           check           │      └───────────────┘
-│  └─────────────┬─────────────┘  执行 setImmediate 回调
-│  ┌─────────────┴─────────────┐
-└──┤      close callbacks      │  执行 socket.on('close') 回调
-   └───────────────────────────┘
+```mermaid
+flowchart TD
+    T2["timers\n执行 setTimeout/setInterval 回调"]
+    PC2["pending callbacks\n执行 I/O 回调 (TCP 错误等)"]
+    IP2["idle, prepare\n内部使用"]
+    PO2["poll\n执行 I/O 回调 (文件读取·网络)\n可阻塞等待新 I/O"]
+    CH2["check\n执行 setImmediate 回调"]
+    CC2["close callbacks\n执行 close 事件回调"]
+    MT2["每阶段结束：清空\nnextTick 队列 + Promise 微任务"]
+
+    T2 --> MT2 --> PC2 --> MT2 --> IP2 --> MT2 --> PO2 --> MT2 --> CH2 --> MT2 --> CC2 --> MT2 --> T2
+
+    style T2 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style PC2 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style IP2 fill:#6b7280,color:#fff,stroke:#4b5563
+    style PO2 fill:#10b981,color:#fff,stroke:#059669
+    style CH2 fill:#f59e0b,color:#fff,stroke:#d97706
+    style CC2 fill:#6b7280,color:#fff,stroke:#4b5563
+    style MT2 fill:#8b5cf6,color:#fff,stroke:#7c3aed
 ```
 
 ### 3.3 各阶段详解
@@ -319,27 +319,26 @@ export UV_THREADPOOL_SIZE=8  # 设置为 8 个线程
 
 **工作流程**:
 
-```
-┌─────────────┐
-│  主线程      │
-│ (Event Loop) │
-└──────┬──────┘
-       │ 1. fs.readFile() 调用
-       ▼
-┌──────────────────────────┐
-│   libuv 线程池(4个线程)   │
-│  ┌────┐ ┌────┐ ┌────┐ ┌────┐
-│  │ T1 │ │ T2 │ │ T3 │ │ T4 │
-│  └──┬─┘ └────┘ └────┘ └────┘
-│     │ 2. 线程 T1 执行 read()
-│     │    (阻塞等待磁盘)
-│     │ 3. 完成后将结果放入队列
-└─────┼───────────────────────┘
-      │
-      ▼ 4. 事件循环检测到结果
-┌──────────────┐
-│  执行回调     │
-└──────────────┘
+```mermaid
+flowchart TD
+    MAIN["主线程 (Event Loop)"]
+    READ["fs.readFile() 调用"]
+    POOL["libuv 线程池 (默认4线程)\nT1 · T2 · T3 · T4"]
+    T1_WORK["线程 T1 执行 read()\n(阻塞等待磁盘 I/O)"]
+    QUEUE["I/O 完成 → 结果放入事件队列"]
+    EL_POLL["Event Loop poll 阶段\n检测到 I/O 结果"]
+    CB["执行回调函数"]
+
+    MAIN -->|"1. 发起调用"| READ --> POOL
+    POOL -->|"2. 分配线程"| T1_WORK
+    T1_WORK -->|"3. 完成"| QUEUE --> EL_POLL --> CB --> MAIN
+
+    style MAIN fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style POOL fill:#4a9eff,color:#fff,stroke:#2563eb
+    style T1_WORK fill:#4a9eff,color:#fff,stroke:#2563eb
+    style QUEUE fill:#f59e0b,color:#fff,stroke:#d97706
+    style EL_POLL fill:#10b981,color:#fff,stroke:#059669
+    style CB fill:#10b981,color:#fff,stroke:#059669
 ```
 
 **代码示例**:
@@ -427,29 +426,23 @@ V8 是 Node.js 的"JavaScript 执行引擎",负责:
 
 ### 5.2 V8 + Node.js 集成架构
 
-```
-┌─────────────────────────────────────┐
-│  JavaScript 代码                     │
-│  const fs = require('fs');           │
-│  fs.readFile('file.txt', callback);  │
-└──────────────┬──────────────────────┘
-               │ V8 执行
-┌──────────────┴──────────────────────┐
-│  V8 引擎                             │
-│  • 解析 AST                          │
-│  • 编译为机器码(TurboFan)            │
-│  • 调用 C++ Binding                  │
-└──────────────┬──────────────────────┘
-               │ Node.js Binding
-┌──────────────┴──────────────────────┐
-│  C++ 层 (node::fs::ReadFile)         │
-│  调用 libuv 的 uv_fs_read()          │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────┴──────────────────────┐
-│  libuv 线程池执行 read()             │
-│  完成后将结果推入事件循环队列         │
-└─────────────────────────────────────┘
+```mermaid
+flowchart TD
+    CODE["JavaScript 代码\nconst fs = require('fs')\nfs.readFile('file.txt', callback)"]
+    V8_PARSE["V8 引擎\n解析 AST · 编译为机器码 (TurboFan)\n调用 C++ Binding"]
+    BINDING2["Node.js Binding\n(C++ 层)"]
+    LIBUV2["libuv\n提交异步 I/O 任务到线程池"]
+    OS2["操作系统\n实际执行磁盘/网络 I/O"]
+    RESULT["I/O 完成 → 事件循环 → 执行 callback"]
+
+    CODE --> V8_PARSE --> BINDING2 --> LIBUV2 --> OS2 --> RESULT
+
+    style CODE fill:#4a9eff,color:#fff,stroke:#2563eb
+    style V8_PARSE fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style BINDING2 fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style LIBUV2 fill:#f59e0b,color:#fff,stroke:#d97706
+    style OS2 fill:#6b7280,color:#fff,stroke:#4b5563
+    style RESULT fill:#10b981,color:#fff,stroke:#059669
 ```
 
 ### 5.3 V8 Isolate 与 Context
@@ -886,20 +879,28 @@ Koa.js 是 Express.js 原班人马(TJ Holowaychuk)开发的下一代 Web 框架,
 
 **Koa.js(洋葱模型)**:
 
-```
-     请求
-      ↓
-  ┌────────┐
-  │   M1   │ → 前置逻辑
-  │ ┌────┐ │
-  │ │ M2 │ │ → 前置逻辑
-  │ │┌──┐│ │
-  │ ││M3││ │ → 核心处理
-  │ │└──┘│ │
-  │ └────┘ │ → 后置逻辑
-  └────────┘ → 后置逻辑
-      ↓
-     响应
+```mermaid
+flowchart TD
+    REQ2["请求"]
+    M1_PRE["M1 前置逻辑"]
+    M2_PRE["M2 前置逻辑"]
+    M3["M3 核心处理"]
+    M2_POST["M2 后置逻辑"]
+    M1_POST["M1 后置逻辑"]
+    RESP2["响应"]
+
+    REQ2 --> M1_PRE --> M2_PRE --> M3 --> M2_POST --> M1_POST --> RESP2
+
+    NOTE3["洋葱模型：\n请求从外到内穿过中间件\n响应从内到外逐层返回"]
+
+    style REQ2 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style M1_PRE fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style M2_PRE fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style M3 fill:#10b981,color:#fff,stroke:#059669
+    style M2_POST fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style M1_POST fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style RESP2 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style NOTE3 fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 ### 8.3 洋葱模型代码示例
@@ -1269,7 +1270,7 @@ create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
 
 ### 9.8 NestJS 完整项目结构
 
-```
+```diagram
 src/
 ├── app.module.ts              # 根模块
 ├── main.ts                    # 入口文件
@@ -1473,20 +1474,24 @@ if (cluster.isMaster) {
 
 **工作流程**:
 
-```
-┌──────────────┐
-│ Master 进程   │
-└──────┬───────┘
-       │ fork()
-   ┌───┴───┬───────┬───────┐
-   │       │       │       │
-┌──▼───┐ ┌─▼───┐ ┌─▼───┐ ┌─▼───┐
-│Worker│ │Worker│ │Worker│ │Worker│
-│ 1    │ │ 2    │ │ 3    │ │ 4    │
-└──────┘ └─────┘ └─────┘ └─────┘
-   ↑       ↑       ↑       ↑
-   └───────┴───────┴───────┘
-   请求轮询分配(Round-Robin)
+```mermaid
+flowchart TD
+    MASTER["Master 进程"]
+    W1["Worker 1"]
+    W2["Worker 2"]
+    W3["Worker 3"]
+    W4["Worker 4"]
+    RR["请求轮询分配\n(Round-Robin)"]
+
+    MASTER -->|"fork()"| W1 & W2 & W3 & W4
+    W1 & W2 & W3 & W4 <-->|"处理请求"| RR
+
+    style MASTER fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style W1 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style W2 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style W3 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style W4 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style RR fill:#10b981,color:#fff,stroke:#059669
 ```
 
 ### 11.3 负载均衡策略

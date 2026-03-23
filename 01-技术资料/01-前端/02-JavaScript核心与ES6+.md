@@ -460,34 +460,42 @@ JavaScript 是单线程语言，事件循环机制使其能够处理异步操作
 
 #### 浏览器事件循环流程图
 
-```
-┌─────────────────────────────────────────────────────┐
-│                    JavaScript 引擎                    │
-│  ┌──────────────┐        ┌───────────────────────┐  │
-│  │  调用栈       │        │  微任务队列             │  │
-│  │  Call Stack  │        │  MicroTask Queue       │  │
-│  │              │        │  • Promise.then        │  │
-│  │  [fn3]       │        │  • queueMicrotask      │  │
-│  │  [fn2]       │        │  • MutationObserver    │  │
-│  │  [fn1]       │        └───────────────────────┘  │
-│  │  [global]    │                                    │
-│  └──────┬───────┘                                    │
-│         │ 栈空时                                      │
-│         ▼                                            │
-│  ┌──────────────┐        ┌───────────────────────┐  │
-│  │  事件循环     │◄───────│  宏任务队列             │  │
-│  │  Event Loop  │        │  MacroTask Queue       │  │
-│  └──────────────┘        │  • setTimeout          │  │
-│                          │  • setInterval         │  │
-└─────────────────────────-│  • I/O 回调            │──┘
-                           │  • requestAnimationFrame│
-                           └───────────────────────┘
+```mermaid
+flowchart TB
+    subgraph ENGINE["JavaScript 引擎"]
+        subgraph CALLSTACK["调用栈 Call Stack（同步执行）"]
+            FN3["fn3 (栈顶)"]
+            FN2["fn2"]
+            FN1["fn1 (栈底)"]
+        end
+        HEAP["内存堆 Heap\n对象存储"]
+    end
 
-事件循环算法：
-1. 从宏任务队列取出一个任务执行
-2. 执行完毕后，清空所有微任务队列（直到队列为空）
-3. 执行 UI 渲染（如有需要）
-4. 回到步骤 1
+    subgraph MICRO["微任务队列 MicroTask Queue（优先）"]
+        PT["Promise.then"]
+        QM["queueMicrotask"]
+        MO["MutationObserver"]
+    end
+
+    subgraph MACRO["宏任务队列 MacroTask Queue"]
+        ST["setTimeout / setInterval"]
+        DOM_EV["DOM 事件"]
+        IO["I/O 回调"]
+    end
+
+    EL["Event Loop\n事件循环"]
+
+    CALLSTACK -->|"调用栈清空"| EL
+    EL -->|"优先清空所有微任务"| MICRO
+    EL -->|"取一个宏任务"| MACRO
+    MACRO -->|"放入调用栈"| CALLSTACK
+
+    style ENGINE fill:#1e293b,color:#fff,stroke:#334155
+    style CALLSTACK fill:#4a9eff,color:#fff,stroke:#2563eb
+    style HEAP fill:#6b7280,color:#fff,stroke:#4b5563
+    style MICRO fill:#10b981,color:#fff,stroke:#059669
+    style MACRO fill:#f59e0b,color:#fff,stroke:#d97706
+    style EL fill:#8b5cf6,color:#fff,stroke:#7c3aed
 ```
 
 #### 宏任务（MacroTask）vs 微任务（MicroTask）
@@ -511,35 +519,25 @@ Node.js 基于 libuv 实现事件循环，分为 **6 个阶段**，按顺序循�
 
 #### Node.js 事件循环六阶段
 
-```
-   ┌─────────────────────────────┐
-   │           timers            │  ← 执行 setTimeout/setInterval 到期回调
-   └─────────────┬───────────────┘
-                 │
-   ┌─────────────▼───────────────┐
-   │       pending callbacks     │  ← 执行上一轮延迟的 I/O 错误回调
-   └─────────────┬───────────────┘
-                 │
-   ┌─────────────▼───────────────┐
-   │        idle, prepare        │  ← 仅内部使用
-   └─────────────┬───────────────┘
-                 │
-   ┌─────────────▼───────────────┐
-   │            poll             │  ← 获取新的 I/O 事件（核心阶段）
-   │                             │    若队列为空则等待新事件
-   └─────────────┬───────────────┘
-                 │
-   ┌─────────────▼───────────────┐
-   │            check            │  ← 执行 setImmediate 回调
-   └─────────────┬───────────────┘
-                 │
-   ┌─────────────▼───────────────┐
-   │       close callbacks       │  ← 执行 close 事件回调（如 socket.destroy）
-   └─────────────┬───────────────┘
-                 │
-        （进入下一轮循环）
+```mermaid
+flowchart TD
+    T["timers\n执行 setTimeout/setInterval 到期回调"]
+    PC["pending callbacks\n执行上一轮延迟的 I/O 错误回调"]
+    IP["idle, prepare\n仅内部使用"]
+    PO["poll\n检索新 I/O 事件（可阻塞等待）"]
+    CH["check\n执行 setImmediate 回调"]
+    CC["close callbacks\n执行关闭事件回调"]
+    MT["每阶段结束：清空\nprocess.nextTick 队列 + Promise 微任务"]
 
-  ⚠️  每个阶段切换前，都会清空 process.nextTick 队列和 Promise 微任务队列
+    T --> MT --> PC --> MT --> IP --> MT --> PO --> MT --> CH --> MT --> CC --> MT --> T
+
+    style T fill:#4a9eff,color:#fff,stroke:#2563eb
+    style PC fill:#4a9eff,color:#fff,stroke:#2563eb
+    style IP fill:#6b7280,color:#fff,stroke:#4b5563
+    style PO fill:#10b981,color:#fff,stroke:#059669
+    style CH fill:#f59e0b,color:#fff,stroke:#d97706
+    style CC fill:#6b7280,color:#fff,stroke:#4b5563
+    style MT fill:#8b5cf6,color:#fff,stroke:#7c3aed
 ```
 
 #### 各阶段详解
@@ -656,33 +654,21 @@ console.log("end");
 
 #### 原型链 ASCII 图
 
-```
-实例对象 alice
-┌─────────────────┐
-│  name: 'Alice'  │
-│  [[Prototype]] ─┼──→ Person.prototype
-└─────────────────┘     ┌─────────────────────┐
-                        │  constructor: Person │
-                        │  greet: function     │
-                        │  [[Prototype]] ─────┼──→ Object.prototype
-                        └─────────────────────┘     ┌──────────────────────┐
-                                                     │  toString: function   │
-                                                     │  hasOwnProperty: fn  │
-                                                     │  [[Prototype]] ──────┼──→ null
-                                                     └──────────────────────┘
+```mermaid
+flowchart LR
+    ALICE["实例对象 alice\nname: 'Alice'"]
+    PP["Person.prototype\nconstructor: Person\ngreet: function"]
+    OP["Object.prototype\ntoString: function\nhasOwnProperty: fn"]
+    NULL["null"]
 
-访问 alice.greet：
-1. alice 自身 → 没有 greet
-2. Person.prototype → 找到 greet ✅
+    ALICE -->|"[[Prototype]]"| PP
+    PP -->|"[[Prototype]]"| OP
+    OP -->|"[[Prototype]]"| NULL
 
-访问 alice.toString：
-1. alice 自身 → 没有
-2. Person.prototype → 没有
-3. Object.prototype → 找到 toString ✅
-
-访问 alice.nonExistent：
-1. alice → Person.prototype → Object.prototype → null
-2. 返回 undefined
+    style ALICE fill:#4a9eff,color:#fff,stroke:#2563eb
+    style PP fill:#10b981,color:#fff,stroke:#059669
+    style OP fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style NULL fill:#6b7280,color:#fff,stroke:#4b5563
 ```
 
 ---

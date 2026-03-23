@@ -383,12 +383,28 @@ cache = weakref.WeakValueDictionary()
 
 CPython 使用 **pymalloc** 小对象分配器优化频繁的小内存分配（≤ 512 字节）：
 
-```
-操作系统 (mmap/brk)
-    └─ Python 内存分配器 (pymalloc)
-        ├─ Arena (256KB) — 向操作系统申请的大块内存
-        │   ├─ Pool (4KB) — 按对象大小分类
-        │   │   ├─ Block (8B, 16B, ..., 512B) — 实际对象存储
+```mermaid
+flowchart TD
+    OS["操作系统 (mmap/brk)"]
+    PYMALLOC["Python 内存分配器 (pymalloc)"]
+    ARENA["Arena (256KB)\n向操作系统申请的大块内存"]
+    POOL["Pool (4KB)\n按对象大小分类"]
+    BLOCK["Block (8B, 16B, ..., 512B)\n实际对象存储"]
+    LARGE["大对象 (>512B)\n直接调用 malloc"]
+    GC["GC 垃圾回收\n引用计数 + 分代回收\n解决循环引用"]
+
+    OS --> PYMALLOC
+    PYMALLOC --> ARENA --> POOL --> BLOCK
+    PYMALLOC -->|"大对象"| LARGE
+    BLOCK -.->|"管理"| GC
+
+    style OS fill:#6b7280,color:#fff,stroke:#4b5563
+    style PYMALLOC fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style ARENA fill:#4a9eff,color:#fff,stroke:#2563eb
+    style POOL fill:#4a9eff,color:#fff,stroke:#2563eb
+    style BLOCK fill:#4a9eff,color:#fff,stroke:#2563eb
+    style LARGE fill:#f59e0b,color:#fff,stroke:#d97706
+    style GC fill:#10b981,color:#fff,stroke:#059669
 ```
 
 小于 512 字节的对象从 pymalloc 池中分配（快速），超过 512 字节直接调用系统 `malloc`。
@@ -919,19 +935,35 @@ async def another_good():
 
 ### 8.2 选择指南
 
-```
-需要并发处理？
-├── CPU 密集型任务（计算、视频编码、加密）
-│   ├── 少量任务 → multiprocessing.Process
-│   └── 大量任务 → concurrent.futures.ProcessPoolExecutor
-│
-├── I/O 密集型任务（网络请求、文件读写、数据库）
-│   ├── 少量连接（<100）→ threading 即可
-│   ├── 大量连接（>100）→ asyncio（首选）
-│   └── 混合新旧代码 → concurrent.futures.ThreadPoolExecutor
-│
-└── 混合型
-    └── asyncio + loop.run_in_executor（将 CPU 任务卸载到进程池）
+```mermaid
+flowchart TD
+    Q["需要并发处理？"]
+    CPU["CPU 密集型任务\n计算 · 视频编码 · 加密"]
+    IO["I/O 密集型任务\n网络请求 · 文件读写 · 数据库"]
+    MIX["混合型"]
+
+    FEW["少量任务\n→ multiprocessing.Process"]
+    MANY["大量任务\n→ ProcessPoolExecutor"]
+    THREAD["少量连接 (<100)\n→ threading 即可"]
+    ASYNC["大量连接 (>100)\n→ asyncio（首选）"]
+    OLD["混合新旧代码\n→ ThreadPoolExecutor"]
+    EXEC["asyncio + loop.run_in_executor\n将 CPU 任务卸载到进程池"]
+
+    Q --> CPU & IO & MIX
+    CPU --> FEW & MANY
+    IO --> THREAD & ASYNC & OLD
+    MIX --> EXEC
+
+    style Q fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style CPU fill:#ef4444,color:#fff,stroke:#dc2626
+    style IO fill:#4a9eff,color:#fff,stroke:#2563eb
+    style MIX fill:#f59e0b,color:#fff,stroke:#d97706
+    style FEW fill:#10b981,color:#fff,stroke:#059669
+    style MANY fill:#10b981,color:#fff,stroke:#059669
+    style THREAD fill:#10b981,color:#fff,stroke:#059669
+    style ASYNC fill:#10b981,color:#fff,stroke:#059669
+    style OLD fill:#6b7280,color:#fff,stroke:#4b5563
+    style EXEC fill:#10b981,color:#fff,stroke:#059669
 ```
 
 ```python
@@ -963,11 +995,19 @@ asyncio.run(main())
 
 FastAPI 构建在三大核心之上：
 
-```
-FastAPI
-├── Starlette — ASGI 框架（异步路由、中间件、WebSocket）
-├── Pydantic — 数据验证与序列化（基于类型注解）
-└── Uvicorn — ASGI 服务器（基于 uvloop + httptools）
+```mermaid
+flowchart TD
+    FASTAPI["FastAPI"]
+    STARLETTE["Starlette\nASGI 框架\n异步路由 · 中间件 · WebSocket"]
+    PYDANTIC["Pydantic\n数据验证与序列化\n基于类型注解"]
+    UVICORN["Uvicorn\nASGI 服务器\n基于 uvloop + httptools"]
+
+    FASTAPI --> STARLETTE & PYDANTIC & UVICORN
+
+    style FASTAPI fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style STARLETTE fill:#4a9eff,color:#fff,stroke:#2563eb
+    style PYDANTIC fill:#10b981,color:#fff,stroke:#059669
+    style UVICORN fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 **ASGI vs WSGI**：

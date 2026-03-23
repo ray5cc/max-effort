@@ -46,35 +46,36 @@
 
 JVM 规范（JSR 133）定义的运行时数据区，HotSpot 实现如下：
 
-```
-JVM 运行时数据区（每个 JVM 进程）:
+```mermaid
+flowchart TD
+    subgraph JVM["JVM 运行时数据区（进程级共享）"]
+        MA["方法区 Method Area / Metaspace (JDK8+)\n类信息 · 常量池 · 静态变量 · JIT 编译后的代码"]
+        subgraph HEAP["堆 Heap（所有线程共享）"]
+            subgraph YOUNG["Young Generation 新生代 (1/3)"]
+                EDEN["Eden Space (80%)\n新对象分配区"]
+                S0["Survivor S0 (10%)"]
+                S1["Survivor S1 (10%)"]
+            end
+            OLD["Old Generation 老生代 (2/3)\n存活多轮 GC 的对象"]
+        end
+    end
 
-┌─────────────────────────────────────────────────────────────┐
-│  方法区（Method Area）/ Metaspace（JDK 8+）                  │
-│  存储：类信息、常量池、静态变量、JIT 编译后的代码             │
-├─────────────────────────────────────────────────────────────┤
-│  堆（Heap）—— 所有线程共享                                    │
-│  ┌───────────────────────┬──────────────────────────────┐   │
-│  │   Young Generation    │      Old Generation          │   │
-│  │  ┌──────┬──────────┐  │  （存活多轮 GC 的对象）       │   │
-│  │  │ Eden │ Survivor │  │                              │   │
-│  │  │      │  S0 │ S1 │  │                              │   │
-│  │  └──────┴──────────┘  │                              │   │
-│  └───────────────────────┴──────────────────────────────┘   │
-├─────────────────────────────────────────────────────────────┤
-│  以下为每线程独有:                                            │
-│  ┌──────────────────────────────────────────────┐           │
-│  │  虚拟机栈（VM Stack）                          │ Thread 1 │
-│  │  每个方法调用对应一个栈帧（Stack Frame）：      │           │
-│  │  └─ 局部变量表 + 操作数栈 + 动态链接 + 返回地址│           │
-│  ├──────────────────────────────────────────────┤           │
-│  │  本地方法栈（Native Method Stack）             │           │
-│  │  执行 native 方法时使用                        │           │
-│  ├──────────────────────────────────────────────┤           │
-│  │  程序计数器（Program Counter Register）        │           │
-│  │  记录当前线程执行的字节码行号（native 方法为空）│           │
-│  └──────────────────────────────────────────────┘           │
-└─────────────────────────────────────────────────────────────┘
+    subgraph THREAD["每线程私有"]
+        PC["PC Register\n程序计数器"]
+        STACK["JVM Stack\n栈帧"]
+        NATIVE["Native Method Stack\n本地方法栈"]
+    end
+
+    style MA fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style HEAP fill:#1e293b,color:#fff,stroke:#334155
+    style YOUNG fill:#4a9eff,color:#fff,stroke:#2563eb
+    style EDEN fill:#4a9eff,color:#fff,stroke:#2563eb
+    style S0 fill:#6b7280,color:#fff,stroke:#4b5563
+    style S1 fill:#6b7280,color:#fff,stroke:#4b5563
+    style OLD fill:#10b981,color:#fff,stroke:#059669
+    style PC fill:#f59e0b,color:#fff,stroke:#d97706
+    style STACK fill:#f59e0b,color:#fff,stroke:#d97706
+    style NATIVE fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 **注意：** 程序计数器是 JVM 规范中**唯一不会发生 OOM 的区域**。虚拟机栈抛 `StackOverflowError`（递归太深）或 `OutOfMemoryError`（无法扩展时）。
@@ -83,40 +84,64 @@ JVM 运行时数据区（每个 JVM 进程）:
 
 HotSpot 的堆基于**分代假说（Generational Hypothesis）**：大多数对象"朝生夕死"，少数对象存活很长时间。
 
-```
-Young Generation（新生代，默认 1/3 堆）:
-├── Eden Space（新对象分配区，默认 80%）
-├── Survivor 0 (S0, 10%)
-└── Survivor 1 (S1, 10%)
+```mermaid
+flowchart TD
+    subgraph YOUNG["Young Generation 新生代 (默认 1/3 堆)"]
+        EDEN["Eden Space (80%)\n新对象分配区"]
+        S0["Survivor 0 (10%)"]
+        S1["Survivor 1 (10%)"]
+    end
 
-Minor GC 流程:
-  1. Eden 满 → 触发 Minor GC
-  2. Eden + S0（或S1）中存活对象复制到 S1（或S0）
-  3. 对象年龄+1（每次 Minor GC 存活一次+1）
-  4. 年龄 >= MaxTenuringThreshold（默认15）→ 晋升 Old Gen
-  5. S 区空间不足时 → 直接晋升 Old Gen（空间担保）
+    subgraph OLD["Old Generation 老生代 (默认 2/3 堆)"]
+        OLDOBJ["存储晋升的长生命周期对象\n大对象直接分配 (-XX:PretenureSizeThreshold)\nMajor GC / Full GC 时回收"]
+    end
 
-Old Generation（老年代，默认 2/3 堆）:
-├── 存储晋升的长生命周期对象
-├── 大对象直接分配（-XX:PretenureSizeThreshold）
-└── Major GC / Full GC 时回收
+    MGCFLOW["Minor GC 流程\n① Eden 满 → 触发 Minor GC\n② Eden + S0/S1 中存活对象复制到另一 Survivor\n③ 对象年龄 +1 (每次 Minor GC 存活一次)\n④ 年龄 >= MaxTenuringThreshold(默认15) → 晋升 Old Gen\n⑤ S 区空间不足 → 直接晋升 Old Gen (空间担保)"]
+
+    EDEN -->|"存活对象"| S0 & S1
+    S0 & S1 -->|"年龄达阈值"| OLDOBJ
+    EDEN -.->|"触发 Minor GC"| MGCFLOW
+
+    style EDEN fill:#4a9eff,color:#fff,stroke:#2563eb
+    style S0 fill:#6b7280,color:#fff,stroke:#4b5563
+    style S1 fill:#6b7280,color:#fff,stroke:#4b5563
+    style OLDOBJ fill:#10b981,color:#fff,stroke:#059669
+    style MGCFLOW fill:#8b5cf6,color:#fff,stroke:#7c3aed
 ```
 
 **对象分配流程：**
 
-```
-new Object() 分配流程:
+```mermaid
+flowchart TD
+    START["new Object() 分配请求"]
+    TLAB{"TLAB 有剩余空间？\n(Thread-Local Allocation Buffer，无锁)"}
+    TLAB_ALLOC["直接在 TLAB 中 bump pointer 分配\n（最快路径）"]
+    NEWTLAB{"请求新 TLAB 或\n直接在 Eden CAS 分配"}
+    EDEN{"Eden 空间足够？"}
+    MINOR["触发 Minor GC"]
+    LARGE{"对象 > PretenureSizeThreshold？"}
+    OLD_ALLOC["直接分配到 Old Gen"]
+    FULL{"Old Gen 也不够？"}
+    FULL_GC["Full GC"]
+    OOM["OutOfMemoryError"]
 
-1. 尝试 TLAB（Thread-Local Allocation Buffer，无锁）
-   └─ TLAB 有剩余空间 → 直接在 TLAB 中 bump pointer 分配（最快路径）
+    START --> TLAB
+    TLAB -->|"是"| TLAB_ALLOC
+    TLAB -->|"否"| NEWTLAB --> EDEN
+    EDEN -->|"否"| MINOR --> LARGE
+    LARGE -->|"是"| OLD_ALLOC
+    LARGE -->|"否"| EDEN
+    OLD_ALLOC --> FULL
+    FULL -->|"是"| FULL_GC --> OOM
+    FULL -->|"否"| TLAB_ALLOC
 
-2. TLAB 不够 → 请求新 TLAB 或直接在 Eden 上 CAS 分配
-
-3. Eden 空间不足 → 触发 Minor GC
-
-4. 对象太大（> PretenureSizeThreshold）→ 直接分配到 Old Gen
-
-5. Old Gen 也不够 → Full GC → 仍不够 → OOM
+    style START fill:#4a9eff,color:#fff,stroke:#2563eb
+    style TLAB fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style TLAB_ALLOC fill:#10b981,color:#fff,stroke:#059669
+    style MINOR fill:#f59e0b,color:#fff,stroke:#d97706
+    style OLD_ALLOC fill:#f59e0b,color:#fff,stroke:#d97706
+    style FULL_GC fill:#ef4444,color:#fff,stroke:#dc2626
+    style OOM fill:#ef4444,color:#fff,stroke:#dc2626
 ```
 
 ### 1.3 Metaspace 元空间
@@ -171,31 +196,24 @@ JDK 8 将**永久代（PermGen）改为 Metaspace（元空间）**，主要区�
 
 CMS（Concurrent Mark Sweep）是 JDK 9 之前广泛使用的低延迟收集器，针对 Old Gen。
 
-```
-CMS GC 阶段：
+```mermaid
+flowchart TD
+    S1["① Initial Mark (STW，短暂停)\n标记 GC Roots 直接引用的对象"]
+    S2["② Concurrent Mark（并发，不停用户线程）\n从 GC Roots 并发遍历对象图\n使用写屏障记录并发期间的引用变化 (增量更新)"]
+    S3["③ Remark (STW，比 Initial Mark 稍长)\n重新处理并发标记期间变化的引用\n防止漏标"]
+    S4["④ Concurrent Sweep（并发，不停用户线程）\n清除死对象，释放空间"]
+    S5["⑤ Concurrent Reset（并发）\n重置 CMS 数据结构"]
+    ISSUES["⚠️ 关键缺陷\n• 并发清除不整理，产生内存碎片\n• 浮动垃圾 (Floating Garbage)\n• 占用 CPU 资源（与应用竞争）\n• Old Gen 使用率达 CMSInitiatingOccupancyFraction(92%)\n  来不及时退化为 Serial Old (STW Full GC) —— 性能灾难"]
 
-1. Initial Mark（STW，短暂停）
-   └─ 标记 GC Roots 直接引用的对象
+    S1 --> S2 --> S3 --> S4 --> S5
+    S5 -.->|"缺陷"| ISSUES
 
-2. Concurrent Mark（并发，不停用户线程）
-   └─ 从 GC Roots 开始，并发遍历对象图
-   └─ 使用写屏障记录并发标记期间的引用变化（增量更新）
-
-3. Remark（STW，比 Initial Mark 稍长）
-   └─ 重新处理并发标记期间变化的引用（防止漏标）
-
-4. Concurrent Sweep（并发，不停用户线程）
-   └─ 清除死对象，释放空间
-
-5. Concurrent Reset（并发）
-   └─ 重置 CMS 数据结构
-
-关键缺陷:
-- 并发清除时不整理，产生内存碎片（无法整理大对象）
-- "浮动垃圾"（Floating Garbage）：并发标记期间新产生的垃圾，需下轮 GC 清理
-- 占用 CPU 资源（并发阶段与应用程序竞争）
-- 当 Old Gen 使用率达到 CMSInitiatingOccupancyFraction（默认 92%）触发 GC，
-  来不及时退化为 Serial Old（单线程 Stop-The-World Full GC）—— 性能灾难
+    style S1 fill:#ef4444,color:#fff,stroke:#dc2626
+    style S2 fill:#10b981,color:#fff,stroke:#059669
+    style S3 fill:#ef4444,color:#fff,stroke:#dc2626
+    style S4 fill:#10b981,color:#fff,stroke:#059669
+    style S5 fill:#10b981,color:#fff,stroke:#059669
+    style ISSUES fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 ### 2.3 G1 收集器
@@ -204,7 +222,7 @@ G1（Garbage First）是 JDK 9+ 的默认收集器，可预测停顿时间。
 
 **Region 化内存布局：**
 
-```
+```diagram
 G1 堆内存（Region 划分，每个 Region 1-32MB，默认 2048 个）:
 
 ┌──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┐
@@ -341,20 +359,22 @@ Concurrent Relocate (并发)      — 将存活对象复制到新 Region
 
 ### 3.2 双亲委派模型
 
-```
-类加载器层级:
+```mermaid
+flowchart TD
+    BCL["Bootstrap ClassLoader (C++，无 Java 对象)\n加载 JAVA_HOME/lib/ (rt.jar 等核心类库)"]
+    ECL["Extension ClassLoader\nPlatformClassLoader (JDK9+)\n加载 JAVA_HOME/lib/ext/ 扩展类库"]
+    ACL["Application ClassLoader\nAppClassLoader\n加载 classpath 上的应用类"]
+    CUSTOM["自定义 ClassLoader\n按需加载（热部署/加密/隔离等场景）"]
+    DPD["双亲委派机制\n加载请求先委托父类加载器\n父类加载不了再由子类尝试"]
 
-Bootstrap ClassLoader（C++ 实现，无 Java 对象）
-  └─ 加载 JAVA_HOME/lib/（rt.jar 等核心类库）
+    BCL -->|"子加载器"| ECL --> ACL --> CUSTOM
+    ACL -.->|"遵循"| DPD
 
-Extension ClassLoader（jdk.internal.loader.ClassLoaders.PlatformClassLoader）
-  └─ 加载 JAVA_HOME/lib/ext/ 扩展类库
-
-Application ClassLoader（jdk.internal.loader.ClassLoaders.AppClassLoader）
-  └─ 加载 classpath 上的应用类
-
-自定义 ClassLoader
-  └─ 按需加载（热部署/加密/隔离等场景）
+    style BCL fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style ECL fill:#4a9eff,color:#fff,stroke:#2563eb
+    style ACL fill:#4a9eff,color:#fff,stroke:#2563eb
+    style CUSTOM fill:#10b981,color:#fff,stroke:#059669
+    style DPD fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 **委派流程（`ClassLoader.loadClass()` 源码）：**
@@ -437,7 +457,7 @@ public class EncryptedClassLoader extends ClassLoader {
 
 `synchronized` 基于 JVM 对象头的 **Mark Word** 实现锁，经历了四种状态（锁升级）：
 
-```
+```diagram
 Object Header (64-bit JVM):
 
 Mark Word (8 bytes):
@@ -453,26 +473,27 @@ Klass Pointer (8 bytes，指向方法区的 Class 对象，启用压缩指针时
 
 **锁升级过程：**
 
-```
-无锁
- │ 第一次有线程获取锁
- ↓
-偏向锁 (Biased Locking)
- │ 在 Mark Word 记录线程 ID
- │ 该线程再次进入，只需检查线程 ID（无 CAS）
- │ 另一个线程尝试获取 → 撤销偏向（STW）
- ↓
-轻量级锁 (Thin Lock)
- │ 在线程栈帧创建 Lock Record，CAS 将 Mark Word 替换为 Lock Record 指针
- │ 失败（有竞争）→ 自旋等待（默认自旋10次）
- │ 自旋仍失败 → 膨胀
- ↓
-重量级锁 (Fat Lock / Monitor)
-  使用 OS 互斥量（pthread_mutex_t），线程进入等待状态（阻塞）
-  Monitor 结构：
-    _owner: 持有锁的线程
-    _EntryList: 等待锁的线程队列
-    _WaitSet: 调用 wait() 的线程队列
+```mermaid
+stateDiagram-v2
+    [*] --> 无锁
+
+    无锁 --> 偏向锁 : 第一次有线程获取锁\n在 Mark Word 记录线程 ID
+    state 偏向锁 {
+        [*] --> 持有 : CAS 记录线程ID
+        持有 --> 持有 : 同一线程再次进入（无CAS）
+    }
+    偏向锁 --> 轻量级锁 : 另一个线程尝试获取\n撤销偏向 (STW)
+
+    state 轻量级锁 {
+        [*] --> CAS尝试 : 创建 Lock Record\nCAS 替换 Mark Word
+        CAS尝试 --> 自旋等待 : CAS 失败（有竞争）
+        自旋等待 --> CAS尝试 : 重试
+    }
+    轻量级锁 --> 重量级锁 : 自旋超次数\n膨胀
+
+    state 重量级锁 {
+        [*] --> Monitor : OS互斥量 pthread_mutex_t\n_owner · _EntryList · _WaitSet
+    }
 ```
 
 **`synchronized` 字节码：**
@@ -591,20 +612,31 @@ public abstract class AbstractQueuedSynchronizer {
 
 **AQS 独占模式获取锁流程（`lock()` → `acquire(1)`）：**
 
-```
-tryAcquire(1)  —— 子类实现（ReentrantLock: CAS state 0→1）
-  │
-  ├─ 成功 → 获得锁，直接返回
-  │
-  └─ 失败 → addWaiter(Node.EXCLUSIVE)  —— 当前线程加入等待队列尾部
-               │
-               └─ acquireQueued(node, 1)  —— 自旋等待
-                     │
-                     ├─ 如果前驱是头节点：再次 tryAcquire
-                     │   └─ 成功 → 设自己为头节点，获得锁
-                     │
-                     └─ shouldParkAfterFailedAcquire
-                         └─ LockSupport.park(this)  —— 阻塞等待 unpark 信号
+```mermaid
+flowchart TD
+    START["tryAcquire(1)\n子类实现 (ReentrantLock: CAS state 0→1)"]
+    SUCCESS["获得锁，直接返回"]
+    ADDWAITER["addWaiter(Node.EXCLUSIVE)\n当前线程加入等待队列尾部"]
+    ACQUIREQ["acquireQueued(node, 1)\n自旋等待"]
+    PREV{"前驱是头节点？"}
+    TRYAGAIN["再次 tryAcquire"]
+    SETHEAD["设自己为头节点，获得锁"]
+    PARK["shouldParkAfterFailedAcquire\n→ LockSupport.park(this)\n阻塞等待 unpark 信号"]
+
+    START -->|"成功"| SUCCESS
+    START -->|"失败"| ADDWAITER --> ACQUIREQ --> PREV
+    PREV -->|"是"| TRYAGAIN
+    TRYAGAIN -->|"成功"| SETHEAD
+    TRYAGAIN -->|"失败"| PARK
+    PREV -->|"否"| PARK
+    PARK -.->|"unpark 后继续"| ACQUIREQ
+
+    style START fill:#4a9eff,color:#fff,stroke:#2563eb
+    style SUCCESS fill:#10b981,color:#fff,stroke:#059669
+    style ADDWAITER fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style ACQUIREQ fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style SETHEAD fill:#10b981,color:#fff,stroke:#059669
+    style PARK fill:#ef4444,color:#fff,stroke:#dc2626
 ```
 
 ### 4.5 ReentrantLock vs synchronized
@@ -628,20 +660,25 @@ tryAcquire(1)  —— 子类实现（ReentrantLock: CAS state 0→1）
 
 JMM 是 Java 对底层硬件内存模型的抽象，定义了线程如何访问共享变量：
 
-```
-线程 A                              线程 B
-┌──────────────┐                  ┌──────────────┐
-│  工作内存     │                  │  工作内存     │
-│  (CPU 寄存器  │                  │  (CPU 寄存器  │
-│   + L1/L2   │                  │   + L1/L2   │
-│   Cache)    │                  │   Cache)    │
-└──────┬───────┘                  └──────┬───────┘
-       │  read/write/lock/unlock          │
-       ↕                                 ↕
-┌──────────────────────────────────────────────────┐
-│               主内存（Main Memory）                │
-│         存储所有共享变量的"权威副本"                │
-└──────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph TA["线程 A"]
+        WMA["工作内存\nCPU 寄存器 + L1/L2 Cache"]
+    end
+    subgraph TB_["线程 B"]
+        WMB["工作内存\nCPU 寄存器 + L1/L2 Cache"]
+    end
+    MAIN["主内存 Main Memory\n存储所有共享变量的权威副本"]
+
+    WMA <-->|"read/write/lock/unlock"| MAIN
+    WMB <-->|"read/write/lock/unlock"| MAIN
+
+    NOTE["volatile 保证可见性：\n写操作立即刷新到主内存\n读操作强制从主内存加载\nsynchronized 同时保证原子性 + 可见性 + 有序性"]
+
+    style WMA fill:#4a9eff,color:#fff,stroke:#2563eb
+    style WMB fill:#4a9eff,color:#fff,stroke:#2563eb
+    style MAIN fill:#10b981,color:#fff,stroke:#059669
+    style NOTE fill:#8b5cf6,color:#fff,stroke:#7c3aed
 ```
 
 JMM 定义了 8 种原子操作（lock/unlock/read/load/use/assign/store/write），确保每个操作的语义清晰，以及它们之间的次序规则。
