@@ -4,6 +4,7 @@ import RecallBlock from './components/RecallBlock.vue'
 import BookmarkReview from './components/BookmarkReview.vue'
 import './style.css'
 import './memory-colors.css'
+import './ascii-diagram.css'
 
 export default {
   extends: DefaultTheme,

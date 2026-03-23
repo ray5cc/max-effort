@@ -3,6 +3,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 import type MarkdownIt from 'markdown-it'
 import fs from 'node:fs'
 import path from 'node:path'
+import { asciiDiagramPlugin } from './plugins/asciiDiagramPlugin'
 
 const ROOT = path.resolve(__dirname, '..')
 
@@ -72,6 +73,16 @@ function safeContentPlugin(md: MarkdownIt) {
   md.renderer.rules.html_block = (tokens, idx) => {
     return escapeBraces(tokens[idx].content)
   }
+
+  // 4) code_inline 中的 {{ }} 也需要转义
+  const originalCodeInline = md.renderer.rules.code_inline!
+  md.renderer.rules.code_inline = (tokens, idx, options, env, self) => {
+    const token = tokens[idx]
+    token.content = token.content.replace(/\{\{/g, '&#123;&#123;').replace(/\}\}/g, '&#125;&#125;')
+    return originalCodeInline(tokens, idx, options, env, self)
+  }
+
+  // Note: fence escaping is handled by asciiDiagramPlugin
 }
 
 /* ------------------------------------------------------------------ */
@@ -104,7 +115,9 @@ export default withMermaid(defineConfig({
 
   markdown: {
     config: (md) => {
+      // IMPORTANT: safeContentPlugin must run FIRST to escape {{ }} before other plugins
       md.use(safeContentPlugin)
+      md.use(asciiDiagramPlugin)
     },
   },
 
