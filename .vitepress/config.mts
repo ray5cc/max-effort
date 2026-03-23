@@ -1,7 +1,9 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 import type MarkdownIt from 'markdown-it'
 import fs from 'node:fs'
 import path from 'node:path'
+import { svgDiagramPlugin } from './plugins/svgDiagramPlugin'
 
 const ROOT = path.resolve(__dirname, '..')
 
@@ -77,7 +79,7 @@ function safeContentPlugin(md: MarkdownIt) {
 /*  VitePress 配置                                                     */
 /* ------------------------------------------------------------------ */
 
-export default defineConfig({
+export default withMermaid(defineConfig({
   title: 'Max Effort',
   description: 'AI Agent 全栈开发知识库',
   lang: 'zh-CN',
@@ -104,6 +106,7 @@ export default defineConfig({
   markdown: {
     config: (md) => {
       md.use(safeContentPlugin)
+      md.use(svgDiagramPlugin)
     },
   },
 
@@ -160,4 +163,9 @@ export default defineConfig({
       next: '下一篇',
     },
   },
-})
+
+  // Mermaid 配置
+  mermaid: {
+    theme: 'default',
+  },
+}))

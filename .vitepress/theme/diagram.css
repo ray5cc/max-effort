@@ -1,0 +1,79 @@
+/* ================================================================== */
+/*  ASCII Diagram → SVG 图表样式                                       */
+/*  支持 VitePress 明/暗主题                                            */
+/* ================================================================== */
+
+/* 容器 */
+.ascii-diagram-container {
+  margin: 16px 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 内联 SVG */
+.ascii-diagram-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  min-width: 320px;
+}
+
+.ascii-diagram-svg .d-bg {
+  fill: var(--vp-code-bg);
+  stroke: var(--vp-c-divider);
+  stroke-width: 1;
+}
+
+.ascii-diagram-svg .d-txt {
+  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas',
+    'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 20px;
+  fill: var(--vp-c-text-1);
+  white-space: pre;
+}
+
+/* 预渲染 SVG 图片 */
+.ascii-diagram-img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--vp-c-divider);
+}
+
+/* ================================================================== */
+/*  响应式适配                                                          */
+/* ================================================================== */
+
+@media (max-width: 768px) {
+  .ascii-diagram-container {
+    margin: 12px -16px;
+    padding: 0 8px;
+    border-radius: 0;
+  }
+
+  .ascii-diagram-svg {
+    min-width: 280px;
+  }
+
+  .ascii-diagram-svg .d-txt {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ascii-diagram-svg .d-txt {
+    font-size: 11px;
+  }
+}
+
+/* ================================================================== */
+/*  无障碍：减少动画                                                     */
+/* ================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .ascii-diagram-container {
+    scroll-behavior: auto;
+  }
+}
