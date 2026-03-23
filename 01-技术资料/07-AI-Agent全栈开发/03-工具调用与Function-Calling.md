@@ -85,38 +85,38 @@ Function Calling（工具调用）通过让模型输出**结构化的函数调�
 
 工具调用的核心是一个**请求-执行-回传**的闭环：
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                   工具调用完整流程                        │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    U["用户输入"] --> App1["应用层"]
+    App1 -->|"携带工具定义"| LLM1["LLM
+(GPT-4 / Claude / Gemini)"]
+    LLM1 -->|"tool_calls JSON 列表"| App1
+    App1 --> TD["工具调度器
+Tool Dispatcher
+并行 / 顺序执行"]
+    TD --> TA["Tool A
+search_web
+→ 搜索结果"]
+    TD --> TB["Tool B
+get_weather
+→ 天气数据"]
+    TD --> TC["Tool C
+run_code
+→ 执行结果"]
+    TA & TB & TC --> App2["应用层
+构造 tool 消息 (role=tool)"]
+    App2 -->|"完整对话历史"| LLM2["LLM
+生成最终回复"]
 
-用户输入
-  │
-  ▼
-┌──────────┐   携带工具定义   ┌──────────────┐
-│  应用层   │──────────────▶│     LLM      │
-│          │               │  (GPT-4/     │
-│          │◀──────────────│   Claude/    │
-└──────────┘  tool_calls   │   Gemini)    │
-  │           JSON 列表     └──────────────┘
-  │
-  │  解析 tool_calls
-  ▼
-┌──────────────────┐
-│   工具调度器      │  ─── 并行 / 顺序执行
-│  Tool Dispatcher │
-└──────────────────┘
-  │
-  ├──▶ Tool A (search_web)    ──▶ 返回搜索结果
-  ├──▶ Tool B (get_weather)   ──▶ 返回天气数据
-  └──▶ Tool C (run_code)      ──▶ 返回执行结果
-  │
-  │  构造 tool 消息（role=tool）
-  ▼
-┌──────────┐  包含工具结果的   ┌──────────────┐
-│  应用层   │──────────────▶│     LLM      │
-│          │   完整对话历史   │  生成最终回复  │
-└──────────┘               └──────────────┘
+    style U fill:#6b7280,color:#fff,stroke:#4b5563
+    style App1 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style LLM1 fill:#f59e0b,color:#fff,stroke:#d97706
+    style TD fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style TA fill:#10b981,color:#fff,stroke:#059669
+    style TB fill:#10b981,color:#fff,stroke:#059669
+    style TC fill:#10b981,color:#fff,stroke:#059669
+    style App2 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style LLM2 fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 **关键设计原则**：LLM 本身不执行工具，它只负责**决策**调用哪个工具、传递什么参数。实际执行由应用层的 Tool Executor 完成。

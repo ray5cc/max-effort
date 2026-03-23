@@ -222,41 +222,36 @@ class RedisMemoryStore:
 
 ### 2.1 全链路架构图
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        RAG 全链路                                │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    L["Loading
+文档加载"] --> C["Chunking
+分块切割"]
+    C --> I["Indexing
+向量化"]
+    I --> S["Storing
+持久化"]
+    S --> Q1
 
-  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-  │  Loading │───▶│ Chunking │───▶│ Indexing │───▶│ Storing  │
-  │文档加载   │    │ 分块切割  │    │ 向量化    │    │ 持久化   │
-  └──────────┘    └──────────┘    └──────────┘    └──────────┘
-                                                        │
-  ┌─────────────────────────────────────────────────────┘
-  │
-  ▼
-  ┌──────────────────────────────────────────┐
-  │                Querying                   │
-  │  用户 Query                               │
-  │     │                                    │
-  │     ▼                                    │
-  │  Query 向量化                             │
-  │     │                                    │
-  │     ▼                                    │
-  │  ANN 搜索（HNSW/IVF）                     │
-  │     │                                    │
-  │     ▼                                    │
-  │  Re-ranking（可选）                       │
-  │     │                                    │
-  │     ▼                                    │
-  │  上下文注入 → LLM 生成                    │
-  └──────────────────────────────────────────┘
-        │
-        ▼
-  ┌──────────┐
-  │Evaluation│  RAGAS: Faithfulness / Answer Relevancy /
-  │  评估    │  Context Precision / Context Recall
-  └──────────┘
+    subgraph Querying["Querying 查询"]
+        Q1["用户 Query"] --> Q2["Query 向量化"]
+        Q2 --> Q3["ANN 搜索
+(HNSW/IVF)"]
+        Q3 --> Q4["Re-ranking
+(可选)"]
+        Q4 --> Q5["上下文注入
+→ LLM 生成"]
+    end
+
+    Q5 --> E["Evaluation 评估
+RAGAS: Faithfulness / Answer Relevancy
+Context Precision / Context Recall"]
+
+    style L fill:#4a9eff,color:#fff,stroke:#2563eb
+    style C fill:#f59e0b,color:#fff,stroke:#d97706
+    style I fill:#10b981,color:#fff,stroke:#059669
+    style S fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style E fill:#ef4444,color:#fff,stroke:#dc2626
 ```
 
 ---

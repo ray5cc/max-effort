@@ -26,20 +26,20 @@ vLLM（**v**irtual **LLM**）是 UC Berkeley Sky Computing Lab 于 2023 年发�
 
 ### 核心定位
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         vLLM 定位                               │
-│                                                                  │
-│  用户请求 ──► OpenAI Compatible API ──► vLLM Engine             │
-│                                              │                   │
-│                                    ┌─────────▼──────────┐       │
-│                                    │  PagedAttention    │       │
-│                                    │  Continuous Batch  │       │
-│                                    │  Multi-GPU Support │       │
-│                                    └─────────┬──────────┘       │
-│                                              │                   │
-│                                         GPU 推理加速             │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    U["用户请求"] --> API["OpenAI Compatible API"]
+    API --> E["vLLM Engine"]
+    E --> PA["PagedAttention
+Continuous Batching
+Multi-GPU Support"]
+    PA --> GPU["GPU 推理加速"]
+
+    style U fill:#6b7280,color:#fff,stroke:#4b5563
+    style API fill:#4a9eff,color:#fff,stroke:#2563eb
+    style E fill:#f59e0b,color:#fff,stroke:#d97706
+    style PA fill:#10b981,color:#fff,stroke:#059669
+    style GPU fill:#8b5cf6,color:#fff,stroke:#7c3aed
 ```
 
 ### 主要特性

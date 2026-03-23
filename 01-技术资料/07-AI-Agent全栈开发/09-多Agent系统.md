@@ -34,27 +34,41 @@
 
 **系统总览（ASCII 图）**：
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     多 Agent 系统全景                             │
-│                                                                   │
-│  ┌──────────────┐    消息/事件     ┌──────────────────────────┐  │
-│  │  Orchestrator │ ─────────────► │      Agent Pool           │  │
-│  │  (编排者)     │ ◄───────────── │  ┌────────┐ ┌──────────┐ │  │
-│  │               │   结果/状态     │  │ Agent A│ │ Agent B  │ │  │
-│  └───────┬───────┘                │  │(研究员)│ │(代码工程)│ │  │
-│          │                        │  └────────┘ └──────────┘ │  │
-│          │ 协调                   │  ┌────────┐ ┌──────────┐ │  │
-│          ▼                        │  │ Agent C│ │ Agent D  │ │  │
-│  ┌──────────────┐                 │  │(评审员)│ │(文档写作)│ │  │
-│  │  Shared State │                │  └────────┘ └──────────┘ │  │
-│  │  (共享状态)  │                 └──────────────────────────┘  │
-│  │  - 任务队列  │                                                │
-│  │  - 中间结果  │    ┌──────────────────────────────────────┐   │
-│  │  - 历史对话  │    │           工具层 (Tools)              │   │
-│  └──────────────┘    │  搜索 | 代码执行 | 数据库 | API 调用  │   │
-│                       └──────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    Orch["Orchestrator
+编排者"] -->|"消息/事件"| Pool
+    Pool -->|"结果/状态"| Orch
+    Orch --> SS["Shared State
+共享状态
+任务队列 · 中间结果 · 历史对话"]
+
+    subgraph Pool["Agent Pool"]
+        AA["Agent A
+研究员"]
+        AB["Agent B
+代码工程"]
+        AC["Agent C
+评审员"]
+        AD["Agent D
+文档写作"]
+    end
+
+    subgraph Tools["工具层 (Tools)"]
+        T1["搜索"]
+        T2["代码执行"]
+        T3["数据库"]
+        T4["API 调用"]
+    end
+
+    Pool --> Tools
+
+    style Orch fill:#f59e0b,color:#fff,stroke:#d97706
+    style SS fill:#6b7280,color:#fff,stroke:#4b5563
+    style AA fill:#4a9eff,color:#fff,stroke:#2563eb
+    style AB fill:#10b981,color:#fff,stroke:#059669
+    style AC fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style AD fill:#ef4444,color:#fff,stroke:#dc2626
 ```
 
 ### 1.2 单 Agent vs 多 Agent：何时选择
@@ -84,22 +98,18 @@
 
 **原理**：Agent 生成初步输出后，由自身或另一个 "评审 Agent" 进行批评与改进，形成迭代优化循环。
 
-```
-┌─────────────────────────────────────────────┐
-│              Reflection 模式                 │
-│                                              │
-│   ┌──────────┐   初稿    ┌──────────────┐   │
-│   │Generator │ ───────► │   Critic      │   │
-│   │(生成者)  │ ◄─────── │  (批评者)    │   │
-│   └──────────┘  改进建议 └──────────────┘   │
-│        │                                     │
-│        │  迭代 N 次后                        │
-│        ▼                                     │
-│   ┌──────────┐                              │
-│   │  Final   │                              │
-│   │  Output  │                              │
-│   └──────────┘                              │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    G["Generator
+生成者"] -->|"初稿"| C["Critic
+批评者"]
+    C -->|"改进建议"| G
+    G -->|"迭代 N 次后"| F["Final Output
+最终输出"]
+
+    style G fill:#4a9eff,color:#fff,stroke:#2563eb
+    style C fill:#f59e0b,color:#fff,stroke:#d97706
+    style F fill:#10b981,color:#fff,stroke:#059669
 ```
 
 **代码示意**：
@@ -1962,18 +1972,20 @@ class AutoScaler:
 
 #### 12.2.1 层级式（Supervisor → Workers）
 
-```
-               ┌──────────────┐
-               │  Supervisor  │
-               │  (管理者)    │
-               └──┬───┬───┬──┘
-                  │   │   │
-           ┌──────┘   │   └──────┐
-           ▼          ▼          ▼
-    ┌──────────┐ ┌──────────┐ ┌──────────┐
-    │ Worker A │ │ Worker B │ │ Worker C │
-    │ (研究)   │ │ (编码)   │ │ (测试)   │
-    └──────────┘ └──────────┘ └──────────┘
+```mermaid
+flowchart TD
+    S["Supervisor
+管理者"] --> WA["Worker A
+研究"]
+    S --> WB["Worker B
+编码"]
+    S --> WC["Worker C
+测试"]
+
+    style S fill:#f59e0b,color:#fff,stroke:#d97706
+    style WA fill:#4a9eff,color:#fff,stroke:#2563eb
+    style WB fill:#10b981,color:#fff,stroke:#059669
+    style WC fill:#8b5cf6,color:#fff,stroke:#7c3aed
 ```
 
 - **工作流程**：Supervisor 接收用户请求 → 拆分任务 → 分配给对应 Worker → 收集结果 → 汇总返回

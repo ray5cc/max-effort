@@ -50,6 +50,31 @@ function escapeBraces(s: string): string {
   return s.replace(/\{\{/g, '&#123;&#123;').replace(/\}\}/g, '&#125;&#125;')
 }
 
+/* ------------------------------------------------------------------ */
+/*  Markdown-it 插件：                                                  */
+/*  将 ```mermaid 代码块转换为 <MermaidDiagram code="..." /> Vue 组件    */
+/* ------------------------------------------------------------------ */
+
+function mermaidFencePlugin(md: MarkdownIt) {
+  type FenceRenderer = NonNullable<typeof md.renderer.rules.fence>
+
+  const defaultFence: FenceRenderer =
+    md.renderer.rules.fence ||
+    ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options))
+
+  md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+    const token = tokens[idx]
+    if (token.info.trim() === 'mermaid') {
+      // Base64-encode the diagram source so it safely passes as an HTML attribute.
+      // The encoded string is also the "original content" readable in both GitHub
+      // (as a mermaid code block) and VitePress (rendered as an interactive diagram).
+      const encoded = Buffer.from(token.content.trim()).toString('base64')
+      return `<MermaidDiagram code="${encoded}" />\n`
+    }
+    return defaultFence(tokens, idx, options, env, self)
+  }
+}
+
 function safeContentPlugin(md: MarkdownIt) {
   // 1) inline HTML 全部转义（如 <data>、<context> 等）
   //    block-level HTML（<details>/<summary>）不受影响，因为它们是 html_block 类型
@@ -103,6 +128,7 @@ export default defineConfig({
 
   markdown: {
     config: (md) => {
+      md.use(mermaidFencePlugin)
       md.use(safeContentPlugin)
     },
   },

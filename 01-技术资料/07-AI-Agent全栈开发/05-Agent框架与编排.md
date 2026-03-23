@@ -69,22 +69,23 @@ context_{t+1} = context_t ⊕ r_t ⊕ a_t ⊕ o_t  // 更新上下文
 
 ### 1.3 Thought-Action-Observation 循环
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        ReAct Loop                           │
-│                                                             │
-│  ┌──────────┐    ┌──────────┐    ┌──────────────────────┐  │
-│  │  Input   │───▶│ Thought  │───▶│       Action         │  │
-│  │  + Ctx   │    │(Reasoning)│   │  (Tool Call / Done)  │  │
-│  └──────────┘    └──────────┘    └──────────┬───────────┘  │
-│        ▲                                     │              │
-│        │         ┌──────────┐               │              │
-│        └─────────│Observation│◀──────────────┘              │
-│                  │(Tool Resp)│    env(action)               │
-│                  └──────────┘                               │
-│                                                             │
-│  终止条件：action = "Final Answer" 或 达到最大步数限制         │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    A["Input + Ctx"] --> B["Thought
+(Reasoning)"]
+    B --> C["Action
+(Tool Call / Done)"]
+    C -->|"env(action)"| D["Observation
+(Tool Resp)"]
+    D --> A
+    C -->|"Final Answer"| E(["终止
+达到最大步数限制"])
+
+    style A fill:#4a9eff,color:#fff,stroke:#2563eb
+    style B fill:#f59e0b,color:#fff,stroke:#d97706
+    style C fill:#10b981,color:#fff,stroke:#059669
+    style D fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style E fill:#ef4444,color:#fff,stroke:#dc2626
 ```
 
 ### 1.4 经典 Prompt 模板
@@ -246,29 +247,24 @@ class AgentExecutor(Chain):
 
 ### 2.4 Tool 选择机制
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Tool Selection Flow                        │
-│                                                             │
-│  LLM Output: "Action: search\nAction Input: python async"   │
-│                         │                                   │
-│                         ▼                                   │
-│              ReActOutputParser.parse()                      │
-│                         │                                   │
-│              ┌──────────┴──────────┐                        │
-│              │  AgentAction        │                        │
-│              │  tool = "search"    │                        │
-│              │  tool_input = "..." │                        │
-│              └──────────┬──────────┘                        │
-│                         │                                   │
-│                         ▼                                   │
-│           name_to_tool_map["search"]                        │
-│                  = Tool(func=search_fn)                     │
-│                         │                                   │
-│                         ▼                                   │
-│              tool.run(tool_input)                           │
-│              → observation (str)                            │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["LLM Output
+Action: search
+Action Input: python async"] --> B["ReActOutputParser.parse()"]
+    B --> C["AgentAction
+tool = 'search'
+tool_input = '...'"]
+    C --> D["name_to_tool_map['search']
+= Tool(func=search_fn)"]
+    D --> E["tool.run(tool_input)
+→ observation (str)"]
+
+    style A fill:#4a9eff,color:#fff,stroke:#2563eb
+    style B fill:#f59e0b,color:#fff,stroke:#d97706
+    style C fill:#10b981,color:#fff,stroke:#059669
+    style D fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style E fill:#06b6d4,color:#fff,stroke:#0891b2
 ```
 
 工具注册方式：
@@ -398,36 +394,22 @@ graph = graph_builder.compile(checkpointer=memory)
 
 ### 3.4 状态传播机制
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   LangGraph State Propagation                   │
-│                                                                 │
-│  Initial State: {messages: [HumanMessage("...")]}               │
-│                      │                                          │
-│                      ▼                                          │
-│  ┌──────────────────────────────────────────────────┐           │
-│  │  agent node                                       │           │
-│  │  input:  {messages: [...]}                        │           │
-│  │  output: {messages: [AIMessage(tool_calls=[...])]}│           │
-│  └──────────────────┬─────────────────────────────┘           │
-│                      │  add_messages reducer 追加消息            │
-│                      ▼                                          │
-│  State: {messages: [Human, AI(tool_calls)]}                     │
-│                      │                                          │
-│          should_continue → "tools"                              │
-│                      │                                          │
-│                      ▼                                          │
-│  ┌──────────────────────────────────────────────────┐           │
-│  │  tools node (ToolNode)                            │           │
-│  │  input:  {messages: [..., AI(tool_calls)]}        │           │
-│  │  执行每个 tool_call，生成 ToolMessage               │           │
-│  │  output: {messages: [ToolMessage(...), ...]}      │           │
-│  └──────────────────┬─────────────────────────────┘           │
-│                      │                                          │
-│  State: {messages: [Human, AI(tool_calls), ToolMessage(s)]}     │
-│                      │                                          │
-│                      └──────────────▶ agent node (下一轮)        │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    IS["{messages: [HumanMessage]}"] --> AN
+    AN["**agent node**
+input: messages
+output: AIMessage with tool_calls"] -->|"add_messages reducer 追加消息"| S1
+    S1["{messages: [Human, AI(tool_calls)]}"] -->|"should_continue → 'tools'"| TN
+    TN["**tools node (ToolNode)**
+执行每个 tool_call → ToolMessage"] --> S2
+    S2["{messages: [Human, AI(tool_calls), ToolMessage(s)]}"] -->|"下一轮"| AN
+
+    style IS fill:#6b7280,color:#fff,stroke:#4b5563
+    style AN fill:#4a9eff,color:#fff,stroke:#2563eb
+    style S1 fill:#f3f4f6,color:#374151,stroke:#9ca3af
+    style TN fill:#10b981,color:#fff,stroke:#059669
+    style S2 fill:#f3f4f6,color:#374151,stroke:#9ca3af
 ```
 
 ### 3.5 Checkpointing 与 MemorySaver
