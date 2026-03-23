@@ -136,41 +136,21 @@ LlamaForCausalLM        # 带语言模型头的完整模型
 
 以 LLaMA 为例，完整的前向传播数据流如下：
 
-```
-输入 Token IDs: [1, 15043, 29892, 3186, 29991]
-                        │
-               ┌────────▼────────┐
-               │  Embedding 查表  │  vocab_size × hidden_size
-               │  nn.Embedding   │  (32000 × 4096 for 7B)
-               └────────┬────────┘
-                        │ hidden_states: (batch, seq_len, 4096)
-                        │
-               ┌────────▼────────────────────────────┐
-               │          Decoder Layer × 32          │
-               │  ┌─────────────────────────────┐    │
-               │  │ RMSNorm (pre-norm)           │    │
-               │  │ GQA Attention + RoPE         │    │
-               │  │ 残差连接 (+ hidden_states)   │    │
-               │  │ RMSNorm (pre-norm)           │    │
-               │  │ SwiGLU MLP                   │    │
-               │  │ 残差连接 (+ hidden_states)   │    │
-               │  └─────────────────────────────┘    │
-               └────────┬────────────────────────────┘
-                        │
-               ┌────────▼────────┐
-               │    RMSNorm      │  最终归一化
-               └────────┬────────┘
-                        │
-               ┌────────▼────────┐
-               │   lm_head       │  hidden_size × vocab_size
-               │  nn.Linear      │  (4096 × 32000, no bias)
-               └────────┬────────┘
-                        │
-               logits: (batch, seq_len, 32000)
-                        │
-               ┌────────▼────────┐
-               │    Softmax      │  → 每个位置的词汇概率分布
-               └─────────────────┘
+<!-- ORIGINAL: LLaMA 前向传播数据流（Token IDs → Embedding → Decoder Layers → logits → Softmax） -->
+```mermaid
+graph TD
+    Input["输入 Token IDs"] --> Emb["Embedding 查表 nn.Embedding<br/>vocab_size × hidden_size (32000 × 4096 for 7B)"]
+    Emb -->|"hidden_states: (batch, seq_len, 4096)"| N1
+    subgraph Dec["Decoder Layer × 32"]
+        N1["RMSNorm (pre-norm)"] --> Attn["GQA Attention + RoPE"]
+        Attn --> Res1["残差连接 (+ hidden_states)"]
+        Res1 --> N2["RMSNorm (pre-norm)"]
+        N2 --> MLP["SwiGLU MLP"]
+        MLP --> Res2["残差连接 (+ hidden_states)"]
+    end
+    Res2 --> Norm["RMSNorm 最终归一化"]
+    Norm --> Head["lm_head nn.Linear<br/>hidden_size × vocab_size (4096 × 32000, no bias)"]
+    Head -->|"logits: (batch, seq_len, 32000)"| Soft["Softmax → 每个位置的词汇概率分布"]
 ```
 
 **关键数字（LLaMA 3 8B）：**
@@ -1314,36 +1294,15 @@ MoE 的核心思想是将 Transformer 中的**FFN（前馈网络）层**替换�
 
 **三大核心组件：**
 
-```
-MoE Layer 架构示意图
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-                    ┌─────────────────┐
-                    │   输入 Token x   │
-                    └────────┬────────┘
-                             │
-                    ┌────────▼────────┐
-                    │  Gating Network  │  g(x) = Softmax(W_g · x)
-                    │   （路由器）      │
-                    └────────┬────────┘
-                             │
-              ┌──────────────┼──────────────┐
-              │ Top-K 选择    │              │
-              │ (通常 K=2)    │              │
-              ▼              ▼              ▼
-        ┌──────────┐  ┌──────────┐  ┌──────────┐
-        │ Expert 1 │  │ Expert 2 │  │ Expert 3 │  ... Expert N
-        │  (FFN)   │  │  (FFN)   │  │  (FFN)   │     (未被选中
-        └────┬─────┘  └────┬─────┘  └──────────┘      不参与计算)
-             │ g₁          │ g₂
-             │             │
-             ▼             ▼
-        ┌──────────────────────┐
-        │  输出 = g₁·E₁(x)     │
-        │       + g₂·E₂(x)     │  加权求和
-        └──────────────────────┘
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<!-- ORIGINAL: MoE Layer 架构示意图（输入 → 路由器 → Expert 选择 → 加权求和） -->
+```mermaid
+graph TD
+    Input["输入 Token x"] --> Gate["Gating Network（路由器）<br/>g(x) = Softmax(W_g · x)"]
+    Gate -->|"Top-K 选择 (K=2)"| E1["Expert 1 (FFN)"]
+    Gate -->|"Top-K 选择"| E2["Expert 2 (FFN)"]
+    Gate -.->|"未被选中"| E3["Expert 3 ... N (FFN)<br/>不参与计算"]
+    E1 -->|"g₁"| Out["输出 = g₁·E₁(x) + g₂·E₂(x)<br/>加权求和"]
+    E2 -->|"g₂"| Out
 ```
 
 **1. Expert 网络**
@@ -1529,36 +1488,23 @@ DeepSeek-MoE：64 个小 Expert，激活 8 个
 
 DeepSeek-MoE 引入了若干**共享 Expert**，它们不参与路由选择，而是**始终被激活**。共享 Expert 捕获通用知识（如语法、常识），路由 Expert 专注于领域特定知识（如数学、代码）：
 
-```
-DeepSeek-MoE 架构
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-          ┌──────────────┐
-          │  输入 Token   │
-          └──────┬───────┘
-                 │
-         ┌───────┴───────┐
-         │               │
-         ▼               ▼
-  ┌─────────────┐  ┌──────────┐
-  │ 共享 Expert  │  │  Router  │
-  │ (始终激活)   │  │ (门控)   │
-  │ E_s1, E_s2  │  └────┬─────┘
-  └──────┬──────┘       │ Top-K 选择
-         │        ┌─────┼─────┐
-         │        ▼     ▼     ▼
-         │    ┌────┐ ┌────┐ ┌────┐
-         │    │E_r3│ │E_r7│ │E_r1│ ... (64个路由Expert)
-         │    └──┬─┘ └──┬─┘ └──┬─┘
-         │       └──────┼──────┘
-         │              │
-         └──────┬───────┘
-                ▼
-         加权求和输出
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-共享 Expert 捕获通用知识 → 减轻路由 Expert 的负担
-路由 Expert 专注领域知识 → 提升专业能力
+<!-- ORIGINAL: DeepSeek-MoE 架构（共享 Expert + Router → 路由 Expert → 加权求和） -->
+```mermaid
+graph TD
+    Input["输入 Token"] --> Shared["共享 Expert（始终激活）<br/>E_s1, E_s2"]
+    Input --> Router["Router（门控）"]
+    subgraph Routed["路由 Expert（64个）"]
+        Er3["E_r3"]
+        Er7["E_r7"]
+        Er1["E_r1 ..."]
+    end
+    Router -->|"Top-K 选择"| Er3
+    Router -->|"Top-K 选择"| Er7
+    Router -->|"Top-K 选择"| Er1
+    Shared --> Out["加权求和输出"]
+    Er3 --> Out
+    Er7 --> Out
+    Er1 --> Out
 ```
 
 这种设计在 DeepSeek-V2（236B 总参数，21B 激活）和 DeepSeek-V3 中取得了极佳效果，以远低于同等密集模型的推理成本达到了接近的性能。
@@ -1769,18 +1715,16 @@ DeepSeek 团队发现了一个令人惊奇的现象：在纯 RL 训练过程中�
 
 **多模态模型的核心挑战**：如何将图像、音频等非文本信息转化为 LLM 能理解的 token 序列？
 
-```
-多模态 LLM 的核心思路
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  图像 ──→ [Vision Encoder] ──→ 图像 Token 序列 ──┐
-                                                   │
-  文本 ──→ [Text Tokenizer] ──→ 文本 Token 序列 ──┼→ [LLM] → 输出
-                                                   │
-  音频 ──→ [Audio Encoder] ──→ 音频 Token 序列 ──┘
-
-关键：所有模态都被转化为统一的 Token 序列，
-     共享同一个 Transformer 架构进行处理
+<!-- ORIGINAL: 多模态 LLM 核心思路（图像/文本/音频 → 各自 Encoder → Token 序列 → LLM → 输出） -->
+```mermaid
+graph LR
+    Img["图像"] --> VEnc["Vision Encoder"] --> ImgTok["图像 Token 序列"]
+    Txt["文本"] --> TTok["Text Tokenizer"] --> TxtTok["文本 Token 序列"]
+    Aud["音频"] --> AEnc["Audio Encoder"] --> AudTok["音频 Token 序列"]
+    ImgTok --> LLM["LLM"]
+    TxtTok --> LLM
+    AudTok --> LLM
+    LLM --> Output["输出"]
 ```
 
 ### 12.2 Vision Transformer（ViT）
@@ -1926,30 +1870,13 @@ Step 4: 添加 [CLS] Token（可选）
 
 OpenAI 的 Whisper 是目前最广泛使用的语音编码器，其架构是标准的 Encoder-Decoder Transformer：
 
-```
-Whisper 架构
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  音频波形 (16kHz)
-       │
-       ▼
-  [Log-Mel 频谱图] → 80 个频率 bins × T 帧
-       │
-       ▼
-  ┌─────────────────────┐
-  │  Encoder (Transformer)│  → 音频特征序列
-  │  - 2层 Conv1D 下采样   │
-  │  - N 层 Self-Attention │
-  └──────────┬──────────┘
-             │
-             ▼
-  ┌─────────────────────┐
-  │  Decoder (Transformer)│  → 文本 Token 序列
-  │  - Cross-Attention    │     (转录结果)
-  │  - 自回归生成         │
-  └─────────────────────┘
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<!-- ORIGINAL: Whisper 架构（音频波形 → Log-Mel → Encoder → Decoder → 文本） -->
+```mermaid
+graph TD
+    Audio["音频波形 (16kHz)"] --> Mel["Log-Mel 频谱图<br/>80 个频率 bins × T 帧"]
+    Mel --> Enc["Encoder (Transformer)<br/>2层 Conv1D 下采样<br/>N 层 Self-Attention"]
+    Enc -->|"音频特征序列"| Dec["Decoder (Transformer)<br/>Cross-Attention / 自回归生成"]
+    Dec --> Out["文本 Token 序列（转录结果）"]
 ```
 
 **语音 Agent 应用**
