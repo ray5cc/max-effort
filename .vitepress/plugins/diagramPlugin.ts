@@ -2,7 +2,8 @@
  * Markdown-it plugin: ASCII Diagram Enhancement
  *
  * Automatically detects code blocks containing box-drawing characters
- * and renders them as colorized, graphical diagram containers in VitePress.
+ * or tree-branch patterns and renders them as colorized, graphical
+ * diagram containers in VitePress.
  *
  * On GitHub, the original ASCII art in code fences renders normally (text).
  * In VitePress, the same content is displayed with colored borders, arrows,
@@ -13,9 +14,22 @@ import type MarkdownIt from 'markdown-it'
 /* ---- detection patterns ---- */
 
 const BOX_DRAWING_RE = /[┌┐└┘├┤┬┴┼╔╗╚╝╠╣╬─│═║]/g
-const ARROW_CHARS = /[→←↑↓▶◀▲▼►◄▸◂▴▾⟶⟵⟹⟸]/
 const COLORIZE_RE =
   /([┌┐└┘├┤┬┴┼╔╗╚╝╠╣╬─│═║])|([→←↑↓▶◀▲▼►◄▸◂▴▾⟶⟵⟹⟸])/g
+
+/**
+ * Detect tree branch patterns like "  /   \" used in tree diagrams.
+ * Matches lines where / and \ appear as visual branch connectors
+ * (surrounded by whitespace, not as part of paths or code).
+ */
+const TREE_BRANCH_SAME_LINE_RE = /^\s+[/\\]\s+[/\\]/gm
+
+/**
+ * Detect individual branch lines where / or \ is used as a tree connector.
+ * The character must be preceded by whitespace and followed by whitespace or EOL,
+ * which distinguishes branches from file paths like /usr/bin.
+ */
+const TREE_BRANCH_SINGLE_RE = /^\s+[/\\](?:\s|$)/gm
 
 /**
  * Determine if a fence block looks like an ASCII diagram.
@@ -25,8 +39,19 @@ function isDiagram(content: string, info: string): boolean {
   const lang = (info || '').trim().split(/\s+/)[0].toLowerCase()
   if (lang && lang !== 'text' && lang !== 'plaintext') return false
 
-  const matches = content.match(BOX_DRAWING_RE)
-  return matches !== null && matches.length >= 4
+  // Method 1: Box-drawing characters (≥4)
+  const boxMatches = content.match(BOX_DRAWING_RE)
+  if (boxMatches && boxMatches.length >= 4) return true
+
+  // Method 2: Tree branch patterns — both / and \ on the same line (≥2 lines)
+  const sameLineMatches = content.match(TREE_BRANCH_SAME_LINE_RE)
+  if (sameLineMatches && sameLineMatches.length >= 2) return true
+
+  // Method 3: Individual branch lines — / or \ as tree connectors (≥3 lines)
+  const singleMatches = content.match(TREE_BRANCH_SINGLE_RE)
+  if (singleMatches && singleMatches.length >= 3) return true
+
+  return false
 }
 
 /* ---- HTML helpers ---- */
