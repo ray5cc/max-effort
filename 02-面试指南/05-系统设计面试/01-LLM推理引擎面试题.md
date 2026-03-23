@@ -535,7 +535,7 @@ return output / running_sum
 
 **答：**
 
-```
+```diagram
 系统架构：
 
 用户层
@@ -993,7 +993,7 @@ TensorRT-LLM 借鉴 vLLM 的 PagedAttention 思想：
 
 **答：**
 
-```
+```diagram
 客户端 HTTP/gRPC
       ↓
 Triton Inference Server
@@ -1029,7 +1029,7 @@ TRT-LLM 优化：
 
 **答：**
 
-```
+```diagram
 架构设计：
 ┌─────────────────────────────────────────────────────────┐
 │                    负载均衡层 (Nginx/Envoy)               │

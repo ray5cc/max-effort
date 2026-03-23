@@ -109,7 +109,7 @@
 
 HuggingFace Transformers 中的 `src/transformers/models/llama/modeling_llama.py` 是最值得精读的源码文件之一，它包含了现代 Decoder-only LLM 的所有核心组件：
 
-```
+```diagram
 modeling_llama.py 主要类结构
 ────────────────────────────────────────────────────────────
 LlamaRMSNorm            # 前归一化（替代 LayerNorm）
@@ -136,7 +136,7 @@ LlamaForCausalLM        # 带语言模型头的完整模型
 
 以 LLaMA 为例，完整的前向传播数据流如下：
 
-```
+```diagram
 输入 Token IDs: [1, 15043, 29892, 3186, 29991]
                         │
                ┌────────▼────────┐
@@ -597,7 +597,7 @@ pos3 [    0     0     0     0  ]
 训练时用因果掩码，一次前向可计算所有位置的损失（Teacher Forcing）
 ```
 
-```
+```diagram
 GPT 预训练示意：
   输入序列: The  cat  sat  on   mat
                 │    │    │    │    │
@@ -673,7 +673,7 @@ Decoder输出: <X> for inviting <Y> your <Z>
 （<X>, <Y>, <Z> 是哨兵 token，每个代表一段被遮盖的 span）
 ```
 
-```
+```diagram
 T5 架构：
                     Encoder                     Decoder
   ┌───────────────────────────┐  ┌────────────────────────────────┐
@@ -694,7 +694,7 @@ T5 架构：
 
 ### 5.4 三种范式对比与适用场景
 
-```
+```diagram
 预训练范式对比：
 
 CLM (GPT)                  MLM (BERT)                 Seq2Seq (T5)
@@ -932,7 +932,7 @@ GPT-3 (175B, 300B tokens): 数据量严重不足！
 Chinchilla (70B, 1.4T tokens) 性能超过 Gopher (280B, 300B tokens)
 ```
 
-```
+```diagram
 Chinchilla 最优点可视化：
 
 损失 L
@@ -948,7 +948,7 @@ Chinchilla 最优点可视化：
 
 LLaMA（2023）正是基于 Chinchilla 结论设计的：
 
-```
+```diagram
 LLaMA 1 7B：在 1T tokens 上训练（≈ 143 tokens/param）
 LLaMA 2 7B：在 2T tokens 上训练（≈ 286 tokens/param）
 LLaMA 3 8B：在 15T tokens 上训练（≈ 1875 tokens/param）
@@ -1295,7 +1295,7 @@ Teacher Forcing 是指训练时将真实 token（而非模型预测的 token）�
 
 **密集模型 vs MoE 模型的核心差异：**
 
-```
+```diagram
 密集模型（Dense）：每个 token 激活 100% 参数
 ──────────────────────────────────────────
   输入 token → [所有参数参与计算] → 输出
@@ -1314,7 +1314,7 @@ MoE 的核心思想是将 Transformer 中的**FFN（前馈网络）层**替换�
 
 **三大核心组件：**
 
-```
+```diagram
 MoE Layer 架构示意图
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1450,7 +1450,7 @@ Expert 参数（MoE FFN）:
 
 **关键洞察**：Mixtral 拥有 46.7B 的知识容量，但每次推理只需 12.9B 的计算成本——相当于一个 13B 密集模型的推理速度，但性能接近 70B 密集模型。
 
-```
+```diagram
 密集模型 vs Mixtral 8x7B 结构对比（单层）
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1489,7 +1489,7 @@ Mixtral 8x7B:
 
 在分布式训练中，不同 Expert 通常分布在不同 GPU 上。Token-level Routing 意味着每个 token 可能被路由到任意 GPU 上的 Expert，导致大量的 All-to-All 通信。如果负载不均衡，部分 GPU 会成为瓶颈，其余 GPU 空闲等待。
 
-```
+```diagram
 分布式 MoE 通信示意
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 GPU 0           GPU 1           GPU 2           GPU 3
@@ -1529,7 +1529,7 @@ DeepSeek-MoE：64 个小 Expert，激活 8 个
 
 DeepSeek-MoE 引入了若干**共享 Expert**，它们不参与路由选择，而是**始终被激活**。共享 Expert 捕获通用知识（如语法、常识），路由 Expert 专注于领域特定知识（如数学、代码）：
 
-```
+```diagram
 DeepSeek-MoE 架构
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1602,7 +1602,7 @@ DeepSeek-MoE 架构
 
 **两个维度的 Scaling 对比：**
 
-```
+```diagram
 ┌─────────────────────────────────────────────────┐
 │              模型性能                              │
 │                                                   │
@@ -1769,7 +1769,7 @@ DeepSeek 团队发现了一个令人惊奇的现象：在纯 RL 训练过程中�
 
 **多模态模型的核心挑战**：如何将图像、音频等非文本信息转化为 LLM 能理解的 token 序列？
 
-```
+```diagram
 多模态 LLM 的核心思路
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1833,7 +1833,7 @@ Step 4: 添加 [CLS] Token（可选）
 
 **固定分辨率 vs 动态分辨率**
 
-```
+```diagram
 固定分辨率（早期方法）：
   所有图像统一缩放到 224×224 → 196 tokens
   问题：高分辨率图像的细节丢失严重
@@ -1868,7 +1868,7 @@ Step 4: 添加 [CLS] Token（可选）
 
 如何将视觉 token 和文本 token "融合"是多模态模型的关键架构决策：
 
-```
+```diagram
 三种融合架构对比
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1926,7 +1926,7 @@ Step 4: 添加 [CLS] Token（可选）
 
 OpenAI 的 Whisper 是目前最广泛使用的语音编码器，其架构是标准的 Encoder-Decoder Transformer：
 
-```
+```diagram
 Whisper 架构
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1956,7 +1956,7 @@ Whisper 架构
 
 在 AI Agent 场景中，语音模态的集成通常遵循以下流程：
 
-```
+```diagram
 实时语音 Agent Pipeline
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -2100,7 +2100,7 @@ SWA 的核心思想是：每个 token 只关注最近 W 个 token（而非所有
 
 **Local + Global Attention Patterns**
 
-```
+```diagram
 稀疏注意力的典型模式
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

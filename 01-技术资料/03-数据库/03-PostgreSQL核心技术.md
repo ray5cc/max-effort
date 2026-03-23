@@ -114,7 +114,7 @@ BackendStartup(Port *port)
 
 每个 Backend 进程处理一个客户端连接的完整生命周期：
 
-```
+```diagram
 Client ──TCP──> Postmaster ──fork()──> Backend Process
                                           │
                                     PostgresMain()
@@ -146,7 +146,7 @@ typedef struct Port {
 
 ### 1.3 辅助进程
 
-```
+```diagram
 Postmaster
 ├── WAL Writer         — 定期将 WAL buffer 刷到磁盘
 ├── Checkpointer       — 执行 checkpoint，刷脏页到磁盘
@@ -176,7 +176,7 @@ PostgreSQL 的数据以**堆文件（Heap File）**形式存储，每个关系�
 
 源码：`src/include/storage/bufpage.h`
 
-```
+```diagram
  0                   8KB
  ┌──────────────────────────────────────────────────────┐
  │  PageHeaderData (24 bytes)                           │
@@ -291,7 +291,7 @@ typedef struct HeapTupleFields {
 
 **UPDATE 操作的版本链：**
 
-```
+```diagram
 UPDATE users SET email='new@x.com' WHERE id=1;
 
 Block 5, Offset 10:                Block 5, Offset 24:
@@ -317,7 +317,7 @@ Block 5, Offset 10:                Block 5, Offset 24:
 
 **HOT 链结构：**
 
-```
+```diagram
 Index entry ──→ Block 5, Offset 10 (旧tuple, HEAP_HOT_UPDATED=1)
                     │  t_ctid
                     ↓
@@ -355,7 +355,7 @@ typedef struct BTPageOpaqueData {
 
 **B-tree 整体结构：**
 
-```
+```diagram
                     ┌─────────────┐
                     │  Meta Page  │  Block 0：存储根页面地址、快速根等元信息
                     └─────────────┘
@@ -375,7 +375,7 @@ typedef struct BTPageOpaqueData {
 
 **查找流程（`_bt_search` in `nbtsearch.c`）：**
 
-```
+```diagram
 _bt_search(rel, key, stack_ptr, access)
     │
     ├─ 从 Meta Page 获取根页面
@@ -390,7 +390,7 @@ _bt_search(rel, key, stack_ptr, access)
 
 **插入流程（`_bt_doinsert` in `nbtinsert.c`）：**
 
-```
+```diagram
 _bt_doinsert(rel, itup, checkUnique, heapRel)
     │
     ├─ _bt_search()        — 找到目标叶子页
@@ -551,7 +551,7 @@ typedef struct SnapshotData {
 
 核心函数：`HeapTupleSatisfiesMVCC`（`src/backend/access/heap/heapam_visibility.c`）
 
-```
+```diagram
 HeapTupleSatisfiesMVCC(tuple, snapshot, buffer):
 
 1. 检查 t_xmin（谁插入了这个版本？）
@@ -669,7 +669,7 @@ SELECT pg_wal_lsn_diff(
 
 ### 5.2 WAL 写入流程
 
-```
+```diagram
 应用层 SQL → Backend 进程 → WAL 写入路径
                                │
                     XLogBeginInsert()
@@ -727,7 +727,7 @@ checkpoint_completion_target = 0.9 表示用 90% 的 checkpoint 间隔时间
 
 PostgreSQL 流式复制架构：
 
-```
+```diagram
 主库 (Primary)                         备库 (Standby)
 ┌──────────────────────────────┐       ┌─────────────────────────────┐
 │  Backend 进程                │       │  WAL Receiver 进程           │
@@ -756,7 +756,7 @@ PostgreSQL 流式复制架构：
 
 ### 6.1 查询处理全流程
 
-```
+```diagram
 客户端 SQL
     │
     ▼

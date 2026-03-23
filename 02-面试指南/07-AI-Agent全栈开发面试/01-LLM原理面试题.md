@@ -1402,7 +1402,7 @@ DistServe/Splitwise 架构可让每种节点独立扩缩容，混合长短请求
 
 **部署架构全景**：
 
-```
+```diagram
 用户请求
     ↓
 [API Gateway + Rate Limiter]

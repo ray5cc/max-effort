@@ -40,7 +40,7 @@
 
 容器与虚拟机（VM）代表两种不同粒度的隔离方案：
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────────┐
 │                     容器架构 (Container)                         │
 ├──────────────┬──────────────┬──────────────┬────────────────────┤
@@ -93,7 +93,7 @@ Namespace 是 Linux 内核提供的轻量级进程隔离机制，每个 Namespac
 
 PID Namespace 为容器内进程提供独立的进程 ID 空间，容器内第一个进程 PID=1，与宿主机的 PID 完全隔离。
 
-```
+```diagram
 宿主机进程树：                    容器内进程树：
 PID 1  (systemd)                  PID 1  (nginx)      ← 实际宿主机 PID 8421
 PID 2  (kthreadd)                 PID 2  (worker)     ← 实际宿主机 PID 8422
@@ -130,7 +130,7 @@ int child_pid = clone(child_fn, stack_top,
 
 NET Namespace 为每个容器提供独立的网络栈，包括网卡、IP 地址、路由表、iptables 规则等。
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────────┐
 │ 宿主机 NET Namespace                                             │
 │  eth0: 192.168.1.100   lo: 127.0.0.1                            │
@@ -383,7 +383,7 @@ OverlayFS（overlay2）是 Docker 默认的存储驱动，基于联合文件系�
 
 #### OverlayFS 分层原理
 
-```
+```diagram
 镜像构建层（只读）                       容器层（可写）
                                           ┌──────────────────┐
                                           │   upperdir       │  ← 容器写入层
@@ -506,7 +506,7 @@ $ journalctl -u docker | grep "containerd"
 
 ### 2.1 整体架构
 
-```
+```diagram
 用户层：
   docker CLI / Docker Desktop / 第三方工具
        │  REST API / Unix Socket

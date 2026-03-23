@@ -62,7 +62,7 @@
 
 **参考答案：**
 
-```
+```diagram
 Workflow（.github/workflows/xxx.yml）
 └── Job（runs-on: ubuntu-latest）
     ├── Step 1（uses: actions/checkout@v4）
@@ -382,7 +382,7 @@ steps:
 
 App of Apps 是 ArgoCD 管理多应用的最佳实践：创建一个"根应用"，其 Git 路径下存放多个子 Application 的 YAML，ArgoCD 自动同步这些子 Application。
 
-```
+```diagram
 Git 仓库结构：
 apps/
 ├── root-app.yaml          # 根应用，指向 apps/ 目录
@@ -633,7 +633,7 @@ GitHub Actions OIDC Token 是一个 JWT，结构为 `header.payload.signature`�
 
 **仓库结构设计：**
 
-```
+```diagram
 gitops-repo/
 ├── clusters/
 │   ├── prod-us-east-1/

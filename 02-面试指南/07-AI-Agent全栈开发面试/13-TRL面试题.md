@@ -753,7 +753,7 @@ def r1_reward(response, ground_truth):
 
 **答：**
 
-```
+```diagram
 完整流水线：
 
 Step 1: 数据准备

@@ -23,7 +23,7 @@
 
 以 LLaMA-2-70B 为例，全量微调所需资源：
 
-```
+```diagram
 模型参数量：70B × 4 bytes (fp32) = 280 GB
 梯度存储：  280 GB
 优化器状态：560 GB (Adam 需要一阶 + 二阶矩)
@@ -40,7 +40,7 @@
 
 ### PEFT 的核心思路
 
-```
+```diagram
 预训练模型权重 W₀ (冻结)
         │
         ▼
@@ -62,7 +62,7 @@
 
 ## 2. 核心方法总览
 
-```
+```diagram
 PEFT 方法家族
 ├── 适配器方法 (Adapter Methods)
 │   ├── Adapter Tuning (Houlsby 2019)
@@ -83,7 +83,7 @@ PEFT 方法家族
 
 ### 各方法参数量对比
 
-```
+```diagram
 方法              可训练参数比例   GPU 需求 (7B 模型)   质量
 ─────────────────────────────────────────────────────────
 Full Fine-Tuning    100%          ≥ 4×A100 80GB      最佳
@@ -165,7 +165,7 @@ h = W₀x + (alpha/r) × B × A × x
 
 LoRA 通常应用于 Transformer 的 **注意力层权重矩阵**：
 
-```
+```diagram
 Transformer 层中的矩阵
 ├── Q (Query)     ← LoRA 核心目标
 ├── K (Key)       ← LoRA 核心目标
@@ -206,7 +206,7 @@ Transformer 层中的矩阵
 
 QLoRA 在 LoRA 基础上叠加了三项量化技术，实现在消费级 GPU 上微调 70B 模型：
 
-```
+```diagram
 QLoRA = LoRA + NF4 量化 + 双重量化 + 分页优化器
 
 ┌─────────────────────────────────────┐
@@ -361,7 +361,7 @@ optimizer = bnb.optim.PagedAdamW8bit(
 
 ### 决策树
 
-```
+```diagram
 开始
  │
  ├─ GPU VRAM < 24GB?
@@ -456,7 +456,7 @@ HuggingFace Hub：
 
 ### 整体分层架构
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────┐
 │                   用户代码层                          │
 │  get_peft_model() / PeftModel.from_pretrained()     │
@@ -874,7 +874,7 @@ model.add_weighted_adapter(
 
 ### 适配器合并策略对比
 
-```
+```diagram
 合并策略        原理                          适用场景
 ──────────────────────────────────────────────────────────
 linear          按权重线性叠加 ΔW             任务相似，简单场景
@@ -956,7 +956,7 @@ outputs = peft_model.generate(
 
 ### 合并时机选择
 
-```
+```diagram
 场景                           推荐策略
 ────────────────────────────────────────────────────────────
 生产部署（固定任务）            merge_and_unload()
@@ -1254,7 +1254,7 @@ training_args = TrainingArguments(
 
 ### 显存使用估算
 
-```
+```diagram
 模型           量化    LoRA r=8    训练 batch=1   预估 VRAM
 ──────────────────────────────────────────────────────────
 LLaMA-2-7B    NF4     +LoRA       seq=2048       ~10 GB
@@ -1307,7 +1307,7 @@ def lora_experiment(rank, alpha, dataset_size):
 
 ### Dropout 使用建议
 
-```
+```diagram
 数据集大小        lora_dropout    理由
 ────────────────────────────────────────────────────────
 < 1,000 样本      0.05~0.1       数据少，需要正则化防过拟合

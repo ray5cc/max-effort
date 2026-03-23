@@ -119,7 +119,7 @@ Thought: {agent_scratchpad}
 
 ### 2.1 类层次结构
 
-```
+```diagram
 BaseLanguageModel
     └── BaseChatModel
             └── ChatOpenAI / ChatAnthropic / ...
@@ -309,7 +309,7 @@ class CustomTool(BaseTool):
 
 LangGraph 将 Agent 工作流建模为**有状态的有向图（Stateful DAG）**，核心概念：
 
-```
+```diagram
 StateGraph
     ├── State Schema (TypedDict / Pydantic)
     ├── Nodes (callable: State → State update dict)
@@ -480,7 +480,7 @@ graph.add_edge("branch_b", "aggregator")
 
 基于 [langgenius/dify](https://github.com/langgenius/dify) 源码分析：
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────────┐
 │                      Dify Workflow Engine                       │
 │                                                                 │
@@ -619,7 +619,7 @@ class LLMNode(BaseNode):
 
 ### 4.5 变量池（Variable Pool）
 
-```
+```diagram
 变量池是 Dify Workflow 的核心状态容器：
 
   VariablePool
@@ -639,7 +639,7 @@ class LLMNode(BaseNode):
 
 #### ReAct（在线规划）
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────┐
 │  ReAct：交错推理与行动（Online Planning）              │
 │                                                     │
@@ -656,7 +656,7 @@ class LLMNode(BaseNode):
 
 #### Plan-and-Solve（离线规划）
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────┐
 │  Plan-and-Solve：先规划后执行（Offline Planning）     │
 │                                                     │
@@ -719,7 +719,7 @@ workflow.add_edge("summarize", END)
 
 Reflexion 通过**语言强化**让 Agent 从失败中学习，核心机制：
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────┐
 │                    Reflexion Architecture                   │
 │                                                             │
@@ -773,7 +773,7 @@ def actor_with_reflection(state: ReflexionState) -> dict:
 
 #### Supervisor 模式
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────┐
 │                     Supervisor Pattern                        │
 │                                                              │
@@ -826,7 +826,7 @@ def supervisor_agent(state):
 
 ### 6.1 ConversableAgent 架构
 
-```
+```diagram
 ConversableAgent
 ├── name: str
 ├── system_message: str
@@ -935,7 +935,7 @@ class GroupChatManager(ConversableAgent):
 
 ### 6.3 AutoGen GroupChat 架构图
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────────┐
 │                     AutoGen GroupChat                            │
 │                                                                  │
@@ -1020,7 +1020,7 @@ Dify:      横向扩展，Worker 队列（Celery）
 
 ### 7.3 选型决策树
 
-```
+```diagram
 是否需要可视化编辑？
     ├── 是 → Dify
     └── 否
@@ -1166,7 +1166,7 @@ autogen.runtime_logging.start(logger_type="sqlite", config={"dbname": "agent.db"
 
 这是一个高频混淆点，值得在一开始就厘清：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────────────┐
 │                        Agent 通信生态                                │
 │                                                                      │
@@ -1235,7 +1235,7 @@ Agent Card 通常托管在 `/.well-known/agent.json` 路径下，便于其他 Ag
 
 A2A 中的核心交互单位是 **Task**（任务）。一个 Task 的完整生命周期如下：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────┐
 │                   Task 生命周期                           │
 │                                                          │
@@ -1285,7 +1285,7 @@ artifact = {
 
 在大规模系统中，Agent 需要动态发现其他 Agent 并匹配能力。常见模式有两种：
 
-```
+```diagram
 方式一：静态注册（适合小规模）
 ┌──────────────────────────────────┐
 │         Agent Registry           │
@@ -1351,7 +1351,7 @@ async def discover_and_delegate(task_description: str):
 
 A2A 的最大价值在于让不同框架构建的 Agent 能无缝协作。以下是一个典型场景：
 
-```
+```diagram
 用户请求："分析上周的服务器故障，生成修复方案，并创建 Jira 工单"
 
 ┌──────────────────────────────────────────────────────────────┐
@@ -1407,7 +1407,7 @@ Agent 评估的核心难题总结：
 
 一个全面的 Agent 评估框架应覆盖以下维度：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────┐
 │                   Agent 评估金字塔                        │
 │                                                          │
@@ -1501,7 +1501,7 @@ def evaluate_agent_on_swe_bench(agent, test_cases: list) -> dict:
 
 多 Agent 系统引入了额外的评估维度——不仅要看个体表现，还要看团队协作效率：
 
-```
+```diagram
 单 Agent 评估                    多 Agent 额外评估维度
 ┌──────────────┐               ┌──────────────────────────┐
 │ • 任务完成率  │               │ • 协作效率               │
@@ -1616,7 +1616,7 @@ PRODUCTION_METRICS = {
 >
 > Agent 的可观测性同理：你需要**看到数字**（Metrics）、**读到细节**（Logs）、**追踪因果**（Traces）。
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────┐
 │                Agent 可观测性三大支柱                          │
 │                                                              │
@@ -1647,7 +1647,7 @@ PRODUCTION_METRICS = {
 
 Agent 的执行过程天然适合用分布式追踪来表示。关键是设计合理的 **Span 层次**：
 
-```
+```diagram
 Trace: "用户请求 → Agent 完成任务"
 │
 ├── Span: agent_run (总耗时: 8.2s, 总 Token: 3,450)
@@ -1723,7 +1723,7 @@ class ObservableAgent:
 
 以下是 Agent 系统应追踪的核心指标，按重要程度排列：
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────┐
 │                    Agent 核心指标体系                         │
 │                                                             │
@@ -1906,7 +1906,7 @@ Human-in-the-Loop 不是"Agent 不够聪明"的补丁，而是**系统设计中�
 
 最简单的 Human-in-the-Loop 模式：Agent 在关键决策点**暂停**，等待人类批准后再继续。
 
-```
+```diagram
 用户请求 → Agent 规划 → [审批点] → 人类确认 → Agent 执行 → 结果
                            │
                            └── 人类拒绝 → Agent 重新规划
@@ -1964,7 +1964,7 @@ final = graph.invoke(None, config)  # 从断点继续
 
 比审批模式更灵活：人类可以在 Agent 运行的**任意步骤**观察并修正其方向。
 
-```
+```diagram
 ┌────────────────────────────────────────────────────────┐
 │                   干预模式流程                           │
 │                                                        │
@@ -2059,7 +2059,7 @@ Agent：运行集成测试，报告结果
 
 所有 Human-in-the-Loop 模式的底层都依赖**状态持久化**和**中断/恢复**机制：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────┐
 │            Human-in-the-Loop 架构                            │
 │                                                              │
@@ -2261,7 +2261,7 @@ tool_breakers = {
 
 当 Agent 系统的某些组件不可用时，不应直接返回错误，而应**降级**到能力较弱但仍可用的模式：
 
-```
+```diagram
 ┌───────────────────────────────────────────────────────────────┐
 │                    Agent 降级策略                              │
 │                                                               │

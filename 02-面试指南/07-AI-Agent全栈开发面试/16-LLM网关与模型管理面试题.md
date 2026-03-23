@@ -76,7 +76,7 @@ LLM 网关就像一个"万能翻译官"——你的应用只说一种"语言"（
 
 LLM 网关（LLM Gateway / LLM Proxy）是位于应用与 LLM Provider 之间的中间层，提供以下核心能力：
 
-```
+```diagram
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐
 │  应用服务    │ ──→ │  LLM 网关     │ ──→ │  OpenAI     │
 │  (统一格式)  │     │              │ ──→ │  Anthropic  │
@@ -268,7 +268,7 @@ router = Router(
 
 #### 执行流程
 
-```
+```diagram
 请求到达
   │
   ▼
@@ -317,7 +317,7 @@ Virtual Key 就像酒店的房卡——你不需要知道房间锁芯的结构�
 
 #### 核心架构
 
-```
+```diagram
                    ┌──────────────────────────┐
                    │       LLM 网关           │
                    │                          │
@@ -428,7 +428,7 @@ def chat_handler(user_message: str) -> str:
 
 **LLM 应用关键指标体系**：
 
-```
+```diagram
 性能指标
 ├── TTFT（Time to First Token）：首 Token 延迟，影响用户感知
 ├── TBT（Time Between Tokens）：Token 间隔，影响流式体验
@@ -521,7 +521,7 @@ response = litellm.completion(
 
 **Prompt 生命周期管理**：
 
-```
+```diagram
 编辑 → 测试 → 标记 staging → 评估 → 标记 production → 监控 → 迭代
   │                                                          │
   └──────────────── 发现问题，回滚到上一版 ←─────────────────┘
@@ -548,7 +548,7 @@ MCP（Model Context Protocol）就像 USB 协议——在 USB 出现之前，每
 
 #### 协议架构
 
-```
+```diagram
 ┌─────────────────┐         ┌─────────────────┐
 │   MCP Client    │ ←─────→ │   MCP Server    │
 │  (AI 应用/Agent) │  JSON-RPC │  (工具/数据提供者) │
@@ -704,7 +704,7 @@ print(f"成本: ${cost:.4f}")  # ≈ $0.0060
 
 #### 路由策略矩阵
 
-```
+```diagram
 ┌──────────────────────────────────────────────────┐
 │              智能路由决策引擎                      │
 │                                                  │
@@ -824,7 +824,7 @@ class SmartRouter:
 
 #### 模型级联（Cascade）模式
 
-```
+```diagram
 请求到达
   │
   ▼
@@ -880,7 +880,7 @@ async def cascade_route(messages: list) -> dict:
 
 LiteLLM 的核心设计思想是 **Adapter Pattern（适配器模式）**——定义统一的输入/输出接口（OpenAI Chat Completions 格式），为每个 Provider 实现一个适配器，将统一格式转换为 Provider 原生格式。
 
-```
+```diagram
                     统一入口
                       │
               litellm.completion()
@@ -1034,7 +1034,7 @@ Langfuse 的 trace 模型就像一本"调查日记"——每次用户提问是�
 
 #### 三层数据模型
 
-```
+```diagram
 Trace（一次完整的用户交互）
 │
 ├── Span: "检索相关文档"
@@ -1112,7 +1112,7 @@ async def generate_answer(query: str, docs: list) -> str:
 
 #### 底层存储架构
 
-```
+```diagram
 ┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
 │  SDK / API  │ ──→ │  Ingestion   │ ──→ │  ClickHouse     │
 │  (异步批量)  │     │  Pipeline    │     │  (列式存储)      │
@@ -1152,7 +1152,7 @@ async def generate_answer(query: str, docs: list) -> str:
 
 #### 工作原理
 
-```
+```diagram
 用户请求
   │
   ▼
@@ -1274,7 +1274,7 @@ class SemanticCache:
 
 #### A2A 协议架构
 
-```
+```diagram
 ┌────────────────┐        A2A Protocol        ┌────────────────┐
 │  Client Agent  │ ←─────────────────────────→ │  Remote Agent  │
 │  (发起方)      │   HTTP + JSON-RPC + SSE    │  (执行方)      │
@@ -1324,7 +1324,7 @@ class SemanticCache:
 
 #### Task 生命周期
 
-```
+```diagram
           submitted ──→ working ──→ completed
               │            │
               │            ├──→ input-required (需要人工输入)
@@ -1349,7 +1349,7 @@ class SemanticCache:
 
 #### 两者如何协同
 
-```
+```diagram
 ┌──────────────────────────────────────────────────┐
 │                Application Agent                  │
 │                                                   │
@@ -1391,7 +1391,7 @@ LLM 评估流水线就像"产品质检线"——每次出厂的产品（模型�
 
 #### 评估流水线架构
 
-```
+```diagram
 ┌────────────────────────────────────────────────┐
 │              LLM 评估流水线                      │
 │                                                │
@@ -1539,7 +1539,7 @@ Prompt Caching 就像考试时的"开卷笔记"——你把常用的公式和知
 
 #### 工作原理
 
-```
+```diagram
                      请求 1（冷启动）
                      ┌──────────────────────────────────┐
                      │ [System Prompt   ] [Context Docs ] │ ← 全部处理
@@ -1626,7 +1626,7 @@ print(response.usage)
 
 #### 缓存友好的 Prompt 结构设计
 
-```
+```diagram
 ┌──────────────────────────────────────┐
 │  稳定区域（适合缓存）                 │
 │  ├── System Prompt                    │
@@ -1685,7 +1685,7 @@ savings = 1 - total_cached / total_no_cache           # = 73.5% 节省
 
 #### 分摊架构
 
-```
+```diagram
 ┌──────────────────────────────────────────────────┐
 │                    LLM Gateway                    │
 │                                                   │
@@ -1848,7 +1848,7 @@ Circuit Breaker（熔断器）就像家里的保险丝——当电路过载（Pr
 
 #### 三态模型
 
-```
+```diagram
           ┌────────────────────┐
           │                    │
           ▼                    │
@@ -1966,7 +1966,7 @@ Guardrails 就像机场安检——旅客（用户输入）登机前要过安检
 
 #### 双向检查架构
 
-```
+```diagram
      用户输入
         │
         ▼
@@ -2124,7 +2124,7 @@ agent = Agent(
 
 #### 架构总览
 
-```
+```diagram
                         ┌─────────────────────────────────────────┐
                         │              负载均衡层                  │
                         │     (Nginx / AWS ALB / Cloudflare)      │
@@ -2276,7 +2276,7 @@ class RequestQueue:
 
 #### 容量规划
 
-```
+```diagram
 百万级日请求 ≈ 12 RPS（均匀分布）/ 50+ RPS（峰值）
 
 计算资源需求：
@@ -2327,7 +2327,7 @@ class RequestQueue:
 
 #### 架构设计
 
-```
+```diagram
 ┌───────────────────────────────────────────────────────────────┐
 │                    数据采集层                                  │
 │                                                               │
@@ -2557,7 +2557,7 @@ add_trace_processor(processor)
 
 #### 成本优化全景图
 
-```
+```diagram
 LLM 成本 = 请求数 × 每请求 Token 数 × Token 单价
 
 优化方向1: 减少请求数
@@ -2778,7 +2778,7 @@ async def manage_context(messages: list, max_tokens: int = 4000) -> list:
 
 #### 架构设计
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────┐
 │                   统一 LLM Gateway                           │
 │                 (LiteLLM Proxy / 自建)                       │
@@ -2950,7 +2950,7 @@ router_settings:
 
 #### 平台架构
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────────┐
 │                    Agent 互操作平台                               │
 │                                                                  │
@@ -3154,7 +3154,7 @@ async def handle_a2a_task(task: A2ATask):
 
 #### 场景分析
 
-```
+```diagram
 现状痛点：
 ├── 各团队直接调用不同 Provider API，代码分散
 ├── API Key 分散在各团队代码/配置中，安全风险高
@@ -3278,7 +3278,7 @@ response = client.chat.completions.create(
 
 #### 雪崩场景分析
 
-```
+```diagram
 故障根因（可能性排序）：
 ├── 1. 多 Provider 同时限流（大促/热点事件导致全网流量激增）
 ├── 2. 网关自身故障（OOM / CPU 打满 / 配置错误）
@@ -3482,7 +3482,7 @@ async def adaptive_rate_limit(request, level: DegradationLevel):
 
 #### 数据采集架构
 
-```
+```diagram
                  ┌───────────────────────────────┐
                  │         LLM Gateway            │
                  │       (LiteLLM Proxy)          │
@@ -3613,7 +3613,7 @@ class LLMCostReport:
 
 #### Grafana Dashboard 配置
 
-```
+```diagram
 Dashboard 布局：
 
 Row 1: 总览卡片
@@ -3697,7 +3697,7 @@ langfuse_context.update_current_trace(
 
 #### 场景分析
 
-```
+```diagram
 目标：每次 Prompt 或模型配置变更时，自动在 CI 中运行评估，
       只有质量指标达标（如 correctness > 0.85）才允许合并/部署。
 
@@ -3710,7 +3710,7 @@ langfuse_context.update_current_trace(
 
 #### CI/CD 评估流水线
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────┐
 │                    CI/CD Pipeline                            │
 │                                                             │
@@ -3913,7 +3913,7 @@ python scripts/check_eval_results.py ci_results/ --threshold correctness=0.85
 
 #### 回归检测策略
 
-```
+```diagram
 评估结果管理：
 
 1. 每次 CI 运行的评估分数存储在 Langfuse Dataset Run 中

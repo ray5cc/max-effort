@@ -205,7 +205,7 @@ async function* streamChat(messages: Message[]): AsyncGenerator<string> {
 
 ### 1.6 请求链路 ASCII 时序图
 
-```
+```diagram
 Client          Nginx            FastAPI          LLM API
   │                │                │                │
   │─── POST ──────▶│                │                │
@@ -392,7 +392,7 @@ async def chat_with_budget(user_id: str, messages: list[dict]) -> str:
 
 AI 应用的会话需要持久化历史消息，同时兼顾高读写性能：
 
-```
+```diagram
 ┌──────────┐    ┌───────────────┐    ┌──────────────┐
 │  Client  │───▶│  FastAPI App  │───▶│  Redis       │
 │          │    │               │    │  (热数据)     │
@@ -557,7 +557,7 @@ async def summarize_and_compress(
 
 ### 4.2 Trace / Span / Generation 层级
 
-```
+```diagram
 Trace（一次用户请求的完整链路）
 │
 ├── Span: "retrieval"（RAG 检索）
@@ -943,7 +943,7 @@ async def health_check():
 
 断路器防止在上游故障时持续发送注定失败的请求：
 
-```
+```diagram
          failure_threshold 次失败
 CLOSED ──────────────────────────▶ OPEN
   ▲                                  │
@@ -1265,7 +1265,7 @@ async def chat(
 
 vLLM 是目前最流行的 LLM 推理引擎，其 API Server 展示了 FastAPI 在高性能 AI 后端中的典型用法。
 
-```
+```diagram
                     vLLM API Server 架构
 ┌──────────────────────────────────────────────────────────┐
 │                  FastAPI Application                      │
@@ -1361,7 +1361,7 @@ async def create_chat_completion(request: Request):
 
 Open WebUI 展示了 FastAPI 构建完整 AI 平台的工程实践：
 
-```
+```diagram
           Open WebUI 后端架构
 ┌─────────────────────────────────────┐
 │           FastAPI App                │
@@ -1807,7 +1807,7 @@ class APIKeyManager:
 
 AI 平台通常需要支持多个组织、团队和用户。LiteLLM 的多租户模型提供了清晰的层级结构：
 
-```
+```diagram
             多租户层级结构
 ┌─────────────────────────────────┐
 │  Organization（组织）            │  ← 最高层级，独立计费
@@ -1981,7 +1981,7 @@ AI 应用的每个请求需要经过多道"检查站"：验证身份、检查速
 
 ### 10.2 七层中间件架构
 
-```
+```diagram
                AI 后端中间件链
 ┌────────────────────────────────────────────────────┐
 │  Request ──────────────────────────────── Response  │
@@ -2240,7 +2240,7 @@ pipeline.post_call_hooks.append(langfuse_logging_hook)
 
 Dify 展示了另一种中间件思维：将 AI 应用的整个执行过程抽象为**可视化工作流**，每个节点是一个独立的处理步骤：
 
-```
+```diagram
         Dify 工作流执行架构
 ┌───────────────────────────────────────────┐
 │  Workflow Engine                           │
@@ -2428,7 +2428,7 @@ class Message(Base):
 
 LobeChat 等 AI Chat 应用支持"重新生成"和"编辑历史消息"，这意味着对话不是简单的线性列表，而是树形结构：
 
-```
+```diagram
                树形对话结构
                   ┌──────┐
                   │ User  │ "什么是 RAG？"
@@ -2919,7 +2919,7 @@ async def track_requests(request: Request, call_next):
 
 AI 服务的扩展挑战在于**流式连接的有状态性**——SSE 连接在完成前必须保持在同一 Pod 上。
 
-```
+```diagram
           有状态 AI 服务扩展策略
 ┌──────────────────────────────────────────────┐
 │                  Load Balancer               │
@@ -2998,7 +2998,7 @@ async def chat_completion(request: ChatRequest):
 
 追踪产生的 Span 结构：
 
-```
+```diagram
 chat_completion (总耗时: 3200ms)
 ├── context_retrieval (150ms)
 │   ├── embedding_generation (50ms)

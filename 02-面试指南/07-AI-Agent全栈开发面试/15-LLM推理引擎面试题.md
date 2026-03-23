@@ -309,7 +309,7 @@ vLLM 实现了两种调度策略：
 
 #### 选型决策树
 
-```
+```diagram
 需要高并发生产服务？
   ├── 是 → 有 NVIDIA GPU？
   │       ├── 是 → vLLM / SGLang / TensorRT-LLM
@@ -349,7 +349,7 @@ SGLang 介于 vLLM 和 llama.cpp 之间偏向 vLLM，同样面向 GPU 高吞吐�
 
 #### 推理的两个阶段
 
-```
+```diagram
 用户请求 ─────────────────────────────────────────→ 完成
          │← Prefill →│←──── Decode（逐 token 生成）────→│
          │            │                                    │
@@ -454,7 +454,7 @@ GGUF 流行原因：
 
 #### 工作原理（以 MLP 层为例）
 
-```
+```diagram
 原始 MLP：Y = GeLU(X · W_gate) ⊙ (X · W_up)，然后 Y · W_down
 
 张量并行（TP=2，2 个 GPU）：
@@ -726,7 +726,7 @@ class Scheduler:
 
 #### 调度流程
 
-```
+```diagram
               新请求
                 ↓
             [waiting]  ←──────── 显存不足，无法调入
@@ -872,7 +872,7 @@ SGLang 零开销调度器：
 
 #### FP8 的两种格式
 
-```
+```diagram
 E4M3（推理首选）：
   ┌─────┬──────┬─────┐
   │ S(1)│ E(4) │ M(3)│  → 范围 ±448，精度更高
@@ -961,7 +961,7 @@ System Prompt 被重复计算了 3 次 → 浪费！
 
 #### Radix Tree 数据结构
 
-```
+```diagram
 Radix Tree（压缩前缀树）：
 
                     [root]
@@ -1262,7 +1262,7 @@ vllm serve model_name \
 
 **策略 1：显存分区（Static Partitioning）**
 
-```
+```diagram
 80GB GPU 显存分区：
 ┌──────────────────────────────────────────┐
 │ Model A 权重 (15GB) │ Model A KV (10GB) │
@@ -1292,7 +1292,7 @@ GPU 一次只加载一个模型：
 
 **策略 3：LoRA 热切换（推荐）**
 
-```
+```diagram
 基础模型权重（共享）+ 多个 LoRA Adapter（各几十 MB）：
 
 ┌──────────────────────────────────────────┐
@@ -1422,7 +1422,7 @@ class LoRAWorker:
 
 #### 传统调度器的问题
 
-```
+```diagram
 传统调度器（vLLM V0 架构）：
 
 时间 → ────────────────────────────────────────→
@@ -1438,7 +1438,7 @@ GPU:   [等待][计算   ][等待][计算   ][等待][计算   ]
 
 #### SGLang 的双缓冲并行调度
 
-```
+```diagram
 零开销调度器：
 
 时间 → ────────────────────────────────────────→
@@ -1590,7 +1590,7 @@ VLLM_USE_CUDA_GRAPH=1 vllm serve model_name
 
 #### 整体架构
 
-```
+```diagram
                 ┌─────────────────────────────────────────────┐
                 │          KV Cache Manager                    │
                 │                                              │
@@ -1793,7 +1793,7 @@ Expert 选择：每 token 选 8/256 个 Expert（Top-8 Routing）
 
 #### 集群规划：96 GPU（假设 12 节点 × 8 H100）
 
-```
+```diagram
 方案：PD 分离 + EP + TP 混合并行
 
 ═══════════════════════════════════════════════════════
@@ -1828,7 +1828,7 @@ Expert 选择：每 token 选 8/256 个 Expert（Top-8 Routing）
 
 #### PD 分离（Prefill-Decode Disaggregation）
 
-```
+```diagram
 为什么分离：
 - Prefill 是计算密集（Compute Bound）：大量矩阵乘法，GPU 计算利用率高
 - Decode 是访存密集（Memory Bound）：逐 token 生成，主要瓶颈是读 KV Cache
@@ -2005,7 +2005,7 @@ SGLang 在结构化输出（Constrained Decoding）上有零开销的优化：
 
 #### V0 单进程架构的问题
 
-```
+```diagram
 vLLM V0（单进程）：
 ┌───────────────────────────────────────────┐
 │              Main Process (Python)         │
@@ -2024,7 +2024,7 @@ vLLM V0（单进程）：
 
 #### V1 多进程架构
 
-```
+```diagram
 vLLM V1（多进程）：
 
 ┌──────────────┐     ZMQ      ┌──────────────────┐
@@ -2241,7 +2241,7 @@ Decode 特性：
 
 #### PD 分离架构设计
 
-```
+```diagram
                         ┌─────────────┐
                         │  Router /   │
                         │  Gateway    │
@@ -2345,7 +2345,7 @@ class PDRouter:
 
 #### 架构设计
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────┐
 │                   Application Layer                  │
 │              OpenAI Compatible API                   │
@@ -2487,7 +2487,7 @@ llama.cpp 使用 `ggml` 后端抽象：
 
 #### 调度器核心架构
 
-```
+```diagram
                     新请求
                       ↓
               ┌───────────────┐
@@ -2726,7 +2726,7 @@ class SLO:
 
 #### 架构设计
 
-```
+```diagram
                     ┌─────────────┐
                     │   CDN/WAF   │
                     └──────┬──────┘
@@ -2849,7 +2849,7 @@ PARAMETER num_thread 4       # CPU 线程数
 
 #### 内存优化策略
 
-```
+```diagram
 内存预算分配（8GB 总内存）：
 ┌──────────────────────────────────────┐
 │ OS + Desktop    │ 2.0 GB            │
@@ -3030,7 +3030,7 @@ vLLM 额外优势：
 
 #### 排查框架：METRICS → RESOURCE → CODE → CONFIG
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────┐
 │                 P99 延迟飙升排查路径                        │
 │                                                          │
@@ -3213,7 +3213,7 @@ GGUF（GPT-Generated Unified Format）是 llama.cpp 从 2023 年 8 月起采用�
 
 **文件结构：**
 
-```
+```diagram
 ┌─────────────────────────────────────┐
 │  Magic Number (4 bytes)             │  0x46554747 = "GGUF" (little-endian)
 ├─────────────────────────────────────┤
@@ -3297,7 +3297,7 @@ Q4_K_M（K-quants 量化）：
 
 **选择决策树：**
 
-```
+```diagram
 内存是否 > 模型 F16 大小的 60%？
 ├── 是 → Q8_0（几乎无损）
 └── 否 → 是否需要高质量输出？
@@ -3327,7 +3327,7 @@ llama.cpp 是由 Georgi Gerganov 开发的纯 C/C++ LLM 推理框架，核心理
 
 **架构概览：**
 
-```
+```diagram
 ┌──────────────────────────────────────────────┐
 │              应用层 (Application)              │
 │  llama-cli · llama-server · llama-bench       │
@@ -3407,7 +3407,7 @@ struct llama_kv_cache {
 
 **工作原理：**
 
-```
+```diagram
 Transformer 模型结构（以 Llama-2 7B 为例，共 32 层）：
 
   ┌─────────────┐
@@ -3458,7 +3458,7 @@ llama-cli -m model.gguf -ngl 20 --verbose
 
 **标准采样管线（从 logits 到 token）：**
 
-```
+```diagram
 原始 Logits [vocab_size]
     │
     ▼
@@ -3582,7 +3582,7 @@ ggml（**G**eorgi **G**erganov **M**achine **L**earning）是一个纯 C 语言�
 
 **ggml 与 llama.cpp 的关系：**
 
-```
+```diagram
 llama.cpp (模型逻辑)          ggml (计算引擎)
 ├── 加载 GGUF 文件        →   ggml_tensor 结构
 ├── 构建推理流程          →   ggml_cgraph (计算图)
@@ -3633,7 +3633,7 @@ K-quants 是 llama.cpp 的第二代量化方案，它在传统均匀量化的基
 
 **K-quants（Q4_K_M）的实现：**
 
-```
+```diagram
 超级块(super block)：256 个权重
   ├── 1 个 FP16 全局 scale (d)
   ├── 1 个 FP16 全局 min (dmin)
@@ -3765,7 +3765,7 @@ KV Cache (bytes) = 2 × n_layers × n_ctx × n_kv_heads × head_dim × dtype_siz
 
 **实际计算示例：**
 
-```
+```diagram
 模型：Llama-3 8B
   n_layers = 32, n_heads = 32, n_kv_heads = 8 (GQA), head_dim = 128
 
@@ -3818,7 +3818,7 @@ Metal 和 CUDA 是 llama.cpp 最重要的两个 GPU 后端，但它们的设计�
 
 **统一内存的性能影响：**
 
-```
+```diagram
 CUDA 后端的数据流：
   CPU RAM ──PCIe──→ GPU VRAM ──计算──→ GPU VRAM ──PCIe──→ CPU RAM
   延迟瓶颈：PCIe 4.0 x16 ≈ 32 GB/s
@@ -3870,7 +3870,7 @@ llama-server 是 llama.cpp 内置的 HTTP 推理服务器，提供 **OpenAI 兼�
 
 **Slot 模型原理：**
 
-```
+```diagram
 启动时预分配 N 个 Slot（由 --parallel / -np 参数控制）：
 
 ┌────────────────────────────────────────────┐
@@ -4006,7 +4006,7 @@ mmap 和 mlock 是 llama.cpp 模型加载和内存管理的两个关键系统调
 
 **mmap（Memory-Mapped File）：**
 
-```
+```diagram
 传统加载方式：
   打开文件 → malloc 分配内存 → read() 读入内存 → 关闭文件
   缺点：需要等待完整文件读取，加载 40GB 模型需数十秒
@@ -4072,7 +4072,7 @@ ggml 使用**静态计算图**（与 PyTorch 的动态图不同），在推理�
 
 **构建-执行两阶段模型：**
 
-```
+```diagram
 阶段 1：构建计算图（Build Phase）
   ┌────────────────────────────────────────┐
   │ 用 ggml API 描述计算流程，不做实际计算   │
@@ -4275,7 +4275,7 @@ KV Cache 量化是将推理过程中的 Key/Value 缓存从 FP16 降低到更低
 
 **实现机制：**
 
-```
+```diagram
 标准流程（无 KV 量化）：
   Attention 计算 → 生成 FP16 的 K, V → 存入 Cache → 下次直接用
 
@@ -4410,7 +4410,7 @@ ggml 的后端抽象是一个将**计算逻辑**与**硬件执行**分离的架�
 
 **架构分层：**
 
-```
+```diagram
 ┌────────────────────────────────────────────────┐
 │  应用层 (llama.cpp)                             │
 │  构建计算图、管理 KV Cache、采样等               │
@@ -4458,7 +4458,7 @@ struct ggml_backend_i {
 
 **调度流程（混合 CPU/GPU 推理时）：**
 
-```
+```diagram
 1. 构建完整计算图（所有节点）
     │
 2. 后端调度器遍历每个节点：
@@ -4585,7 +4585,7 @@ Grammar-constrained Sampling（语法约束采样）是 llama.cpp 的一个强�
 
 **实现流程：**
 
-```
+```diagram
 1. 解析 GBNF 语法 → 构建语法规则树
 2. 编译为确定性下推自动机（PDA）
 3. 推理时维护自动机的当前状态
@@ -4768,7 +4768,7 @@ NUMA（Non-Uniform Memory Access）是多路服务器的内存架构特征。在
 
 **NUMA 架构背景：**
 
-```
+```diagram
 双路服务器内存拓扑：
 
 ┌─────────────────┐     QPI/UPI      ┌─────────────────┐
@@ -4935,7 +4935,7 @@ llama-server 单实例通常支持 1-16 并发，100+ 并发需要**多实例水
 
 **整体架构：**
 
-```
+```diagram
                     客户端 (100+ 并发)
                          │
                          ▼
@@ -5080,7 +5080,7 @@ CUDA_VISIBLE_DEVICES=1 llama-server \
 
 **第 1 步：明确约束条件**
 
-```
+```diagram
 硬件约束：
   ├── 可用内存/VRAM: ___ GB
   ├── CPU 架构: x86(AVX2/512) / ARM(NEON)
@@ -5191,7 +5191,7 @@ llama-server \
 
 **排查框架（从底层往上）：**
 
-```
+```diagram
 Layer 1: 硬件/OS 层
   │ ├── 内存是否 swap？（最常见原因）
   │ ├── CPU 是否降频？（温控节流）

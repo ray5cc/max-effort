@@ -110,7 +110,7 @@ type Pair = [string, number];
 
 **参考答案**：
 
-```
+```diagram
           any（不在正常层级中，绕过类型检查）
 
          unknown（最顶部类型，接受一切赋值）
@@ -1336,7 +1336,7 @@ Emitter（发射器）→ .js + .d.ts + .js.map
 
 **解决方案：Project References**
 
-```
+```diagram
 monorepo/
 ├── tsconfig.json              # 根配置（解决方案文件）
 ├── tsconfig.base.json         # 共享基础配置

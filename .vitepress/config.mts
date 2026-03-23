@@ -53,9 +53,10 @@ function escapeBraces(s: string): string {
 /* ------------------------------------------------------------------ */
 /*  Markdown-it 插件：                                                  */
 /*  将 ```mermaid 代码块转换为 <MermaidDiagram code="..." /> Vue 组件    */
+/*  将 ```diagram 代码块转换为 <DiagramBlock code="..." /> Vue 组件      */
 /* ------------------------------------------------------------------ */
 
-function mermaidFencePlugin(md: MarkdownIt) {
+function diagramFencePlugin(md: MarkdownIt) {
   type FenceRenderer = NonNullable<typeof md.renderer.rules.fence>
 
   const defaultFence: FenceRenderer =
@@ -64,13 +65,20 @@ function mermaidFencePlugin(md: MarkdownIt) {
 
   md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     const token = tokens[idx]
-    if (token.info.trim() === 'mermaid') {
-      // Base64-encode the diagram source so it safely passes as an HTML attribute.
-      // The encoded string is also the "original content" readable in both GitHub
-      // (as a mermaid code block) and VitePress (rendered as an interactive diagram).
+    const lang = token.info.trim()
+
+    if (lang === 'mermaid') {
       const encoded = Buffer.from(token.content.trim()).toString('base64')
       return `<MermaidDiagram code="${encoded}" />\n`
     }
+
+    if (lang === 'diagram') {
+      // ASCII art / structural diagrams rendered via DiagramBlock Vue component.
+      // The base64-encoded source serves as the raw text fallback for GitHub.
+      const encoded = Buffer.from(token.content.trim()).toString('base64')
+      return `<DiagramBlock code="${encoded}" />\n`
+    }
+
     return defaultFence(tokens, idx, options, env, self)
   }
 }
@@ -128,7 +136,7 @@ export default defineConfig({
 
   markdown: {
     config: (md) => {
-      md.use(mermaidFencePlugin)
+      md.use(diagramFencePlugin)
       md.use(safeContentPlugin)
     },
   },

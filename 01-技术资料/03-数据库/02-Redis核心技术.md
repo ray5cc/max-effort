@@ -103,7 +103,7 @@ struct __attribute__ ((__packed__)) sdshdr64 {
 
 **ziplist 内存布局（ASCII）：**
 
-```
+```diagram
 ┌────────┬────────┬────────┬──────────────────────────────────┬────────┐
 │zlbytes │zltail  │zllen   │   entry[0] | entry[1] | ...       │zlend   │
 │(4字节) │(4字节) │(2字节) │                                  │(0xFF)  │
@@ -123,7 +123,7 @@ struct __attribute__ ((__packed__)) sdshdr64 {
 
 **listpack 内存布局（src/listpack.c）：**
 
-```
+```diagram
 ┌────────┬────────┬──────────────────────────────┬────────┐
 │total   │num     │   lp-entry[0] | lp-entry[1]  │lpend   │
 │bytes   │elements│                              │(0xFF)  │
@@ -179,7 +179,7 @@ typedef struct dict {
 
 Redis 不会一次性完成 rehash（避免阻塞），而是分摊到每次 CRUD 操作中。
 
-```
+```diagram
 触发条件：
   扩容：used / size > 1（load factor > 1）
         或 BGSAVE/BGREWRITEAOF 期间 load factor > 5（放宽阈值，减少 COW 页污染）
@@ -240,7 +240,7 @@ typedef struct zskiplist {
 
 **跳表层级布局（ASCII，4层示例）：**
 
-```
+```diagram
 Level 4: header ──────────────────────────────────────────→ NULL
 Level 3: header ──────────── [score=30] ──────────────────→ NULL
 Level 2: header ── [s=10] ── [s=30] ── [s=50] ───────────→ NULL
@@ -302,7 +302,7 @@ typedef struct quicklist {
 ```
 
 **内存布局：**
-```
+```diagram
 quicklist
   ├── Node1 [ziplist: e0, e1, e2, e3]
   ├── Node2 [ziplist: e4, e5, e6, e7]  ← LZF 压缩（compress > 0 时，中间节点压缩）
@@ -333,7 +333,7 @@ quicklist
 
 **触发路径：**
 
-```
+```diagram
 BGSAVE 命令
     │
     ▼
@@ -356,7 +356,7 @@ rdbSaveBackground(char *filename)          ← src/rdb.c
 ```
 
 **Copy-on-Write（COW）机制：**
-```
+```diagram
 fork() 后，父子进程共享物理内存页（页表指向同一物理页）
 父进程写某页 → OS 触发 page fault → 复制该页 → 父进程写副本
 子进程始终看到 fork 时刻的快照，无需任何锁
@@ -368,7 +368,7 @@ fork() 后，父子进程共享物理内存页（页表指向同一物理页）
 
 **RDB 文件格式（ASCII）：**
 
-```
+```diagram
 ┌──────────┬─────────┬──────────────────────────────────────────┬────────┐
 │  "REDIS" │ version │  数据体（若干 DB 块）                      │  EOF  │
 │  (5字节) │ (4字节) │                                          │+CRC64  │
@@ -400,7 +400,7 @@ key-value 对：
 
 **写入路径：**
 
-```
+```diagram
 processCommand()
     │  命令执行成功后
     ▼
@@ -422,7 +422,7 @@ beforeSleep() / serverCron()
 
 **AOF 重写（`BGREWRITEAOF`）：**
 
-```
+```diagram
 bgrewriteaofCommand()
     │  fork 子进程
     ▼
@@ -447,7 +447,7 @@ AOF 重写不依赖旧 AOF 文件（从内存 RDB 快照重新生成），保证
 
 Redis 4.0+ 引入，由 `aof-use-rdb-preamble yes`（默认开启）控制。
 
-```
+```diagram
 混合持久化的 AOF 文件格式：
 
 ┌──────────────────────────────┬──────────────────────────────────┐
@@ -642,7 +642,7 @@ typedef struct aeEventLoop {
 
 **主循环（`aeMain` in ae.c）：**
 
-```
+```diagram
 aeMain(eventLoop):
   while (!eventLoop->stop):
       beforesleep()                    ← 处理 pending 客户端写回、AOF flush 等
@@ -692,7 +692,7 @@ static char *aeApiName(void);
 
 ### 4.3 命令处理完整流程
 
-```
+```diagram
 客户端 TCP 连接
        │
        ▼
@@ -737,7 +737,7 @@ sendReplyToClient → writeToClient → write(fd, ...)  ← 发送给客户端
 
 Redis 6.0 引入多线程 IO，但**命令执行仍在主线程**，只有读写操作分发到 IO 线程。
 
-```
+```diagram
 架构图（4个IO线程）：
 
 主线程                    IO Thread 1     IO Thread 2     IO Thread 3
@@ -773,7 +773,7 @@ Redis 6.0 引入多线程 IO，但**命令执行仍在主线程**，只有读写
 
 **复制建立流程：**
 
-```
+```diagram
 SLAVE → MASTER: PING
 SLAVE → MASTER: REPLCONF listening-port <port>
 SLAVE → MASTER: REPLCONF capa psync2
@@ -805,7 +805,7 @@ long long repl_backlog_off;  /* 缓冲区首字节对应的全局 offset */
 
 **`syncWithMaster` 流程（slave 侧）：**
 
-```
+```diagram
 syncWithMaster(el, fd, privdata, mask)   ← 连接可写时触发
     │
     ├── PHASE 1: 发送 PING，等待 +PONG
@@ -863,7 +863,7 @@ Failover 步骤：
 
 **Sentinel 状态机（ASCII）：**
 
-```
+```diagram
   MONITOR ──[SDOWN]──→ ODOWN check ──[quorum met]──→ LEADER ELECTION
      ↑                                                      │
      │                                                [elected]
@@ -925,7 +925,7 @@ clusterCron() 还负责：
 
 **MOVED / ASK 重定向：**
 
-```
+```diagram
 客户端: SET foo bar
         │  计算 slot = 12345 → 应该在 Node C，但发给了 Node A
         ▼
@@ -963,7 +963,7 @@ multiState mstate;  /* 包含 multiCmd *commands 数组和 int count */
 
 **MULTI/EXEC 执行流程：**
 
-```
+```diagram
 客户端:  MULTI
              │  设置 CLIENT_MULTI flag，清空 mstate
              ▼
@@ -1006,7 +1006,7 @@ void touchWatchedKey(redisDb *db, robj *key) {
 
 **WATCH 乐观锁工作流程（CAS 模式）：**
 
-```
+```diagram
 WATCH key1 key2        ← 注册监控
 MULTI
   GET key1
@@ -1048,7 +1048,7 @@ void evalGenericCommand(client *c, int evalsha) {
 
 **原子性保证机制：**
 
-```
+```diagram
 Redis 是单线程模型（命令执行阶段）
 Lua 脚本执行期间：
   ├── 不会处理其他客户端请求（同一事件循环迭代内完成）

@@ -46,7 +46,7 @@
 
 ### 1.1 内存结构
 
-```
+```diagram
 InnoDB 内存结构
 ├── Buffer Pool（最重要，默认 128MB，生产建议 60-80% 物理内存）
 │     ├── 数据页（16KB/页）
@@ -63,7 +63,7 @@ InnoDB 内存结构
 
 ### 1.2 磁盘结构
 
-```
+```diagram
 InnoDB 磁盘结构
 ├── 表空间（Tablespace）
 │     ├── System Tablespace (ibdata1)      — 数据字典、Double Write Buffer、Undo Log（老版本）
@@ -128,7 +128,7 @@ Buffer Pool 是 InnoDB 最核心的内存组件，所有数据访问都必须经
 
 InnoDB 不使用标准 LRU，而是**分区 LRU（Midpoint Insertion Strategy）**：
 
-```
+```diagram
 Buffer Pool LRU 链表:
 
 ┌──────────────────────────────────────────────────────────┐
@@ -239,7 +239,7 @@ InnoDB 每张表**必须有且只有一个**聚簇索引（Clustered Index），
 
 **聚簇索引结构：**
 
-```
+```diagram
 聚簇索引 B+树（主键 = 1,2,3,...）:
 
                      ┌──────────┐
@@ -255,7 +255,7 @@ Leaf Pages:   │1|row1 │↔  │11|row │   叶子节点：存储完整行�
 
 **叶子页面内部布局（FIL_PAGE_INDEX 类型）：**
 
-```
+```diagram
 Page (16KB)
 ┌──────────────────────────────────────────────────────┐
 │ File Header (38 bytes)                                │
@@ -411,7 +411,7 @@ Undo Log 分为两种：
 
 **Undo Log 记录的内容（UPDATE 为例）：**
 
-```
+```diagram
 UPDATE users SET age = 26 WHERE id = 1;
 
 Undo Log 记录:
@@ -470,7 +470,7 @@ class ReadView {
 
 **可见性判断规则：**
 
-```
+```diagram
 对于行的 DB_TRX_ID = trx_id:
 
 1. trx_id == m_creator_trx_id → 自己修改的 → 可见
@@ -696,7 +696,7 @@ Redo Log 记录了所有数据页的物理修改，用于崩溃恢复。
 
 **Log Record 结构：**
 
-```
+```diagram
 Redo Log Record:
 ┌──────────────────────────────────────────────────────┐
 │ type (1 byte)   — 操作类型（如 MLOG_REC_UPDATE_IN_PLACE）│
@@ -748,7 +748,7 @@ lsn - last_checkpoint_lsn = 未经 checkpoint 的 redo log 量
 
 InnoDB 使用 **Fuzzy Checkpoint**（模糊检查点，不要求立刻刷所有脏页）：
 
-```
+```diagram
 Checkpoint 推进过程：
 
 older LSN ─────────────────────────────────→ newer LSN
@@ -794,7 +794,7 @@ Step 4: Change Buffer 合并
 
 **Change Buffer 解决方案：** 当辅助索引页不在 Buffer Pool 中，且**该索引不是唯一索引**时（唯一索引需读入页才能检查唯一性），将修改操作缓存在 Change Buffer 中，延迟到该页被读入 Buffer Pool 时再合并。
 
-```
+```diagram
 写入流程 (无需立即修改辅助索引页):
   INSERT INTO users VALUES (100, 'Alice', 25);
   → 修改聚簇索引页（可能在 Buffer Pool 中）

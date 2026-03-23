@@ -146,7 +146,7 @@ t=8: 新请求D需要比[    ]更大的空间，但总空闲足够
 
 PagedAttention 借鉴操作系统的虚拟内存和分页机制：
 
-```
+```diagram
 操作系统虚拟内存          PagedAttention KV Cache
 ─────────────────         ──────────────────────────
 虚拟地址空间       ←→     逻辑 KV 块（Logical Block）
@@ -158,7 +158,7 @@ PagedAttention 借鉴操作系统的虚拟内存和分页机制：
 
 ### 逻辑块与物理块
 
-```
+```diagram
 逻辑视图（请求视角）：
 Request A: [Block 0][Block 1][Block 2][Block 3]
            token 0-3  4-7     8-11    12-15
@@ -195,7 +195,7 @@ block_memory = block_size × num_layers × 2 × num_heads × head_dim × dtype_s
 
 Beam Search 需要维护多个候选序列（beam），这些序列共享前缀：
 
-```
+```diagram
 Beam Search (beam_width=3):
 
 Prompt: "The weather today is"
@@ -274,7 +274,7 @@ GPU 始终保持满负荷运行 ✓
 
 ### 调度器决策流程
 
-```
+```diagram
 每个 Step 的调度逻辑：
 
 ┌─────────────────────────────────────────────┐
@@ -319,7 +319,7 @@ engine_args = EngineArgs(
 
 ### vLLM 官方 Benchmark 结果
 
-```
+```diagram
 测试环境：A100-40GB，LLaMA-7B，ShareGPT 数据集
 
 吞吐量对比（tokens/second）：
@@ -398,7 +398,7 @@ print(response.choices[0].message.content)
 
 ## 总结
 
-```
+```diagram
 vLLM 技术栈全景：
 
                     ┌─────────────────────────┐
@@ -434,7 +434,7 @@ vLLM 技术栈全景：
 
 ### 组件关系图
 
-```
+```diagram
 LLMEngine
 ├── Tokenizer                    # 分词器
 ├── Scheduler                    # 调度器
@@ -451,7 +451,7 @@ LLMEngine
 
 ### 推理请求生命周期
 
-```
+```diagram
 客户端请求
     │
     ▼ add_request()
@@ -554,7 +554,7 @@ class BlockAllocator:
 
 ### 逻辑到物理的映射
 
-```
+```diagram
 BlockSpaceManager 维护每个序列的块表（Block Table）：
 
 Sequence A 的块表：
@@ -630,7 +630,7 @@ class Scheduler:
 
 ### 调度决策流程图
 
-```
+```diagram
 _schedule() 执行流程：
 
 开始
@@ -699,7 +699,7 @@ llm = LLM(
 
 ### 张量并行（Tensor Parallelism）
 
-```
+```diagram
 张量并行将注意力头和 FFN 层分布到多个 GPU：
 
 GPU 0                    GPU 1
@@ -733,7 +733,7 @@ llm = LLM(
 
 ### 流水线并行（Pipeline Parallelism）
 
-```
+```diagram
 流水线并行将模型层分布到多个 GPU：
 
 GPU 0（Layer 0-9）    GPU 1（Layer 10-19）   GPU 2（Layer 20-31）
@@ -831,7 +831,7 @@ params = SamplingParams(
 
 ### 采样流程
 
-```
+```diagram
 Logits（未归一化分数）
       │
       ▼ apply_temperature(logits / temperature)
@@ -891,7 +891,7 @@ async def generate_stream(prompt: str):
 
 ### 异步引擎架构
 
-```
+```diagram
 AsyncLLMEngine
 ├── _engine_loop()                 # 后台循环（独立 asyncio task）
 │   └── 不断调用 engine.step()
@@ -927,7 +927,7 @@ AsyncLLMEngine
 
 ### 量化方案对比
 
-```
+```diagram
 量化方案性能对比（LLaMA-7B, A100-40GB）：
 
 精度/显存/吞吐量权衡：
@@ -1011,7 +1011,7 @@ llm = LLM(
 
 ## 架构总结
 
-```
+```diagram
 vLLM 完整组件图：
 
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -1523,7 +1523,7 @@ python -m vllm.entrypoints.openai.api_server \
 
 ### 场景化调优策略
 
-```
+```diagram
 场景1：最大化吞吐量
 ──────────────────────────────────────────────
 目标：每秒处理最多的 token 数
@@ -1854,7 +1854,7 @@ export NCCL_DEBUG=INFO
 
 TensorRT-LLM（TRT-LLM）是 NVIDIA 于 2023 年发布的开源 LLM 推理优化库，构建于 TensorRT 之上，专为 NVIDIA GPU（特别是 H100、A100）优化。
 
-```
+```diagram
 TensorRT-LLM 技术栈：
 
 ┌─────────────────────────────────────────────────────┐
@@ -1888,7 +1888,7 @@ TensorRT-LLM 技术栈：
 
 ### 计算图优化流程
 
-```
+```diagram
 原始模型（ONNX / PyTorch）
         │
         ▼ 解析阶段
@@ -1984,7 +1984,7 @@ TRT-LLM 针对 LLM 关键算子编写了高度优化的 CUDA kernels：
 
 ### KV Cache 分页管理
 
-```
+```diagram
 TRT-LLM 的 KV Cache 管理（类似 PagedAttention）：
 
 物理内存：
@@ -2105,7 +2105,7 @@ SmoothQuant 解决方案：
 
 ## 6. 性能数据
 
-```
+```diagram
 H100 80GB SXM5 基准测试（官方数据）：
 
 LLaMA-2 70B，TP=4，FP8：
@@ -2158,7 +2158,7 @@ LoRA 支持        有限            支持          完善
 
 ### 两阶段架构
 
-```
+```diagram
 阶段一：Build Phase（一次性编译，CPU 上执行）
 ─────────────────────────────────────────────
   输入: 模型权重（HuggingFace / NeMo 格式）
@@ -2320,7 +2320,7 @@ outputs = session.generate(
 
 ## 4. Triton Inference Server 集成
 
-```
+```diagram
 TRT-LLM + Triton 服务架构：
 
 客户端 HTTP/gRPC 请求
@@ -2348,7 +2348,7 @@ TRT-LLM + Triton 服务架构：
 
 ### Triton 模型仓库结构
 
-```
+```diagram
 model_repository/
 ├── preprocessing/             # Tokenization
 │   ├── 1/
@@ -2600,7 +2600,7 @@ pip install build/tensorrt_llm*.whl     # 安装
 
 ## 2. 构建工作流
 
-```
+```diagram
 完整构建流程：
 
 原始模型
@@ -2981,7 +2981,7 @@ llama.cpp 由 Georgi Gerganov 于 2023 年 3 月开源，最初目标是在 MacB
 - 跨平台：Linux、macOS、Windows、Android、iOS
 - OpenAI 兼容的 HTTP 服务端
 
-```
+```diagram
 ┌─────────────────────────────────────────────┐
 │              llama.cpp 生态系统               │
 ├─────────────────────────────────────────────┤
@@ -3047,7 +3047,7 @@ GGUF（GPT-Generated Unified Format）是 2023 年 8 月引入的新格式，取
 
 **GGUF 文件结构：**
 
-```
+```diagram
 ┌────────────────────────────────────────┐
 │            GGUF 文件结构                │
 ├────────────────────────────────────────┤
@@ -3102,7 +3102,7 @@ GGUF（GPT-Generated Unified Format）是 2023 年 8 月引入的新格式，取
 
 ### 命名规则解析
 
-```
+```diagram
 Q4_K_M
 │ │ │ └── M = Medium（中等版本，关键层用更高精度）
 │ │ └──── K = K-quants（使用超块量化，更精确）
@@ -3142,7 +3142,7 @@ sub_block_size = 32
 - 成本：RTX 4090（24GB VRAM）约 ¥15,000 vs MacBook Pro M3 Max（128GB 统一内存）
 
 **隐私与数据安全：**
-```
+```diagram
 云端 API 推理:                本地 CPU 推理:
 用户数据 ──► API 服务器        用户数据 ──► 本地模型
            ├── 数据留存                    ├── 完全私有
@@ -3161,7 +3161,7 @@ sub_block_size = 32
 
 ### Metal 后端（Apple Silicon）
 
-```
+```diagram
 Apple M2/M3 统一内存架构：
 ┌─────────────────────────────────────┐
 │           统一内存（共享）           │
@@ -3260,7 +3260,7 @@ struct ggml_tensor {
 
 ggml 采用**单块连续内存池**管理所有张量数据。创建 `ggml_context` 时预先分配一块大内存，之后所有张量数据都从这块内存线性分配：
 
-```
+```diagram
 ┌──────────────────────────────────────────────┐
 │              ggml_context 内存池              │
 ├──────────┬──────────┬──────────┬─────────────┤
@@ -3282,7 +3282,7 @@ ggml 不立即执行计算，而是先**构建计算图（Computation Graph）**
 
 以矩阵乘法 `C = A × B + bias` 为例：
 
-```
+```diagram
    A (权重)    B (输入)
      │            │
      └────┬───────┘
@@ -3321,7 +3321,7 @@ GGUF（GGML Universal File）是 llama.cpp 从 v2 开始使用的统一模型文
 
 ### 文件头结构
 
-```
+```diagram
 偏移量   大小    内容
 ──────────────────────────────────────────────────
 0x00    4B      Magic: 0x46554747 ("GGUF" 小端)
@@ -3444,7 +3444,7 @@ print(f"层数: {meta.get('llama.block_count')}")
 
 ### `llama_model_load()`：加载模型权重
 
-```
+```diagram
 llama_model_load()
   ├─ 打开 GGUF 文件，读取 metadata
   ├─ 根据 architecture 选择 hparams（超参数）
@@ -3460,7 +3460,7 @@ llama_model_load()
 
 ### `llama_new_context_with_model()`：创建推理上下文
 
-```
+```diagram
 llama_new_context_with_model()
   ├─ 分配 KV cache（见第 4 节）
   │    n_ctx * n_layers * n_heads * head_dim * 2 * sizeof(kv_type)
@@ -3472,7 +3472,7 @@ llama_new_context_with_model()
 
 ### `llama_decode()`：一次前向传播
 
-```
+```diagram
 llama_decode(ctx, batch)
   ├─ 处理 batch：确定哪些 token 需要计算 logits
   ├─ 构建计算图 llm_build_graph()
@@ -3605,7 +3605,7 @@ llama.cpp 支持**多序列**共享同一个 KV Cache（用于 batch 并发推�
 
 Q4_K 格式将权重分组进行量化，结构如下：
 
-```
+```diagram
 一个 Q4_K "superblock" = 256 个浮点数
 │
 ├─ 12 个 "block"，每块 32 个元素
@@ -3720,7 +3720,7 @@ struct ggml_backend_i {
 
 ### n_gpu_layers 如何路由层到 GPU
 
-```
+```diagram
 n_gpu_layers = 35  （将前 35 层放 GPU，其余在 CPU）
 
 ┌──────────────────────────────────────────────┐
@@ -3752,7 +3752,7 @@ n_gpu_layers = 35  （将前 35 层放 GPU，其余在 CPU）
 
 ### 完整采样 Pipeline
 
-```
+```diagram
 logits (词表大小的原始分数，如 32000 维)
   │
   ▼
@@ -3846,7 +3846,7 @@ print(output["choices"][0]["text"])
 
 ### 整体架构
 
-```
+```diagram
                     HTTP 请求
                        │
               ┌────────▼────────┐
@@ -4192,7 +4192,7 @@ print(f"向量维度: {len(embedding)}")  # 通常是模型的 hidden_dim
 
 ### "选量化"决策树
 
-```
+```diagram
 你的可用内存是多少？
 │
 ├─ 充足（>= 16 GB RAM 或 16 GB VRAM）
