@@ -50,6 +50,39 @@ function escapeBraces(s: string): string {
   return s.replace(/\{\{/g, '&#123;&#123;').replace(/\}\}/g, '&#125;&#125;')
 }
 
+/* ------------------------------------------------------------------ */
+/*  Markdown-it 插件：                                                  */
+/*  将 ```mermaid 代码块转换为 <MermaidDiagram code="..." /> Vue 组件    */
+/*  将 ```diagram 代码块转换为 <DiagramBlock code="..." /> Vue 组件      */
+/* ------------------------------------------------------------------ */
+
+function diagramFencePlugin(md: MarkdownIt) {
+  type FenceRenderer = NonNullable<typeof md.renderer.rules.fence>
+
+  const defaultFence: FenceRenderer =
+    md.renderer.rules.fence ||
+    ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options))
+
+  md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+    const token = tokens[idx]
+    const lang = token.info.trim()
+
+    if (lang === 'mermaid') {
+      const encoded = Buffer.from(token.content.trim()).toString('base64')
+      return `<MermaidDiagram code="${encoded}" />\n`
+    }
+
+    if (lang === 'diagram') {
+      // ASCII art / structural diagrams rendered via DiagramBlock Vue component.
+      // The base64-encoded source serves as the raw text fallback for GitHub.
+      const encoded = Buffer.from(token.content.trim()).toString('base64')
+      return `<DiagramBlock code="${encoded}" />\n`
+    }
+
+    return defaultFence(tokens, idx, options, env, self)
+  }
+}
+
 function safeContentPlugin(md: MarkdownIt) {
   // 1) inline HTML 全部转义（如 <data>、<context> 等）
   //    block-level HTML（<details>/<summary>）不受影响，因为它们是 html_block 类型
@@ -103,6 +136,7 @@ export default defineConfig({
 
   markdown: {
     config: (md) => {
+      md.use(diagramFencePlugin)
       md.use(safeContentPlugin)
     },
   },

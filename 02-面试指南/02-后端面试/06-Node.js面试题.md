@@ -41,7 +41,7 @@
 
 Node.js 是一个基于 **V8 引擎**的 JavaScript 运行时，核心由三层组成：
 
-```
+```diagram
 ┌─────────────────────────────┐
 │     JavaScript 应用代码      │  ← 用户代码 + npm 模块
 ├─────────────────────────────┤
@@ -87,7 +87,7 @@ for (let i = 0; i < 4; i++) {
 
 Node.js 事件循环基于 libuv 实现，每次迭代（tick）按固定顺序经过 **六个阶段**：
 
-```
+```diagram
    ┌───────────────────────────┐
 ┌─>│        1. Timers          │  setTimeout / setInterval 回调
 │  └───────────┬───────────────┘
@@ -246,7 +246,7 @@ Poll（执行 readFile 回调）
 
 `require()` 按以下顺序解析模块：
 
-```
+```diagram
 require('X')
 │
 ├─ 1. X 是核心模块？（fs, http, path...）
@@ -711,7 +711,7 @@ Poll 阶段承担两个核心职责：
 
 **Poll 阶段的决策流程**：
 
-```
+```diagram
 进入 Poll 阶段
     │
     ├─ Poll 队列非空？
@@ -770,7 +770,7 @@ fs.readFile(__filename, () => {
 
 **libuv 的双轨 I/O 模型**：
 
-```
+```diagram
                     Node.js 主线程（事件循环）
                            │
               ┌────────────┴────────────┐
@@ -850,7 +850,7 @@ for (let i = 0; i < 5; i++) {
 
 V8 采用**多层编译**策略，在启动速度和峰值性能之间取得平衡：
 
-```
+```diagram
 JavaScript 源码
        │
        ▼
@@ -985,7 +985,7 @@ obj[dynamicKey] = value; // 无法预测属性布局
 | Duplex      | 双工流（可读可写）   | `net.Socket`, `zlib.createGzip`       |
 | Transform   | 转换流（读写+变换）  | `zlib.createGzip`, `crypto.createCipher` |
 
-```
+```diagram
 Readable ──────→ Transform ──────→ Writable
 (文件读取)       (gzip 压缩)       (网络发送)
 ```
@@ -994,7 +994,7 @@ Readable ──────→ Transform ──────→ Writable
 
 当生产者（Readable）的速度快于消费者（Writable）时，需要背压机制防止内存溢出。
 
-```
+```diagram
  Readable（快）           Writable（慢）
     │                         │
     │   write(chunk)          │
@@ -1063,7 +1063,7 @@ await pipeline(
 
 **Express——线性中间件模型**：
 
-```
+```diagram
 请求 → MW1 → MW2 → MW3 → 路由处理
             next()  next()  next()
 响应 ← ──────────────────────────
@@ -1073,7 +1073,7 @@ await pipeline(
 
 **Koa——洋葱模型（Onion Model）**：
 
-```
+```diagram
 请求 ────────────────────→
   │                       │
   │  ┌── MW1 ──────────┐  │
@@ -1215,7 +1215,7 @@ Node.js Cluster 模块利用 `fork()` 创建多个 Worker 进程，共享同一�
 
 **架构**：
 
-```
+```diagram
                     ┌──────────────┐
                     │  Master 进程  │  不处理业务逻辑
                     │  (管理者)     │  负责 fork Worker + 监控
@@ -1388,7 +1388,7 @@ const worker = new Worker('./worker.js', {
 
 NestJS 深度借鉴 Angular 的架构，核心概念有三个：**Module（模块）、Controller（控制器）、Provider/Service（服务）**。
 
-```
+```diagram
 Application
 ├── AppModule（根模块）
 │   ├── UsersModule
@@ -1473,7 +1473,7 @@ export class RequestScopedService {
 
 V8 将堆内存分为**新生代**和**老生代**，使用不同的 GC 算法：
 
-```
+```diagram
 V8 堆内存布局
 ┌─────────────────────────────────────┐
 │              新生代 (Young Gen)      │  默认 ~16MB（64 位系统）
@@ -1722,7 +1722,7 @@ Node.js 11+ 对齐了浏览器行为：**每个宏任务执行完立即清空微
 
 以 `fs.readFile()` 为例，完整生命周期如下：
 
-```
+```diagram
 JavaScript 层                    C++ / libuv 层
 ─────────────                    ──────────────
 fs.readFile(path, cb)
@@ -1772,7 +1772,7 @@ cb(null, data)  ← 用户回调在主线程执行
 
 网络 I/O **不走线程池**，而是直接使用操作系统的异步事件通知机制：
 
-```
+```diagram
 ┌──────────────┐
 │  事件循环     │
 │              │
@@ -2001,7 +2001,7 @@ npx 0x -p <PID>  # 自动生成火焰图
 
 NestJS 的请求生命周期中，各组件按严格顺序执行：
 
-```
+```diagram
 HTTP 请求进入
     │
     ▼
@@ -2125,7 +2125,7 @@ export class UsersController {
 
 **SharedArrayBuffer** 允许多个线程访问同一块内存（零拷贝），**Atomics** 提供原子操作保证线程安全。
 
-```
+```diagram
 主线程                    Worker 线程
    │                         │
    │  ┌─── SharedArrayBuffer ───┐
@@ -2272,7 +2272,7 @@ const middleware3 = async (ctx, next) => {
 };
 ```
 
-```
+```diagram
 调用栈展开：
 
 dispatch(0) → middleware1 执行
@@ -2525,7 +2525,7 @@ blocked((time, stack) => {
 
 **架构设计**：
 
-```
+```diagram
 ReadStream → CSVParser → FilterTransform → FormatTransform → WriteStream
   (64KB 块)    (逐行解析)   (条件过滤)       (格式转换)       (写入磁盘)
        │          │             │                │               │
@@ -2824,7 +2824,7 @@ spec:
             command: ["sleep", "5"]  # 等 5s 让 Service 更新 Endpoints
 ```
 
-```
+```diagram
 K8s 发送 SIGTERM
      │
      ├─ preStop hook (sleep 5s)  ← 等待 Service 摘除 Pod
@@ -2854,7 +2854,7 @@ K8s 发送 SIGTERM
 
 **阶段一：发现内存泄漏**
 
-```
+```diagram
 内存使用量监控图：
 
   RSS (MB)
@@ -3006,7 +3006,7 @@ class WebSocketHandler {
 
 **架构总览**：
 
-```
+```diagram
                         ┌─────────────────┐
                         │   Nginx / LB    │  WebSocket 负载均衡
                         │   (sticky)      │  (ip_hash / cookie)
@@ -3167,7 +3167,7 @@ server.listen(8080);
 
 **排查思路：由外到内、由粗到细**
 
-```
+```diagram
 排查路径：
 
 1. 确认范围 → 全部接口慢还是单个接口？

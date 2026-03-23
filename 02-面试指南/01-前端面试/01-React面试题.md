@@ -43,7 +43,7 @@
 
 完整流程分为五步：
 
-```
+```diagram
 JSX
  │ Babel 编译（或 jsx runtime）
  ▼
@@ -132,7 +132,7 @@ const handleClick = () => {
 
 React 并不直接在 DOM 节点上绑定原生事件，而是将所有事件委托到根容器（`root`）上：
 
-```
+```diagram
 原生 DOM 事件流：
   document
     └── root (React 根容器) ← React 在此注册事件监听
@@ -197,7 +197,7 @@ React 认为：0 号节点从 A 变成了 B → 更新（而非删除 A 复用 B
 <details>
 <summary>参考答案</summary>
 
-```
+```diagram
 Commit 阶段时序：
   Mutation（DOM 变更）
        │
@@ -551,7 +551,7 @@ function UserProfile() {
 
 **React 的处理流程**（`ReactFiberWorkLoop.js`）：
 
-```
+```diagram
 beginWork(UserProfile)
   │
   └─ 执行 UserProfile()
@@ -639,7 +639,7 @@ Error Boundary 只能是**类组件**，需实现至少一个方法：
 
 **工作原理**（`ReactFiberThrow.js`）：
 
-```
+```diagram
 子组件抛出错误
      │
      ▼
@@ -724,7 +724,7 @@ Scheduler（`packages/scheduler/src/forks/Scheduler.js`）维护两个**最小�
 
 **任务生命周期**：
 
-```
+```diagram
 scheduleCallback(priority, callback)
      │
      ├─ startTime > currentTime → 入 timerQueue，设置 setTimeout 等待
@@ -771,7 +771,7 @@ RSC 将组件分为三类：
 
 **工作流程**：
 
-```
+```diagram
 服务器                              客户端
   │                                   │
   ├─ 执行 Server Components           │
@@ -805,7 +805,7 @@ React 17 的批处理通过 `executionContext`（位标记）实现：只在 `Ba
 
 React 18 的变化：所有调度都通过 Scheduler 的宏任务队列（MessageChannel），因此：
 
-```
+```diagram
 React 18 更新流程：
   setState(1) → dispatchSetState → scheduleUpdateOnFiber
                                          │ 注意：不立即执行，而是
@@ -893,7 +893,7 @@ function mountEffectImpl(fiberFlags, hookFlags, create, deps) {
 
 **flushPassiveEffects 执行顺序**：
 
-```
+```diagram
 1. 执行所有 useEffect cleanup（destroy 函数）
    │ 按 fiber 树的深度优先后序遍历
    ▼
@@ -1100,7 +1100,7 @@ function shouldYieldToHost() {
 
 **完整时序**：
 
-```
+```diagram
 帧时间轴（16.67ms）：
 ┌──────────────────────────────────────────────────────────────┐
 │  宏任务①(5ms)  │ 浏览器处理 │ 宏任务②(5ms)  │ 布局/绘制  │
@@ -1338,7 +1338,7 @@ Hydration 是将服务端渲染的静态 HTML 与客户端 React 树关联（att
 
 **Mismatch 处理**：
 
-```
+```diagram
 发现 Mismatch：
   客户端 Fiber 期望：<div>
   服务端 HTML 实际：<span>
@@ -1514,7 +1514,7 @@ function useFetch<T>(
 
 **推荐决策**：
 
-```
+```diagram
 列表条目数量
     │
     ├─ < 100：React.memo 优化即可
@@ -1666,7 +1666,7 @@ const count = useStore((state) => state.count);
 
 **完整架构**：
 
-```
+```diagram
 React 应用
     │
     ├─ Error Boundary（React 错误）

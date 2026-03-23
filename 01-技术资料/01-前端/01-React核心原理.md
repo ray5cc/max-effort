@@ -23,7 +23,7 @@
 
 React 16 之前使用**同步递归**的 Stack Reconciler：整棵组件树的 Diff 一旦开始就无法中断，主线程被长时间占据，导致动画卡顿（丢帧）。
 
-```
+```diagram
 Stack Reconciler（旧）：
   reconcile(root)
     └─ reconcile(child1)
@@ -89,30 +89,29 @@ function FiberNode(tag, pendingProps, key, mode) {
 
 React 同时维护**两棵** Fiber 树，类比 Canvas 双缓冲技术：
 
-```
-                    ┌─────────────────────────────────────┐
-  fiberRoot.current │                                     │
-         │          ▼                                     │
-         │    current 树（屏幕上显示的）                    │
-         │    ┌──────────┐                                │
-         │    │  rootFiber│◄── stateNode ──┐              │
-         │    └──────────┘                │              │
-         │         │ child                │              │
-         │    ┌────▼─────┐               fiberRoot       │
-         │    │   App    │◄── alternate ──►│              │
-         │    └──────────┘                │              │
-         │                                │              │
-         └──────────────────────────►workInProgress 树   │
-                                     (正在构建/可中断)     │
-                                    ┌──────────┐         │
-                                    │  rootFiber│        │
-                                    └──────────┘         │
-                                         │ child         │
-                                    ┌────▼─────┐         │
-                                    │   App    │         │
-                                    └──────────┘         │
-                                                         │
-  commit 阶段完成后：fiberRoot.current 切换为 workInProgress 树 ┘
+```mermaid
+flowchart TD
+    FR["FiberRootNode\n(fiberRoot)"]
+    CT["rootFiber\n(current 树，屏幕显示)"]
+    CA["App Fiber\n(current)"]
+    WP["rootFiber\n(workInProgress 树)"]
+    WA["App Fiber\n(workInProgress，正在构建)"]
+    SW["commit 后\nfiberRoot.current 指针切换\n→ workInProgress 成为新 current"]
+
+    FR -->|"current"| CT
+    CT -->|"child"| CA
+    CT -.->|"stateNode"| FR
+    FR -.->|"workInProgress"| WP
+    WP -->|"child"| WA
+    WP -.->|"stateNode"| FR
+    WP -->|"commit 后成为 current"| SW
+
+    style FR fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style CT fill:#4a9eff,color:#fff,stroke:#2563eb
+    style CA fill:#4a9eff,color:#fff,stroke:#2563eb
+    style WP fill:#10b981,color:#fff,stroke:#059669
+    style WA fill:#10b981,color:#fff,stroke:#059669
+    style SW fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 - **current 树**：当前屏幕上渲染的内容，`fiberRoot.current` 指向其根节点。
@@ -123,46 +122,30 @@ React 同时维护**两棵** Fiber 树，类比 Canvas 双缓冲技术：
 
 源码入口：`packages/react-reconciler/src/ReactFiberWorkLoop.js`
 
-```
-performConcurrentWorkOnRoot(root)
-         │
-         ▼
-  ┌─────────────────────────────────────┐
-  │         Render 阶段（可中断）          │
-  │                                     │
-  │   workLoopConcurrent()              │
-  │       while (workInProgress !== null│
-  │           && !shouldYield()) {      │
-  │         performUnitOfWork(wip)      │
-  │       }                             │
-  │                                     │
-  │   ┌──── beginWork(wip) ────────┐    │
-  │   │ 根据 tag 分发处理逻辑         │    │
-  │   │ 对比 current 与 pendingProps │    │
-  │   │ 返回下一个要处理的子 Fiber     │    │
-  │   └────────────────────────────┘    │
-  │                                     │
-  │   ┌── completeWork(wip) ─────────┐  │
-  │   │ 创建/更新 DOM 节点（HostComponent）│  │
-  │   │ 收集副作用 flags 到父 Fiber    │  │
-  │   │ 返回兄弟节点继续处理           │  │
-  │   └────────────────────────────┘    │
-  └─────────────────────────────────────┘
-         │
-         ▼
-  ┌─────────────────────────────────────┐
-  │         Commit 阶段（不可中断）        │
-  │                                     │
-  │   commitRoot(root)                  │
-  │     ├─ Before Mutation（commitBeforeMutationEffects）│
-  │     │    getSnapshotBeforeUpdate / useEffect cleanup│
-  │     ├─ Mutation（commitMutationEffects）│
-  │     │    insertBefore / appendChild / removeChild   │
-  │     │    fiberRoot.current = finishedWork  ← 切换！ │
-  │     └─ Layout（commitLayoutEffects）│
-  │          componentDidMount/Update   │
-  │          useLayoutEffect            │
-  └─────────────────────────────────────┘
+```mermaid
+flowchart TD
+    START["performConcurrentWorkOnRoot(root)"]
+
+    subgraph RENDER_PHASE["Render 阶段（可中断）"]
+        WLC["workLoopConcurrent()\nwhile workInProgress && !shouldYield()"]
+        BW["beginWork(wip)\n根据 tag 分发 · 创建/diff 子 Fiber\n收集副作用标记 flags"]
+        CW["completeWork(wip)\n创建/更新真实 DOM 节点\n向上收集 subtreeFlags"]
+        WLC --> BW --> CW --> WLC
+    end
+
+    subgraph COMMIT_PHASE["Commit 阶段（不可中断）"]
+        BM["Before Mutation"] --> MU["Mutation\nDOM 变更"] --> LA["Layout\nuseLayoutEffect"]
+    end
+
+    START --> RENDER_PHASE --> COMMIT_PHASE
+
+    style START fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style WLC fill:#4a9eff,color:#fff,stroke:#2563eb
+    style BW fill:#4a9eff,color:#fff,stroke:#2563eb
+    style CW fill:#4a9eff,color:#fff,stroke:#2563eb
+    style BM fill:#10b981,color:#fff,stroke:#059669
+    style MU fill:#10b981,color:#fff,stroke:#059669
+    style LA fill:#10b981,color:#fff,stroke:#059669
 ```
 
 **beginWork** 源码 `ReactFiberBeginWork.js`：
@@ -329,7 +312,7 @@ function shouldYieldToHost() {
 
 **时间切片工作流**：
 
-```
+```diagram
 主线程时间轴：
 ┌─────────────────────────────────────────────────────────────┐
 │  宏任务1（5ms）   │  浏览器处理  │  宏任务2（5ms）  │  ...    │
@@ -407,17 +390,24 @@ export function startTransition(scope, options) {
 
 每个函数组件的所有 Hook 以**单向链表**形式存储在 `fiber.memoizedState` 上：
 
-```
-FiberNode.memoizedState
-    │
-    ▼
-┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐
-│ Hook (useState)     │─next─►│ Hook (useEffect)    │─next─►│ Hook (useMemo)     │─next─► null
-│  memoizedState: 0   │      │  memoizedState:     │      │  memoizedState:     │
-│  queue: UpdateQueue │      │   { create, deps,   │      │   [value, deps]     │
-│  baseState: 0       │      │     destroy, tag }  │      │                     │
-│  baseQueue: null    │      │  queue: EffectList  │      │                     │
-└─────────────────────┘      └─────────────────────┘      └─────────────────────┘
+```mermaid
+flowchart LR
+    MS["FiberNode.memoizedState"]
+    H1["Hook: useState\nmemoizedState: 0\nqueue: UpdateQueue\nbaseState: 0"]
+    H2["Hook: useEffect\nmemoizedState:\n{ create, deps,\n  destroy, tag }\nqueue: EffectQueue"]
+    H3["Hook: useMemo\nmemoizedState:\n[value, deps]"]
+    NULL["null"]
+
+    MS --> H1
+    H1 -->|"next"| H2
+    H2 -->|"next"| H3
+    H3 -->|"next"| NULL
+
+    style MS fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style H1 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style H2 fill:#10b981,color:#fff,stroke:#059669
+    style H3 fill:#f59e0b,color:#fff,stroke:#d97706
+    style NULL fill:#6b7280,color:#fff,stroke:#4b5563
 ```
 
 **规则"不能在条件语句中使用 Hook"的根本原因**：React 通过**链表顺序**标识每个 Hook 的状态。若条件语句导致某次渲染跳过了一个 Hook，链表的对应关系就会错位，读取到错误的状态。
@@ -567,18 +557,21 @@ function updateReducer(reducer, initialArg) {
 
 ### 3.4 useEffect vs useLayoutEffect 执行时机
 
-```
-Commit 阶段时间轴：
-                                   ┌─── fiberRoot.current 切换 ───┐
-                                   │                              │
-  Before Mutation   │   Mutation   │         Layout               │   (异步)
-  ─────────────────────────────────│──────────────────────────────│────────────
-  getSnapshot       │  DOM 变更    │  useLayoutEffect cleanup      │  useEffect cleanup
-  scheduleEffect    │  (插入/删除) │  componentDidMount/Update     │  useEffect create
-                    │             │  useLayoutEffect create        │  (通过 Scheduler 调度)
-                    │             │  ref 赋值                      │
+```mermaid
+flowchart LR
+    BM["Before Mutation\ngetSnapshot\nscheduleEffect"]
+    MU["Mutation\nDOM 变更 (插入/删除)\nref 清空\nuseInsertionEffect"]
+    SW["fiberRoot.current\n切换为 workInProgress"]
+    LA["Layout\nuseLayoutEffect cleanup\ncomponentDidMount/Update\nref 赋值"]
+    AS["异步 Passive\nuseEffect cleanup\nuseEffect create"]
 
-  同步执行（阻塞浏览器绘制）       │  同步执行（阻塞浏览器绘制）  │  浏览器绘制后异步执行
+    BM --> MU --> SW --> LA --> AS
+
+    style BM fill:#4a9eff,color:#fff,stroke:#2563eb
+    style MU fill:#f59e0b,color:#fff,stroke:#d97706
+    style SW fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style LA fill:#10b981,color:#fff,stroke:#059669
+    style AS fill:#6b7280,color:#fff,stroke:#4b5563
 ```
 
 **useLayoutEffect**：
@@ -668,45 +661,30 @@ const element = _jsx("div", {
 
 ### 4.2 完整渲染流水线
 
-```
-用户代码                    React 内部
-─────────────────────────────────────────────────────────────────
-<App />                     创建 ReactElement（虚拟 DOM 描述对象）
-   │
-   ▼
-ReactDOM.createRoot(div)    创建 FiberRootNode，设置容器
-   │
-   ▼
-root.render(<App />)
-   │
-   ▼
-scheduleUpdateOnFiber()     触发更新，根据上下文决定 Lane
-   │
-   ▼
-ensureRootIsScheduled()     将渲染任务提交给 Scheduler 队列
-   │
-   ▼ (Scheduler 调度，可能在下一个宏任务执行)
-performConcurrentWorkOnRoot()
-   │
-   ├── Render 阶段 ──────── workLoopConcurrent()
-   │   │                   每 5ms 检查 shouldYield()，可中断
-   │   │
-   │   ├── beginWork()      深度优先，处理每个 Fiber 节点
-   │   │   ├── 对比 current 与 pendingProps，决定是否复用
-   │   │   ├── 调用函数组件/render()，生成子 ReactElement
-   │   │   └── reconcileChildren()，Diff 子节点，打上 flags
-   │   │
-   │   └── completeWork()   回溯，处理 HostComponent
-   │       ├── 创建真实 DOM 节点（mount 时）
-   │       ├── 设置 DOM 属性、事件监听
-   │       └── 将 flags 归并到父 Fiber.subtreeFlags
-   │
-   └── Commit 阶段 ─────── commitRoot()，同步执行
-       ├── Before Mutation   读取 DOM 快照
-       ├── Mutation          真正修改 DOM
-       └── Layout            同步副作用（useLayoutEffect）
-           │
-           └── (异步) flushPassiveEffects()  useEffect
+```mermaid
+flowchart TD
+    JSX["JSX/TSX → ReactElement\n虚拟 DOM 描述对象"]
+    CREATE["ReactDOM.createRoot(div)\n→ 创建 FiberRootNode"]
+    RENDER["root.render(<App />)"]
+    SCHEDULE["scheduleUpdateOnFiber()\n根据上下文决定 Lane"]
+    ENSURE["ensureRootIsScheduled()\n将任务提交给 Scheduler 队列"]
+    CONCURRENT["performConcurrentWorkOnRoot()\n(Scheduler 调度，可能下一宏任务)"]
+    RENDER_P["Render 阶段（可中断）\nworkLoopConcurrent()\nbeginWork / completeWork"]
+    COMMIT_P["Commit 阶段（不可中断）\ncommitRoot()\nBefore Mutation → Mutation → Layout"]
+    DOM["真实 DOM 更新\n用户看到新界面"]
+
+    JSX --> CREATE --> RENDER --> SCHEDULE --> ENSURE --> CONCURRENT
+    CONCURRENT --> RENDER_P --> COMMIT_P --> DOM
+
+    style JSX fill:#4a9eff,color:#fff,stroke:#2563eb
+    style CREATE fill:#4a9eff,color:#fff,stroke:#2563eb
+    style RENDER fill:#4a9eff,color:#fff,stroke:#2563eb
+    style SCHEDULE fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style ENSURE fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style CONCURRENT fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style RENDER_P fill:#10b981,color:#fff,stroke:#059669
+    style COMMIT_P fill:#10b981,color:#fff,stroke:#059669
+    style DOM fill:#f59e0b,color:#fff,stroke:#d97706
 ```
 
 ### 4.3 Commit 三子阶段详解
@@ -751,29 +729,33 @@ React Compiler（原名 React Forget）在**编译时**自动插入等价的 `us
 
 编译器的核心流程：
 
-```
-源码 JSX/TSX
-     │
-     ▼
- Babel Parse     → AST（抽象语法树）
-     │
-     ▼
- React Compiler  ────────────────────────────────────────────────
-     │
-     ├── HIR（High-level IR）构建    分析控制流、函数边界
-     │
-     ├── 别名分析（Alias Analysis）  检测变量是否被修改/转义
-     │
-     ├── 效果分析（Effect Analysis）  判断副作用范围
-     │
-     ├── 反应性分析（Reactivity Analysis）
-     │       确定哪些值是"响应式"的（依赖 props/state）
-     │       以及哪些值可以被安全缓存
-     │
-     └── 代码生成                     插入 useMemo/useCallback/React.memo
-     │
-     ▼
- 优化后的 JSX/TSX（语义等价）
+```mermaid
+flowchart TD
+    SRC["源码 JSX/TSX"]
+    PARSE["Babel Parse → AST（抽象语法树）"]
+
+    subgraph COMPILER["React Compiler"]
+        HIR["HIR 构建\n分析控制流、函数边界"]
+        ALIAS["别名分析 Alias Analysis\n检测变量是否被修改/转义"]
+        EFFECT["效果分析 Effect Analysis\n判断副作用范围"]
+        REACT["反应性分析 Reactivity Analysis\n确定响应式值，哪些可安全缓存"]
+        CODEGEN["代码生成\n插入 useMemo/useCallback/React.memo"]
+        HIR --> ALIAS --> EFFECT --> REACT --> CODEGEN
+    end
+
+    OUT["优化后的 JSX/TSX\n（语义等价，含自动缓存）"]
+
+    SRC --> PARSE --> HIR
+    CODEGEN --> OUT
+
+    style SRC fill:#4a9eff,color:#fff,stroke:#2563eb
+    style PARSE fill:#4a9eff,color:#fff,stroke:#2563eb
+    style HIR fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style ALIAS fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style EFFECT fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style REACT fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style CODEGEN fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style OUT fill:#10b981,color:#fff,stroke:#059669
 ```
 
 **编译示例**：

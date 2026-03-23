@@ -25,7 +25,7 @@
 
 Kubernetes 采用 **主从（Master-Worker）** 架构，分为 Control Plane（控制平面）和 Node（工作节点）两层。
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        K8s 集群全景图                                │
 │                                                                     │
@@ -74,7 +74,7 @@ Kubernetes 采用 **主从（Master-Worker）** 架构，分为 Control Plane（
 - 无状态，可水平扩展；通过 `--etcd-servers` 连接 etcd 集群
 - 提供 RESTful API、Watch 机制（List-Watch）供各组件订阅资源变更
 
-```
+```diagram
 请求流程：
   kubectl apply -f pod.yaml
        │
@@ -148,7 +148,7 @@ Kubernetes 采用 **主从（Master-Worker）** 架构，分为 Control Plane（
 | CRI-O | 专为 K8s 设计，符合 OCI 标准 |
 | Docker Engine | 通过 cri-dockerd 适配（K8s v1.24+ 已移除原生支持）|
 
-```
+```diagram
 kubelet → CRI (gRPC) → containerd → runc → 容器
                               │
                          containerd-shim（解耦生命周期）
@@ -164,7 +164,7 @@ Pod 是 K8s 的**最小调度单元**，封装一个或多个共享网络（同�
 
 #### Pod 生命周期
 
-```
+```diagram
               ┌─────────────────────────────────────────────────────────┐
               │                    Pod 生命周期                          │
               │                                                          │
@@ -292,7 +292,7 @@ spec:
 
 **Deployment → ReplicaSet → Pod** 层级关系：
 
-```
+```diagram
 Deployment（期望状态管理）
     │
     ├── ReplicaSet v1（旧版本，replicas=0）
@@ -504,7 +504,7 @@ spec:
 
 #### Service 流量路径
 
-```
+```diagram
 外部请求
     │
     ▼
@@ -570,7 +570,7 @@ spec:
 
 **流量路由架构**：
 
-```
+```diagram
 Internet
     │
     ▼
@@ -587,7 +587,7 @@ Ingress Controller Pod（nginx/traefik）
 
 ### 3.1 kube-scheduler 调度流程
 
-```
+```diagram
 未绑定 Pod 进入调度队列
            │
            ▼
@@ -773,7 +773,7 @@ spec:
 
 ### 4.1 存储层级
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────┐
 │                    K8s 存储体系                       │
 │                                                      │
@@ -893,7 +893,7 @@ allowVolumeExpansion: true
 
 **动态供应流程**：
 
-```
+```diagram
 用户创建 PVC（指定 StorageClass）
        │
        ▼
@@ -916,7 +916,7 @@ Pod 调度到节点，kubelet 调用 CSI NodeStageVolume / NodePublishVolume
 
 CSI 是 K8s 与存储提供商之间的标准接口，解耦存储驱动与 K8s 核心代码。
 
-```
+```diagram
 K8s 控制面                    CSI 驱动（用户态）
 ────────────────────────────────────────────────
 external-attacher       →→→  ControllerPublishVolume
@@ -953,7 +953,7 @@ K8s 网络模型的三条基本规则：
 
 ### 5.2 通信模式
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────┐
 │                   K8s 网络通信全景                         │
 │                                                           │
@@ -974,7 +974,7 @@ K8s 网络模型的三条基本规则：
 
 **DNS 解析链路**：
 
-```
+```diagram
 Pod 内查询 backend-svc.default.svc.cluster.local
     │
     ▼
@@ -1001,7 +1001,7 @@ CoreDNS 查询 Service 记录
 
 **Flannel VXLAN 数据包封装**：
 
-```
+```diagram
 源 Pod 原始包
 [Pod A IP → Pod B IP | 应用数据]
          │
@@ -1016,7 +1016,7 @@ CoreDNS 查询 Service 记录
 
 **Calico BGP 模式**：
 
-```
+```diagram
 Node1 (AS 64512)                Node2 (AS 64512)
 ┌─────────────────┐             ┌─────────────────┐
 │ Pod CIDR:       │ BGP Peering │ Pod CIDR:       │
@@ -1097,7 +1097,7 @@ spec:
 
 ### 6.1 RBAC（基于角色的访问控制）
 
-```
+```diagram
 RBAC 对象关系：
 Subject（用户/ServiceAccount/Group）
     │
@@ -1375,7 +1375,7 @@ helm history my-postgres
 
 **自定义 Chart 结构**：
 
-```
+```diagram
 my-app/
 ├── Chart.yaml          # Chart 元信息（名称/版本/依赖）
 ├── values.yaml         # 默认配置参数

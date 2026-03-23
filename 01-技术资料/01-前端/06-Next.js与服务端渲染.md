@@ -119,10 +119,28 @@ export default async function ProductPage({
 
 React 18+ 的 Suspense 边界允许服务器**分块发送** HTML。不需要等所有数据就绪，可以先发送页面骨架，数据就绪后再流式传输对应 HTML 片段。
 
-```
-服务器 → [页面骨架 HTML] ──→ 浏览器立即显示骨架
-       → [数据区块 1 HTML] ──→ 浏览器替换 loading → 显示内容 1
-       → [数据区块 2 HTML] ──→ 浏览器替换 loading → 显示内容 2
+```mermaid
+flowchart LR
+    SERVER["服务器"]
+    SK["页面骨架 HTML"]
+    D1["数据区块 1 HTML"]
+    D2["数据区块 2 HTML"]
+
+    BR_SK["浏览器立即显示骨架"]
+    BR_D1["浏览器替换 loading\n→ 显示内容 1"]
+    BR_D2["浏览器替换 loading\n→ 显示内容 2"]
+
+    SERVER -->|"流式传输"| SK --> BR_SK
+    SERVER -->|"流式传输"| D1 --> BR_D1
+    SERVER -->|"流式传输"| D2 --> BR_D2
+
+    style SERVER fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style SK fill:#4a9eff,color:#fff,stroke:#2563eb
+    style D1 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style D2 fill:#4a9eff,color:#fff,stroke:#2563eb
+    style BR_SK fill:#10b981,color:#fff,stroke:#059669
+    style BR_D1 fill:#10b981,color:#fff,stroke:#059669
+    style BR_D2 fill:#10b981,color:#fff,stroke:#059669
 ```
 
 ```tsx
@@ -158,16 +176,37 @@ Next.js 15 引入的混合策略：**同一个路由中，静态部分预渲染�
 
 ### 2.7 渲染策略选择流程
 
-```
-需要 SEO 吗？
-├── 否 → 需要实时交互吗？
-│        ├── 是 → CSR（后台管理/SaaS dashboard）
-│        └── 否 → SSG（内部工具文档）
-└── 是 → 内容变化频率？
-         ├── 几乎不变 → SSG（博客/文档）
-         ├── 定期更新（分钟~小时级）→ ISR（电商列表/新闻聚合）
-         ├── 每次请求都不同 → SSR（个性化页面/搜索结果）
-         └── 混合（静态 + 动态） → PPR + Streaming SSR
+```mermaid
+flowchart TD
+    Q1{"需要 SEO？"}
+    Q2{"需要实时交互？"}
+    Q3{"内容变化频率？"}
+
+    CSR["CSR\n后台管理 / SaaS dashboard"]
+    SSG_NO["SSG\n内部工具文档"]
+    SSG["SSG\n博客 / 文档"]
+    ISR["ISR\n电商列表 / 新闻聚合"]
+    SSR["SSR\n个性化页面 / 搜索结果"]
+    PPR["PPR + Streaming SSR\n混合（静态 + 动态）"]
+
+    Q1 -->|"否"| Q2
+    Q1 -->|"是"| Q3
+    Q2 -->|"是"| CSR
+    Q2 -->|"否"| SSG_NO
+    Q3 -->|"几乎不变"| SSG
+    Q3 -->|"定期更新 (分钟~小时)"| ISR
+    Q3 -->|"每次请求都不同"| SSR
+    Q3 -->|"混合"| PPR
+
+    style Q1 fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style Q2 fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style Q3 fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style CSR fill:#4a9eff,color:#fff,stroke:#2563eb
+    style SSG_NO fill:#4a9eff,color:#fff,stroke:#2563eb
+    style SSG fill:#10b981,color:#fff,stroke:#059669
+    style ISR fill:#f59e0b,color:#fff,stroke:#d97706
+    style SSR fill:#ef4444,color:#fff,stroke:#dc2626
+    style PPR fill:#10b981,color:#fff,stroke:#059669
 ```
 
 ---
@@ -191,7 +230,7 @@ Next.js 13 引入 App Router，这是一次**架构级升级**，不仅仅是 AP
 
 App Router 使用 `app/` 目录，文件夹结构**直接映射为 URL 路径**：
 
-```
+```diagram
 app/
 ├── layout.tsx          # 根布局（包裹所有页面）
 ├── page.tsx            # 首页 → /
@@ -277,7 +316,7 @@ export default function DashboardLayout({
 
 用圆括号 `(groupName)` 命名的文件夹**不会出现在 URL 中**，用于逻辑分组：
 
-```
+```diagram
 app/
 ├── (marketing)/     # 营销页面用一套布局
 │   ├── layout.tsx   # 简洁布局
@@ -710,7 +749,7 @@ export function NavigationExample() {
 
 典型用例：图片列表 → 点击打开 Modal 预览 → 直接访问 URL 显示完整页面。
 
-```
+```diagram
 app/
 ├── @modal/
 │   └── (.)photo/[id]/

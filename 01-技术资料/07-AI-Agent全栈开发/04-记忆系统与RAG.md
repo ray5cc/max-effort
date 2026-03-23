@@ -86,7 +86,7 @@
 
 上下文内记忆是最直接的记忆形式——把信息放入当前请求的 prompt/messages 列表中。
 
-```
+```diagram
 ┌────────────────────────────────────────────┐
 │            Context Window (128K tokens)     │
 │                                            │
@@ -191,7 +191,7 @@ class RedisMemoryStore:
 
 模型权重本身就是压缩的"记忆"——通过预训练和微调将知识编码进参数。
 
-```
+```diagram
 预训练阶段（世界知识）          微调阶段（任务知识）
 ────────────────────          ────────────────────
 万亿 token 语料                领域数据 / 指令对
@@ -222,41 +222,36 @@ class RedisMemoryStore:
 
 ### 2.1 全链路架构图
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        RAG 全链路                                │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    L["Loading
+文档加载"] --> C["Chunking
+分块切割"]
+    C --> I["Indexing
+向量化"]
+    I --> S["Storing
+持久化"]
+    S --> Q1
 
-  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-  │  Loading │───▶│ Chunking │───▶│ Indexing │───▶│ Storing  │
-  │文档加载   │    │ 分块切割  │    │ 向量化    │    │ 持久化   │
-  └──────────┘    └──────────┘    └──────────┘    └──────────┘
-                                                        │
-  ┌─────────────────────────────────────────────────────┘
-  │
-  ▼
-  ┌──────────────────────────────────────────┐
-  │                Querying                   │
-  │  用户 Query                               │
-  │     │                                    │
-  │     ▼                                    │
-  │  Query 向量化                             │
-  │     │                                    │
-  │     ▼                                    │
-  │  ANN 搜索（HNSW/IVF）                     │
-  │     │                                    │
-  │     ▼                                    │
-  │  Re-ranking（可选）                       │
-  │     │                                    │
-  │     ▼                                    │
-  │  上下文注入 → LLM 生成                    │
-  └──────────────────────────────────────────┘
-        │
-        ▼
-  ┌──────────┐
-  │Evaluation│  RAGAS: Faithfulness / Answer Relevancy /
-  │  评估    │  Context Precision / Context Recall
-  └──────────┘
+    subgraph Querying["Querying 查询"]
+        Q1["用户 Query"] --> Q2["Query 向量化"]
+        Q2 --> Q3["ANN 搜索
+(HNSW/IVF)"]
+        Q3 --> Q4["Re-ranking
+(可选)"]
+        Q4 --> Q5["上下文注入
+→ LLM 生成"]
+    end
+
+    Q5 --> E["Evaluation 评估
+RAGAS: Faithfulness / Answer Relevancy
+Context Precision / Context Recall"]
+
+    style L fill:#4a9eff,color:#fff,stroke:#2563eb
+    style C fill:#f59e0b,color:#fff,stroke:#d97706
+    style I fill:#10b981,color:#fff,stroke:#059669
+    style S fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style E fill:#ef4444,color:#fff,stroke:#dc2626
 ```
 
 ---
@@ -290,7 +285,7 @@ pdf_docs = pdf_reader.load_data(file="./report.pdf")
 
 **LlamaIndex SimpleDirectoryReader 内部调用链**
 
-```
+```diagram
 SimpleDirectoryReader.load_data()
   │
   ├── _load_data_from_paths()
@@ -411,7 +406,7 @@ for node in response.source_nodes:
 
 文本嵌入将离散 token 序列映射到连续语义空间中的稠密向量：
 
-```
+```diagram
 输入文本: "HNSW 是一种近似最近邻搜索算法"
     │
     ▼
@@ -444,7 +439,7 @@ HNSW（Hierarchical Navigable Small World）是当前最主流的 ANN 索引结�
 
 **分层结构**
 
-```
+```diagram
 Layer 2 (稀疏):  1 ──── 7
                         │
 Layer 1 (中密):  1 ─ 3 ─ 7 ─ 9
@@ -554,7 +549,7 @@ class LocalHnswSegment(VectorReader):
 
 **Chroma 持久化写入路径**
 
-```
+```diagram
 chromadb.add(documents, embeddings, ids)
   │
   ├── EmbeddingQueue.submit()          # 异步队列
@@ -572,7 +567,7 @@ chromadb.add(documents, embeddings, ids)
 
 Milvus 是分布式向量数据库，适合亿级向量。
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────┐
 │                   Milvus 架构                        │
 │                                                     │
@@ -884,7 +879,7 @@ class StorageContext:
 
 ### 5.3 QueryEngine Pipeline
 
-```
+```diagram
 query_engine.query("问题")
   │
   ▼
@@ -1164,7 +1159,7 @@ hyde_query_engine = TransformQueryEngine(
 
 Self-RAG 让模型**自主决定是否需要检索**，以及**评估检索结果质量**。
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────┐
 │                   Self-RAG 流程                      │
 └─────────────────────────────────────────────────────┘
@@ -1223,7 +1218,7 @@ def self_rag_generate(query: str, retriever, llm) -> str:
 
 CRAG 引入**检索评估器**（Retrieval Evaluator）和**知识精炼**（Knowledge Refinement）步骤：
 
-```
+```diagram
 Query → 检索 → [评估器]
                   │
                   ├── 置信度高  → 直接使用文档 → 生成答案
@@ -1331,7 +1326,7 @@ workflow.add_conditional_edges(
 
 Graph RAG 将文档知识构建为**知识图谱**，支持多跳推理：
 
-```
+```diagram
 传统 RAG:   Query → 向量搜索 → 孤立文本片段
 Graph RAG:  Query → 图遍历  → 关联实体网络
 
@@ -1389,7 +1384,7 @@ response = kg_query_engine.query("PyTorch 与机器学习的关系？")
 
 ### 8.1 四大核心指标
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────┐
 │                   RAGAS 评估体系                         │
 └─────────────────────────────────────────────────────────┘
@@ -1584,7 +1579,7 @@ BM25 的改进：
 
 **BM25 公式拆解**：
 
-```
+```diagram
 BM25(q, d) = Σ IDF(qi) × [f(qi,d) × (k1 + 1)] / [f(qi,d) + k1 × (1 - b + b × |d|/avgdl)]
 
 各部分含义：
@@ -1678,7 +1673,7 @@ results = bm25.search(["python", "3.12", "match", "性能"])
 
 将 BM25 和向量检索的结果融合，有两种主流策略：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────┐
 │            混合检索架构（Hybrid Search）                   │
 │                                                          │
@@ -1886,7 +1881,7 @@ rrf_query = {
 
 生产级 RAG 系统通常采用**向量 + BM25 + 知识图谱**三路融合：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────┐
 │              三路融合检索架构                                  │
 │                                                              │
@@ -1987,7 +1982,7 @@ class MultiPathRetriever:
 
 向量检索的三个根本局限：
 
-```
+```diagram
 局限 1：缺乏结构化关系
 
   Query: "张三的导师的研究方向是什么？"
@@ -2019,7 +2014,7 @@ class MultiPathRetriever:
 
 知识图谱有两种主流数据模型：
 
-```
+```diagram
 ┌────────────────────────────────────────────────────────────────┐
 │                    属性图（Property Graph）                     │
 │                                                                │
@@ -2136,7 +2131,7 @@ class GraphRAGRetriever:
 
 Graph RAG 的完整流水线分为离线构建和在线查询两个阶段：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────────┐
 │                    Graph RAG 完整流水线                           │
 │                                                                  │
@@ -2269,7 +2264,7 @@ Microsoft GraphRAG 的核心创新在于**社区检测 + 分层摘要**，解决
 
 **社区检测（Leiden 算法）**：
 
-```
+```diagram
 社区检测将知识图谱中紧密连接的节点聚类为"社区"：
 
   整个知识图谱（数千节点）
@@ -2296,7 +2291,7 @@ Microsoft GraphRAG 的核心创新在于**社区检测 + 分层摘要**，解决
 
 **全局搜索 vs 局部搜索**：
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────┐
 │                Microsoft GraphRAG 双模式                     │
 ├────────────────────────────┬────────────────────────────────┤
@@ -2391,7 +2386,7 @@ class HybridGraphVectorRetriever:
 
 Cross-Encoder 和 Bi-Encoder 是两种根本不同的文本匹配架构：
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────┐
 │  Bi-Encoder（用于召回阶段）                                  │
 │                                                             │
@@ -2484,7 +2479,7 @@ ColBERT 的核心思想：晚期交互（Late Interaction）
      每个 query token 找到最佳匹配 → 累加得到高分
 ```
 
-```
+```diagram
 三种模型对比：
 
 ┌──────────────┬─────────────┬──────────────┬───────────────┐
@@ -2504,7 +2499,7 @@ ColBERT 的核心思想：晚期交互（Late Interaction）
 
 生产环境中重排序方案的选型：
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────┐
 │                     重排序方案对比                            │
 ├──────────────────┬─────────────────┬────────────────────────┤
@@ -2558,7 +2553,7 @@ def bge_rerank(query: str, documents: list[str], top_k: int = 10):
 
 完整的生产级检索-排序流水线：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────┐
 │              生产级 Retrieve-Rerank Pipeline              │
 │                                                          │
@@ -2603,7 +2598,7 @@ def bge_rerank(query: str, documents: list[str], top_k: int = 10):
 
 ### 12.1 Query Rewriting 五种策略
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────┐
 │              Query Rewriting 五种策略                          │
 ├─────────────┬────────────────────────────────────────────────┤
@@ -2709,7 +2704,7 @@ def stepback_retrieve(query: str, retriever, llm) -> list:
 
 不同类型的查询应该路由到不同的检索管道：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────┐
 │                  Query Routing 架构                           │
 │                                                              │

@@ -115,7 +115,7 @@ Pod 内的所有容器：
 
 **参考答案**：
 
-```
+```diagram
 Deployment（管理版本策略）
     │  创建/管理
     ├── ReplicaSet-v1（旧版本）── Pod × 0（已缩容）
@@ -330,7 +330,7 @@ Subject（谁）→ RoleBinding/ClusterRoleBinding（绑定）→ Role/ClusterRo
 
 三者是 K8s 存储的**三层抽象**，实现了存储使用与存储供应的解耦：
 
-```
+```diagram
 StorageClass（如何提供存储：哪个 CSI 驱动、什么参数）
     │ 动态供应（Provisioner 自动创建）
     ▼

@@ -41,7 +41,7 @@ TRL 的核心使命：
 
 ### TRL 与 PEFT 的关系
 
-```
+```diagram
 ┌─────────────────────────────────────────────────┐
 │                   TRL                           │
 │  SFTTrainer / DPOTrainer / PPOTrainer           │
@@ -66,7 +66,7 @@ TRL 的核心使命：
 
 ### 三阶段流程
 
-```
+```diagram
 阶段 1：SFT（监督微调）
    目标：让模型学会"按指令回答"
    数据：高质量 (instruction, response) 对
@@ -88,7 +88,7 @@ TRL 的核心使命：
 
 ### 详细架构图
 
-```
+```diagram
                     ┌─────────────────────────┐
                     │      标注数据            │
                     │  (prompt, chosen, rejected) │
@@ -266,7 +266,7 @@ DPO 在做什么：
 
 ### DPO vs RLHF 对比
 
-```
+```diagram
 维度              RLHF (PPO)                    DPO
 ─────────────────────────────────────────────────────────────────
 训练阶段          3 阶段（SFT→RM→PPO）           2 阶段（SFT→DPO）
@@ -345,7 +345,7 @@ def compute_reward(response: str, ground_truth: str, task: str) -> float:
 
 ### GRPO 与 PPO 对比
 
-```
+```diagram
 维度              PPO                           GRPO
 ─────────────────────────────────────────────────────────────────
 Baseline 估计     Critic 网络（参数量同 Policy）   组内均值（无额外参数）
@@ -444,7 +444,7 @@ KTO 的数据格式：
 
 ### 决策指南
 
-```
+```diagram
 你的目标是什么？
 
 ├─ 让模型学会回答指令
@@ -484,7 +484,7 @@ KTO 的数据格式：
 
 ### 库结构
 
-```
+```diagram
 trl/
 ├── trainer/
 │   ├── sft_trainer.py         ← SFT 训练器
@@ -502,7 +502,7 @@ trl/
 
 ### 对应关系
 
-```
+```diagram
 训练阶段          TRL 组件            Config 类
 ────────────────────────────────────────────────────────
 SFT              SFTTrainer           SFTConfig
@@ -1142,7 +1142,7 @@ trainer.train()
 
 ### 流水线概览
 
-```
+```diagram
 数据准备
   │
   ├─ instruction-response 对  → Phase 1: SFT

@@ -1002,7 +1002,7 @@ async with asyncio.TaskGroup() as tg:
 
 CPython 执行 Python 代码分为**编译阶段**和**执行阶段**：
 
-```
+```diagram
 源代码 (.py)
     │
     ▼ [词法分析 (Tokenizer)]
@@ -1107,7 +1107,7 @@ PYTHON_GIL=0 python3.13t script.py  # 显式禁用 GIL
 
 **技术栈选择**：
 
-```
+```diagram
 FastAPI (应用框架)
 ├── Uvicorn + uvloop (ASGI 服务器)
 ├── aiohttp / httpx (异步 HTTP 客户端)

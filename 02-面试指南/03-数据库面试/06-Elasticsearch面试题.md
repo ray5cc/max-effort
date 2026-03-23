@@ -49,7 +49,7 @@
 
 **倒排索引结构**：
 
-```
+```diagram
 Term Dictionary（词典）：所有词的有序列表
 ├─ "elasticsearch" → Posting List [doc1, doc5, doc9]
 ├─ "search" → Posting List [doc2, doc5, doc8]
@@ -224,7 +224,7 @@ GET /products/_search
 
 **分片架构图**：
 
-```
+```diagram
 Index: products (3 Primary + 2 Replica)
 
 Node1            Node2            Node3
@@ -333,7 +333,7 @@ GET /orders/_search
 
 **完整写入流程**（7 步）：
 
-```
+```diagram
 1. 客户端发送写入请求
    ↓
 2. 协调节点（Coordinating Node）接收请求
@@ -789,7 +789,7 @@ POST /my-index/_forcemerge?max_num_segments=1
 
 **Bitset 缓存示例**：
 
-```
+```diagram
 Filter: status = "active"
 Index 有 100 万文档，1000 个符合条件
 
@@ -1366,7 +1366,7 @@ POST /products/_search
 
 **4. 架构设计**
 
-```
+```diagram
                      负载均衡器
                          ↓
     ┌──────────────────────────────────────┐

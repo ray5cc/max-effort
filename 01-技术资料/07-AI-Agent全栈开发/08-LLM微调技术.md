@@ -91,7 +91,7 @@
 
 三种技术并非互斥，而是适用于不同场景的工具箱。理解它们的本质差异是选型的关键。
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────┐
 │                    技术选型决策树                             │
 │                                                              │
@@ -157,7 +157,7 @@ LoRA 训练参数量：r × k + d × r = r(d + k)
 
 **架构图解：**
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────┐
 │                   Transformer 层                          │
 │                                                          │
@@ -219,7 +219,7 @@ Adapter Tuning 在每个 Transformer 子层（Self-Attention 和 FFN）之后插
 
 **Adapter 模块结构：**
 
-```
+```diagram
 输入 h（维度 d）
      │
      ▼
@@ -244,7 +244,7 @@ Adapter 的参数量约为 `2 × d × m`，当 `m = d/100` 时，每层仅增加
 
 **Prefix Tuning**：不修改模型权重，而是在每一层 Transformer 的 Key-Value 矩阵前面拼接可训练的"前缀向量"（Prefix Tokens）。这些前缀向量是连续的浮点向量，不对应真实词汇，相当于为模型注入"软性指令"。
 
-```
+```diagram
 原始注意力输入：
   [x₁, x₂, ..., xₙ]
 
@@ -279,7 +279,7 @@ SFT（监督微调）教会模型"如何回答"，但无法精确控制回答的
 
 RLHF 是 InstructGPT、ChatGPT 等产品背后的核心对齐技术，包含四个阶段：
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────────┐
 │                    RLHF 四阶段流程                               │
 │                                                                 │
@@ -361,7 +361,7 @@ L_DPO = -E[(x, yw, yl)] [
 
 **DPO 流程：**
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────┐
 │                 DPO 两阶段流程                        │
 │                                                      │
@@ -423,7 +423,7 @@ DeepSeek-R1 通过 GRPO + 长链条思维（Long Chain-of-Thought）数据，实
 
 ZeRO（Zero Redundancy Optimizer）是 Microsoft DeepSpeed 框架的核心技术，通过将训练状态分片（Sharding）到多张 GPU 上来消除冗余。
 
-```
+```diagram
 ┌────────────────────────────────────────────────────────────┐
 │               ZeRO 三个阶段的分片策略                        │
 │                                                            │
@@ -464,7 +464,7 @@ FSDP 与 Hugging Face Transformers `Trainer` 无缝集成，通过 `fsdp_config`
 
 verl（Volcano Engine Reinforcement Learning）是字节跳动开源的 RLHF 训练框架，其核心创新在于**混合引擎（Hybrid Engine）**设计：将 Actor 模型的训练引擎（DeepSpeed/FSDP）和推理引擎（vLLM）合并在同一 GPU 进程组内，通过动态权重共享实现零拷贝切换。
 
-```
+```diagram
 传统 RLHF 训练架构（分离式）：
   Training GPU 集群 ←── 网络传输权重 ──► Inference GPU 集群
   （DeepSpeed 训练）                    （vLLM 采样）
@@ -697,7 +697,7 @@ A: 可能原因：①不同 GPU 上的 batch 内容差异导致梯度方差高�
 
 选择工具链的核心考量：
 
-```
+```diagram
                       你的微调需求是什么？
                             │
               ┌─────────────┼─────────────┐
@@ -968,7 +968,7 @@ llamafactory-cli train \
 
 **为什么少而精的数据更有效？**
 
-```
+```diagram
 数据量 vs 模型性能关系（示意）：
 
 性能 ▲
@@ -1060,7 +1060,7 @@ llamafactory-cli train \
 
 专业的微调数据准备是一条完整的工程管线，而非简单的"收集数据 → 开始训练"。
 
-```
+```diagram
 ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
 │  1. 收集  │───▶│  2. 去重  │───▶│ 3. 质量  │───▶│ 4. 格式化 │───▶│ 5. 分词  │
 │          │    │          │    │   过滤    │    │ & 模板化  │    │   分析    │
@@ -1219,7 +1219,7 @@ RLHF（Reinforcement Learning from Human Feedback）是 ChatGPT 成功背后的�
 2. **Reward Model 阶段**（建立评价标准）：让多位资深员工对新员工的工作成果打分，训练出一个"自动评分系统"
 3. **PPO 阶段**（实战迭代）：新员工不断工作 → 自动评分系统打分 → 根据反馈改进 → 循环迭代
 
-```
+```diagram
 RLHF 三阶段管线：
 
 阶段 1：SFT                阶段 2：Reward Model        阶段 3：PPO
@@ -1329,7 +1329,7 @@ def math_reward(response, ground_truth):
 
 ### 10.4 方法选型指南
 
-```
+```diagram
 你有什么类型的反馈数据？
         │
    ┌────┼────┬──────────┐
@@ -1589,7 +1589,7 @@ curl http://localhost:8000/v1/chat/completions \
 
 **端到端流程总结**：
 
-```
+```diagram
 数据准备      训练        评估        合并        量化         部署
 (500条)   (QLoRA 4bit)  (准确率>90%) (16bit合并)  (GGUF Q4_K_M) (Ollama/vLLM)
   │           │           │           │           │            │
@@ -1628,7 +1628,7 @@ tensorboard --logdir outputs/runs --port 6006
 
 **过拟合的早期信号**：
 
-```
+```diagram
 Loss ▲
      │  ╲          ╱── Eval Loss（反弹 = 过拟合！）
      │   ╲        ╱
@@ -1775,7 +1775,7 @@ def check_contamination(train_texts, test_texts, n=10):
 
 在生产环境中进行灰度发布：
 
-```
+```diagram
            ┌────────────────┐
 用户请求 ──▶│   流量路由器    │
            │  (90% / 10%)   │
@@ -1877,7 +1877,7 @@ def check_contamination(train_texts, test_texts, n=10):
 
 > 微调是一个持续迭代的过程，每轮迭代都应该分析"模型在哪些场景表现差"，针对性补充数据。
 
-```
+```diagram
       ┌────────────────────────────────┐
       │                                │
       ▼                                │

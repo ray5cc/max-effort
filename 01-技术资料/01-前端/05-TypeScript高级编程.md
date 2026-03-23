@@ -175,7 +175,7 @@ type Direction = (typeof Direction)[keyof typeof Direction]; // 'UP' | 'DOWN'
 
 ### 2.5 类型层级金字塔：any vs unknown vs never
 
-```
+```diagram
           any (顶部，接受一切)
             │
          unknown (安全的顶部类型)

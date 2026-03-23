@@ -543,7 +543,7 @@ export const config = {
 
 用例：Dashboard 多面板 — 左侧主内容、右侧分析图表可以独立加载和出错：
 
-```
+```diagram
 app/dashboard/
 ├── layout.tsx         # 接收 children + @analytics + @team
 ├── page.tsx          # children slot
@@ -581,7 +581,7 @@ export default function Layout({
 
 用例：Instagram 式的图片浏览 — 列表页点击图片弹出 Modal，直接访问 URL 显示完整页面：
 
-```
+```diagram
 app/
 ├── feed/page.tsx         # 图片列表
 ├── photo/[id]/page.tsx   # 直接访问的完整图片页面
@@ -892,7 +892,7 @@ export async function POST(req: Request) {
 
 **缓存与 CDN 架构**：
 
-```
+```diagram
 用户请求 → CDN（Full Route Cache）
           ├── 命中 → 直接返回（TTFB < 50ms）
           └── 未命中 → Origin Server
@@ -922,7 +922,7 @@ export async function POST(req: Request) {
 2. **请求时**：CDN 立即返回静态 Shell → 服务器**同时**开始渲染动态内容
 3. **流式注入**：动态内容就绪后流式发送给浏览器 → 替换 fallback
 
-```
+```diagram
 构建时生成：
 ┌──────────────────────────┐
 │ [静态] 网站Header         │
@@ -966,7 +966,7 @@ export default function ProductPage() {
 
 **架构设计**：
 
-```
+```diagram
                         ┌──── Next.js Instance 1 (Node.js)
 用户 → CDN → L7 LB ────┼──── Next.js Instance 2 (Node.js)
        ↑               └──── Next.js Instance 3 (Node.js)
@@ -1153,7 +1153,7 @@ export default async function ProductPage({
 
 **技术架构**：
 
-```
+```diagram
                               ┌──── Next.js Server
 用户 A (浏览器) ── WebSocket ──┤     (协调服务器)
 用户 B (浏览器) ── WebSocket ──┤     ↓
@@ -1308,7 +1308,7 @@ module.exports = { assetPrefix: "https://cdn.example.com" };
 
 **优化目标拆解**：
 
-```
+```diagram
 7秒 → 2秒 分解：
 ┌─────────────────────────────────────────┐
 │ 阶段          │ 优化前  │ 优化后  │ 手段   │

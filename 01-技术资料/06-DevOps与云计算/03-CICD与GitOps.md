@@ -42,7 +42,7 @@
 
 三个概念递进叠加，自动化程度逐步提升：
 
-```
+```diagram
 开发者提交代码
       │
       ▼
@@ -80,7 +80,7 @@
 
 **典型流水线全景图：**
 
-```
+```diagram
   Git Push
      │
      ▼
@@ -137,7 +137,7 @@
 
 质量门禁（Quality Gate）是 Pipeline 中阻止低质量代码进入下游的卡点：
 
-```
+```diagram
 代码提交
    │
    ├─▶ [Lint] ESLint / golangci-lint / Ruff
@@ -180,7 +180,7 @@
 
 ### 2.1 核心概念：Workflow / Job / Step / Action
 
-```
+```diagram
 Workflow（.github/workflows/ci.yml）
   │
   ├── 触发器（on: push / pull_request / schedule / workflow_dispatch）
@@ -402,7 +402,7 @@ jobs:
 - 对构建速度要求高（本地缓存）
 - 安全合规要求（代码不出内网）
 
-```
+```diagram
 GitHub Actions 服务
         │
         │  HTTPS 长轮询
@@ -458,7 +458,7 @@ jobs:
 
 **Secrets 层级：**
 
-```
+```diagram
 Organization Secrets（所有仓库可用）
     └── Repository Secrets（当前仓库）
             └── Environment Secrets（指定环境，可设审批）
@@ -490,7 +490,7 @@ Environment 可配置：
 传统方式需要将云厂商长期凭证存储为 Secret，存在泄露风险。
 OIDC 通过短期令牌消除了这一风险：
 
-```
+```diagram
 GitHub Actions Runner
         │
         │  1. 请求 OIDC token（包含仓库/分支/环境信息）
@@ -736,7 +736,7 @@ jobs:
 
 GitOps 由 Weaveworks 于 2017 年提出，核心思想：**Git 是系统期望状态的唯一可信来源（Single Source of Truth）**。
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────┐
 │                    GitOps 四大原则                        │
 ├────────────────┬────────────────────────────────────────┤
@@ -759,7 +759,7 @@ GitOps 由 Weaveworks 于 2017 年提出，核心思想：**Git 是系统期望�
 
 **Push vs Pull 部署模式对比：**
 
-```
+```diagram
 Push 模式（传统 CI/CD）:
   CI 服务器
      │
@@ -788,7 +788,7 @@ ArgoCD 是目前最流行的 GitOps 工具，基于 Kubernetes 原生 CRD 实现
 
 **架构组件：**
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────┐
 │                      ArgoCD 架构                         │
 │                                                         │
@@ -1071,7 +1071,7 @@ spec:
 
 **GitOps 工作流示意：**
 
-```
+```diagram
 开发者
   │
   │  git push（修改 K8s 清单）
@@ -1218,7 +1218,7 @@ ENTRYPOINT ["/server"]
 
 **cosign（Sigstore 项目）工作原理：**
 
-```
+```diagram
 构建阶段（CI/CD）:
   镜像推送到 Registry
        │

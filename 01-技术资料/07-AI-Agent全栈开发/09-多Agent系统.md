@@ -34,27 +34,41 @@
 
 **系统总览（ASCII 图）**：
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     多 Agent 系统全景                             │
-│                                                                   │
-│  ┌──────────────┐    消息/事件     ┌──────────────────────────┐  │
-│  │  Orchestrator │ ─────────────► │      Agent Pool           │  │
-│  │  (编排者)     │ ◄───────────── │  ┌────────┐ ┌──────────┐ │  │
-│  │               │   结果/状态     │  │ Agent A│ │ Agent B  │ │  │
-│  └───────┬───────┘                │  │(研究员)│ │(代码工程)│ │  │
-│          │                        │  └────────┘ └──────────┘ │  │
-│          │ 协调                   │  ┌────────┐ ┌──────────┐ │  │
-│          ▼                        │  │ Agent C│ │ Agent D  │ │  │
-│  ┌──────────────┐                 │  │(评审员)│ │(文档写作)│ │  │
-│  │  Shared State │                │  └────────┘ └──────────┘ │  │
-│  │  (共享状态)  │                 └──────────────────────────┘  │
-│  │  - 任务队列  │                                                │
-│  │  - 中间结果  │    ┌──────────────────────────────────────┐   │
-│  │  - 历史对话  │    │           工具层 (Tools)              │   │
-│  └──────────────┘    │  搜索 | 代码执行 | 数据库 | API 调用  │   │
-│                       └──────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    Orch["Orchestrator
+编排者"] -->|"消息/事件"| Pool
+    Pool -->|"结果/状态"| Orch
+    Orch --> SS["Shared State
+共享状态
+任务队列 · 中间结果 · 历史对话"]
+
+    subgraph Pool["Agent Pool"]
+        AA["Agent A
+研究员"]
+        AB["Agent B
+代码工程"]
+        AC["Agent C
+评审员"]
+        AD["Agent D
+文档写作"]
+    end
+
+    subgraph Tools["工具层 (Tools)"]
+        T1["搜索"]
+        T2["代码执行"]
+        T3["数据库"]
+        T4["API 调用"]
+    end
+
+    Pool --> Tools
+
+    style Orch fill:#f59e0b,color:#fff,stroke:#d97706
+    style SS fill:#6b7280,color:#fff,stroke:#4b5563
+    style AA fill:#4a9eff,color:#fff,stroke:#2563eb
+    style AB fill:#10b981,color:#fff,stroke:#059669
+    style AC fill:#8b5cf6,color:#fff,stroke:#7c3aed
+    style AD fill:#ef4444,color:#fff,stroke:#dc2626
 ```
 
 ### 1.2 单 Agent vs 多 Agent：何时选择
@@ -84,22 +98,18 @@
 
 **原理**：Agent 生成初步输出后，由自身或另一个 "评审 Agent" 进行批评与改进，形成迭代优化循环。
 
-```
-┌─────────────────────────────────────────────┐
-│              Reflection 模式                 │
-│                                              │
-│   ┌──────────┐   初稿    ┌──────────────┐   │
-│   │Generator │ ───────► │   Critic      │   │
-│   │(生成者)  │ ◄─────── │  (批评者)    │   │
-│   └──────────┘  改进建议 └──────────────┘   │
-│        │                                     │
-│        │  迭代 N 次后                        │
-│        ▼                                     │
-│   ┌──────────┐                              │
-│   │  Final   │                              │
-│   │  Output  │                              │
-│   └──────────┘                              │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    G["Generator
+生成者"] -->|"初稿"| C["Critic
+批评者"]
+    C -->|"改进建议"| G
+    G -->|"迭代 N 次后"| F["Final Output
+最终输出"]
+
+    style G fill:#4a9eff,color:#fff,stroke:#2563eb
+    style C fill:#f59e0b,color:#fff,stroke:#d97706
+    style F fill:#10b981,color:#fff,stroke:#059669
 ```
 
 **代码示意**：
@@ -117,7 +127,7 @@ for i in range(max_iterations):
 
 Agent 调用外部工具（搜索引擎、代码解释器、API）来扩展能力边界。工具调用是多 Agent 系统中每个 Agent 的基础能力。
 
-```
+```diagram
 Agent
   │
   ├── 决策：需要外部信息
@@ -155,7 +165,7 @@ Agent
 
 **三大拓扑架构**：
 
-```
+```diagram
 1. Hub-Spoke（中心辐射）       2. P2P（点对点）            3. 分层（Hierarchical）
                                                               
     ┌──────────┐                  A ──── B                  ┌────────────────────┐
@@ -184,7 +194,7 @@ AutoGen（微软开源）是目前最成熟的多 Agent 对话框架之一，核
 
 ### 3.1 ConversableAgent 架构
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────┐
 │                   ConversableAgent                       │
 │                                                          │
@@ -240,7 +250,7 @@ GroupChat(
 
 嵌套对话允许在一次对话的触发下，在幕后启动另一个完整的子对话流程，再将结果返回主流程。
 
-```
+```diagram
 主对话流程
 │
 ├── UserProxy ──► AssistantAgent（"请生成一份报告"）
@@ -393,7 +403,7 @@ Dify 是一个开源的 LLMOps 平台，提供可视化的工作流（Workflow�
 
 Dify Workflow 的核心是 **节点（Node）** 的有向无环图（DAG）：
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────────┐
 │                    Dify Workflow 结构                             │
 │                                                                   │
@@ -461,7 +471,7 @@ Dify 的 Agent 节点支持 **ReAct** 和 **Function Calling** 两种推理策�
 
 Dify 的知识库节点（Knowledge Retrieval）将 RAG 流程可视化：
 
-```
+```diagram
 文档上传
     │
     ▼
@@ -537,7 +547,7 @@ class AgentMessage:
 
 ### 5.2 共享状态 vs 消息传递
 
-```
+```diagram
 ┌──────────────────────────────────────────────────────────────────┐
 │             两种协调机制对比                                       │
 │                                                                   │
@@ -656,7 +666,7 @@ class JudgeAgent:
 
 ### 6.1 架构设计
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────────────┐
 │                  多 Agent 代码审查系统架构                           │
 │                                                                      │
@@ -750,7 +760,7 @@ class CodeReviewAgent:
 
 ```{language}
 {code}
-```
+```diagram
 
 以 JSON 格式输出审查结果（不要包含代码块标记）：
 {{
@@ -1078,7 +1088,7 @@ class ContentMessage(BaseModel):
 - **发布-订阅** = 广播电台：电台播新闻，所有调频的收音机都能收到
 - **事件驱动** = 公告栏：有人贴通知，感兴趣的人自己来看
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                  三种通信模式对比                                        │
 │                                                                         │
@@ -1277,7 +1287,7 @@ class MessageAdapter:
 
 **类比**：远洋轮船的船底分成多个独立隔舱，即使一个隔舱进水，水也不会蔓延到其他隔舱，船不会沉。多 Agent 系统也一样——单个 Agent 的崩溃不应导致整个系统瘫痪。
 
-```
+```diagram
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    隔舱设计（Bulkhead Pattern）                      │
 │                                                                     │
@@ -1367,7 +1377,7 @@ class AgentBulkhead:
 
 **三级降级策略**：
 
-```
+```diagram
 正常响应 ───超时──► 重试（换模型） ───再超时──► 降级（缓存/默认值） ───仍失败──► 人工介入
 ```
 
@@ -1962,18 +1972,20 @@ class AutoScaler:
 
 #### 12.2.1 层级式（Supervisor → Workers）
 
-```
-               ┌──────────────┐
-               │  Supervisor  │
-               │  (管理者)    │
-               └──┬───┬───┬──┘
-                  │   │   │
-           ┌──────┘   │   └──────┐
-           ▼          ▼          ▼
-    ┌──────────┐ ┌──────────┐ ┌──────────┐
-    │ Worker A │ │ Worker B │ │ Worker C │
-    │ (研究)   │ │ (编码)   │ │ (测试)   │
-    └──────────┘ └──────────┘ └──────────┘
+```mermaid
+flowchart TD
+    S["Supervisor
+管理者"] --> WA["Worker A
+研究"]
+    S --> WB["Worker B
+编码"]
+    S --> WC["Worker C
+测试"]
+
+    style S fill:#f59e0b,color:#fff,stroke:#d97706
+    style WA fill:#4a9eff,color:#fff,stroke:#2563eb
+    style WB fill:#10b981,color:#fff,stroke:#059669
+    style WC fill:#8b5cf6,color:#fff,stroke:#7c3aed
 ```
 
 - **工作流程**：Supervisor 接收用户请求 → 拆分任务 → 分配给对应 Worker → 收集结果 → 汇总返回
@@ -1982,7 +1994,7 @@ class AutoScaler:
 
 #### 12.2.2 对等式（Peer-to-Peer）
 
-```
+```diagram
     Agent A ◄──────► Agent B
        ▲  ╲            ╱  ▲
        │    ╲        ╱    │
@@ -1997,7 +2009,7 @@ class AutoScaler:
 
 #### 12.2.3 市场式（Task Marketplace）
 
-```
+```diagram
     ┌──────────────────────────────────┐
     │        任务市场 (Marketplace)    │
     │  ┌────┐ ┌────┐ ┌────┐ ┌────┐  │
@@ -2019,7 +2031,7 @@ class AutoScaler:
 
 #### 12.2.4 流水线式（Pipeline）
 
-```
+```diagram
     输入 ──► Agent A ──► Agent B ──► Agent C ──► Agent D ──► 输出
              (解析)      (分析)      (生成)      (校验)
 ```
@@ -2030,7 +2042,7 @@ class AutoScaler:
 
 #### 12.2.5 辩论式（Debate / Adversarial）
 
-```
+```diagram
     ┌──────────┐        ┌──────────┐
     │ Agent A  │  交替  │ Agent B  │
     │ (正方)   │◄─────►│ (反方)   │
@@ -2063,7 +2075,7 @@ class AutoScaler:
 
 **选择决策树**：
 
-```
+```diagram
 任务特征判断：
 │
 ├─ 步骤固定且有序？ ──────────────► 流水线式
