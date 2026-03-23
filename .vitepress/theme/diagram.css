@@ -1,0 +1,169 @@
+/*
+ * ASCII Diagram Enhancement Styles
+ *
+ * Transforms plain-text ASCII diagrams into visually rich, graphical
+ * presentations inside VitePress while keeping them as normal code
+ * blocks on GitHub.
+ *
+ * Supports both light and dark themes and is mobile-responsive.
+ */
+
+/* ------------------------------------------------------------------ */
+/*  Container                                                          */
+/* ------------------------------------------------------------------ */
+
+.vp-diagram-container {
+  position: relative;
+  margin: 20px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(145deg, #f0f7ff 0%, #e8eff8 100%);
+  border: 1px solid #b3d4f7;
+  box-shadow:
+    0 2px 8px rgba(59, 130, 246, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.vp-diagram-container:hover {
+  box-shadow:
+    0 4px 16px rgba(59, 130, 246, 0.14),
+    0 2px 4px rgba(0, 0, 0, 0.06);
+  border-color: #82b5f0;
+}
+
+/* ---- dark mode ---- */
+
+.dark .vp-diagram-container {
+  background: linear-gradient(145deg, #161b2e 0%, #1a2340 100%);
+  border-color: rgba(96, 165, 250, 0.25);
+  box-shadow:
+    0 2px 12px rgba(96, 165, 250, 0.06),
+    inset 0 1px 0 rgba(96, 165, 250, 0.05);
+}
+
+.dark .vp-diagram-container:hover {
+  box-shadow:
+    0 4px 20px rgba(96, 165, 250, 0.12),
+    inset 0 1px 0 rgba(96, 165, 250, 0.08);
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Pre / Code                                                         */
+/* ------------------------------------------------------------------ */
+
+.vp-diagram {
+  margin: 0 !important;
+  padding: 24px 28px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.25) transparent;
+}
+
+.vp-diagram::-webkit-scrollbar {
+  height: 6px;
+}
+
+.vp-diagram::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vp-diagram::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 3px;
+}
+
+.vp-diagram::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.35);
+}
+
+.dark .vp-diagram::-webkit-scrollbar-thumb {
+  background: rgba(96, 165, 250, 0.2);
+}
+
+.dark .vp-diagram::-webkit-scrollbar-thumb:hover {
+  background: rgba(96, 165, 250, 0.35);
+}
+
+.vp-diagram code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono',
+    'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+  color: #334155 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  white-space: pre;
+  display: block;
+}
+
+.dark .vp-diagram code {
+  color: #cbd5e1 !important;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Colorized characters                                               */
+/* ------------------------------------------------------------------ */
+
+/* Box-drawing borders — calm blue */
+.dg-b {
+  color: #2563eb;
+}
+
+.dark .dg-b {
+  color: #60a5fa;
+}
+
+/* Arrows — vivid teal */
+.dg-a {
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.dark .dg-a {
+  color: #2dd4bf;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mobile responsive                                                  */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+  .vp-diagram-container {
+    margin: 16px -24px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .vp-diagram {
+    padding: 16px 20px !important;
+  }
+
+  .vp-diagram code {
+    font-size: 11px !important;
+    line-height: 1.5 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .vp-diagram-container {
+    margin: 12px -16px;
+  }
+
+  .vp-diagram {
+    padding: 12px 16px !important;
+  }
+
+  .vp-diagram code {
+    font-size: 10px !important;
+    line-height: 1.45 !important;
+  }
+}
