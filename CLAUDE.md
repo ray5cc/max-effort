@@ -23,6 +23,7 @@
 | 06 | DevOps 与云计算 | [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md) | [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md) |
 | 07 | AI Agent 全栈开发 | [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md) | [07-AI-Agent全栈开发面试](./02-面试指南/07-AI-Agent全栈开发面试/README.md) |
 | 08 | 编码题 | [08-编码题](./01-技术资料/08-编码题/README.md) | [08-编码题面试](./02-面试指南/08-编码题面试/README.md) |
+| 09 | AI Agent 工程化 | [09-AI-Agent工程化](./01-技术资料/09-AI-Agent工程化/README.md) | [09-AI-Agent工程化面试](./02-面试指南/09-AI-Agent工程化面试/README.md) |
 
 ## 记忆与上下文管理（Memory Best Practices）
 
