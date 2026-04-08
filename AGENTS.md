@@ -66,13 +66,23 @@ max-effort/
 
 > Cloud Agent 有运行时间限制，以下机制确保任务可中断、可恢复、可并发。
 
+### 0. 代码提交：使用 `report_progress` 工具（禁止 `git push`）
+
+> ⚠️ **Cloud Agent 环境中 `git push` 命令没有推送权限，所有提交必须通过 `report_progress` 工具完成。**
+
+- **提交方式**：调用 `report_progress` 工具，它会自动执行 `git add . && git commit && git push`
+- **禁止操作**：不要使用 `git push`、`gh` CLI 等命令直接推送代码
+- **提交频率**：每完成一个有意义的阶段性目标就调用一次 `report_progress`
+- **PR 描述**：通过 `prDescription` 参数传入 Markdown 格式的进度清单，使用 `- [x]` / `- [ ]` 标记完成状态
+- **Commit 信息**：通过 `commitMessage` 参数传入简短的提交信息
+
 ### 1. 中断恢复：`_WORKING_` 文件夹
 
 - 每次编辑任务开始时，在项目根目录创建 `_WORKING_/` 文件夹
 - 其中存放：用户原始指令、实施计划、当前进度、已获取的经验等中间过程内容
 - 被终止后，下一个 Agent 可从 `_WORKING_/` 中恢复上下文，从中断处继续
 - **任务完全完成时，必须删除 `_WORKING_/` 文件夹**
-- 阶段性目标完成后，**必须提交代码**（避免丢失进度）
+- 阶段性目标完成后，**必须调用 `report_progress` 提交代码**（避免丢失进度）
 
 ### 2. 长文件分块：`__blocks/` 文件夹
 
