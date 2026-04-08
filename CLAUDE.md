@@ -76,6 +76,31 @@
 
 > 由于 Cloud Agent 存在运行时间限制，以下机制确保任务可被安全中断并恢复，同时支持多 subagent 并发编辑。
 
+### 代码提交规范：使用 `report_progress` 工具
+
+> ⚠️ **Cloud Agent 环境中 `git push` 命令没有推送权限，所有提交和推送必须通过 `report_progress` 工具完成。**
+
+```
+# ❌ 禁止：直接使用 git push
+git push origin main
+
+# ❌ 禁止：使用 gh CLI 推送
+gh pr create
+
+# ✅ 正确：使用 report_progress 工具
+report_progress(
+  commitMessage="feat: 新增 SSE 分布式推送文档",
+  prDescription="- [x] 完成 SSE 文档编写\n- [ ] 待更新 README"
+)
+```
+
+**关键规则：**
+1. `report_progress` 会自动执行 `git add . && git commit -m <msg> && git push`
+2. 每完成一个有意义的阶段性变更就调用一次，**不要积累大量变更后一次性提交**
+3. `commitMessage` 使用简短的英文或中文提交信息
+4. `prDescription` 使用 Markdown 清单格式（`- [x]` / `- [ ]`）跟踪总体进度
+5. 如果推送失败，重试 `report_progress`，不要尝试 `git push`
+
 ### 中断恢复机制：`_WORKING_` 文件夹
 
 每次编辑任务开始时，在项目根目录创建 `_WORKING_/` 文件夹，用于存放任务中间状态：
@@ -90,7 +115,7 @@ _WORKING_/
 
 **关键规则：**
 1. 每次编辑任务**开始时创建**，任务**完全完成时删除**
-2. 阶段性目标完成后，**必须立即提交代码**（`git commit`），避免因超时丢失进度
+2. 阶段性目标完成后，**必须立即调用 `report_progress` 提交代码**，避免因超时丢失进度
 3. 被终止后，下一个 Agent 应首先检查 `_WORKING_/` 是否存在，若存在则从中恢复上下文继续工作
 4. `_WORKING_/` 已被 VitePress 构建器忽略，不会出现在最终站点中
 
