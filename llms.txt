@@ -86,6 +86,7 @@
 - [MCP协议与工具生态](./01-技术资料/09-AI-Agent工程化/09-MCP协议与工具生态.md): MCP协议(JSON-RPC 2.0)/Resources+Tools+Prompts三大原语/Server开发(Python/TypeScript)/Client集成/stdio vs HTTP传输/A2A协议/工具治理
 - [LLM微调工程](./01-技术资料/09-AI-Agent工程化/10-LLM微调工程.md): SFT/RLHF/DPO/LoRA/QLoRA/数据工程/评估体系/部署上线
 - [LLM服务编排与成本治理](./01-技术资料/09-AI-Agent工程化/11-LLM服务编排与成本治理.md): BPE Token计量/统一计费引擎/语义缓存vs精确缓存/多模型路由(加权/延迟/成本/质量)/Circuit Breaker/多租户Virtual Key预算管控/Fallback+指数退避/10万→1000万DAU扩展
+- [Prompt Cache工程与路由优化](./01-技术资料/09-AI-Agent工程化/12-Prompt-Cache工程与路由优化.md): KV Cache复用/Prefix Caching(RadixAttention/APC)/多层缓存(L1 GPU/L2 Host/L3分布式)/缓存感知路由(前缀哈希/一致性哈希)/命中率优化(标准化/前缀分组/预热)/高并发(分片/无锁/请求合并)/高可用(降级/副本/重建)/API层缓存(OpenAI 50%折扣/Anthropic 90%折扣/Gemini Context Cache)
 - [高性能API网关内核设计](./01-技术资料/09-AI-Agent工程化/12-高性能API网关内核设计.md): 请求生命周期阶段模型/插件体系(四级作用域+优先级)/限流算法(固定窗口/滑动窗口/令牌桶/漏桶/Redis Lua)/认证鉴权(API Key/JWT/RBAC/ABAC)/SSE流代理/健康检查(主动+被动三态状态机)/高性能网络模型/可观测性钩子/AI网关特化(Token计数/成本路由/Prompt注入检测)/控制面数据面分离
 - [Agent全链路工程设计](./01-技术资料/09-AI-Agent工程化/13-Agent全链路工程设计.md): CLI架构(Ink/React)/Agentic Loop(Think→Act→Observe)/Tool系统(Zod Schema+权限分级)/Context Window管理/API网关/推理服务(Continuous Batching+KV Cache+PD分离)/SSE流式全链路/MCP集成/Sub-agent/10万→1000万DAU
 - [Chatbot全链路工程设计](./01-技术资料/09-AI-Agent工程化/14-Chatbot全链路工程设计.md): Web前端(流式Markdown+虚拟滚动)/SSE传输/CDN策略/长连接负载均衡/会话管理(消息树+分支)/RAG检索增强(Perplexity模式)/推理加速(Speculative Decoding)/内容安全/多区域Active-Active/10万→1000万DAU
