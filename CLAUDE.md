@@ -21,9 +21,9 @@
 | 04 | 算法与数据结构 | [04-算法与数据结构](./01-技术资料/04-算法与数据结构/README.md) | [04-算法与数据结构面试](./02-面试指南/04-算法与数据结构面试/README.md) |
 | 05 | 系统设计 | [05-系统设计](./01-技术资料/05-系统设计/README.md) | [05-系统设计面试](./02-面试指南/05-系统设计面试/README.md) |
 | 06 | DevOps 与云计算 | [06-DevOps与云计算](./01-技术资料/06-DevOps与云计算/README.md) | [06-DevOps与云计算面试](./02-面试指南/06-DevOps与云计算面试/README.md) |
-| 07 | AI Agent 全栈开发 | [07-AI-Agent全栈开发](./01-技术资料/07-AI-Agent全栈开发/README.md) | [07-AI-Agent全栈开发面试](./02-面试指南/07-AI-Agent全栈开发面试/README.md) |
-| 08 | 编码题 | [08-编码题](./01-技术资料/08-编码题/README.md) | [08-编码题面试](./02-面试指南/08-编码题面试/README.md) |
-| 09 | AI Agent 工程化 | [09-AI-Agent工程化](./01-技术资料/09-AI-Agent工程化/README.md) | [09-AI-Agent工程化面试](./02-面试指南/09-AI-Agent工程化面试/README.md) |
+| 07 | LLM 基础 | [07-LLM基础](./01-技术资料/07-LLM基础/README.md) | [07-LLM基础面试](./02-面试指南/07-LLM基础面试/README.md) |
+| 08 | AI Agent 全栈工程 | [08-AI-Agent全栈工程](./01-技术资料/08-AI-Agent全栈工程/README.md) | [08-AI-Agent全栈工程面试](./02-面试指南/08-AI-Agent全栈工程面试/README.md) |
+| 09 | 编码题 | [09-编码题](./01-技术资料/09-编码题/README.md) | [09-编码题面试](./02-面试指南/09-编码题面试/README.md) |
 
 ## 记忆与上下文管理（Memory Best Practices）
 

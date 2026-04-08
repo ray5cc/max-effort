@@ -117,7 +117,7 @@ export default defineConfig({
       { text: '面试指南', link: '/02-面试指南/' },
       {
         text: 'llms.txt',
-        link: 'https://github.com/ray5cc/max-effort/blob/main/llms.txt',
+        link: 'https://raw.githubusercontent.com/ray5cc/max-effort/main/llms.txt',
       },
     ],
 
