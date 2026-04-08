@@ -14,7 +14,7 @@ hero:
       link: /02-面试指南/
     - theme: alt
       text: 🤖 llms.txt
-      link: https://github.com/ray5cc/max-effort/blob/main/llms.txt
+      link: https://raw.githubusercontent.com/ray5cc/max-effort/main/llms.txt
 
 features:
   - icon: 💻
@@ -35,9 +35,12 @@ features:
   - icon: 🚀
     title: DevOps 与云计算
     details: Docker / Kubernetes / CI-CD / GitOps
+  - icon: 🧠
+    title: LLM 基础
+    details: LLM 原理 / Transformer 架构 / Prompt 工程 / 微调技术 / PEFT / 对齐训练 / 推理引擎
   - icon: 🤖
-    title: AI Agent 全栈开发
-    details: LLM 原理 / Prompt 工程 / RAG / Agent 框架 / 微调 / 多 Agent / 流式渲染
+    title: AI Agent 全栈工程
+    details: Agent 架构 / MCP 协议 / RAG 工程化 / 对话系统 / API 网关 / 全链路设计
   - icon: ✍️
     title: 编码题
     details: 编码技巧与解题策略、各领域手写代码实战

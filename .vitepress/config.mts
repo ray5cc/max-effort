@@ -51,10 +51,16 @@ function escapeBraces(s: string): string {
 }
 
 function safeContentPlugin(md: MarkdownIt) {
-  // 1) inline HTML 全部转义（如 <data>、<context> 等）
-  //    block-level HTML（<details>/<summary>）不受影响，因为它们是 html_block 类型
+  // 1) inline HTML: 只转义实际的 HTML 标签（如 <data>、<context> 等），
+  //    不转义 HTML 实体（如 &ZeroWidthSpace;）——避免 header-anchor 中的零宽空格被双重编码
   md.renderer.rules.html_inline = (tokens, idx) => {
-    return tokens[idx].content
+    const content = tokens[idx].content
+    // HTML 实体（以 & 开头，不含 < ）直接保留
+    if (!content.includes('<')) {
+      return content
+    }
+    // 实际 HTML 标签 → 转义，防止 Vue 编译报错
+    return content
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -117,7 +123,7 @@ export default defineConfig({
       { text: '面试指南', link: '/02-面试指南/' },
       {
         text: 'llms.txt',
-        link: 'https://github.com/ray5cc/max-effort/blob/main/llms.txt',
+        link: 'https://raw.githubusercontent.com/ray5cc/max-effort/main/llms.txt',
       },
     ],
 
