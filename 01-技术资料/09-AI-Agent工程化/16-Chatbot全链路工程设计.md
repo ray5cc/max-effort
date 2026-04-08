@@ -1020,6 +1020,8 @@ export async function getMessagesWithCache(conversationId: string) {
 
 ## 3. 网络传输层
 
+> 📖 **深入学习**：本节为全链路视角概述，详细原理与实践请参阅 [流式传输与实时通信](./03-流式传输与实时通信.md) 和 [SSE分布式推送与数据一致性](./04-SSE分布式推送与数据一致性.md)
+
 ### 3.1 SSE vs WebSocket vs Long Polling
 
 选择网络通信协议就像选择送餐方式——外卖小哥骑电动车（SSE）、双向对讲机（WebSocket）、还是你不停打电话问"菜好了没"（Long Polling）。对于 LLM Chatbot，答案几乎总是 SSE。
@@ -1557,6 +1559,8 @@ async function checkRateLimit(
 }
 ```
 ## 4. API 网关与负载均衡
+
+> 📖 **深入学习**：本节为全链路视角概述，详细原理与实践请参阅 [高性能API网关内核设计](./09-高性能API网关内核设计.md) 和 [AI网关与流量治理](./10-AI网关与流量治理.md)
 
 > 如果说 Chatbot 的后端是一座城市，那么 API 网关就是城市的主干道入口——所有车辆（请求）都必须经过这里，由交通指挥系统（负载均衡）决定它们该走哪条路。
 
@@ -2908,6 +2912,8 @@ class ConversationSharer {
 
 ## 6. RAG 检索增强（Perplexity 模式）
 
+> 📖 **深入学习**：本节为全链路视角概述，详细原理与实践请参阅 [RAG工程化实践](./07-RAG工程化实践.md)
+
 > RAG（Retrieval-Augmented Generation）让 Chatbot 从「凭记忆回答」升级为「带着参考资料回答」。这一节我们构建一个类似 Perplexity 的搜索增强对话系统。
 
 ### 6.1 为什么需要 RAG
@@ -3788,6 +3794,8 @@ class RAGEvaluator:
 • Recall 低         → 增加检索数量、扩展搜索来源、改进切块策略
 ```
 ## 7. 推理服务层
+
+> 📖 **深入学习**：本节为全链路视角概述，详细原理与实践请参阅 [LLM推理服务工程](./01-LLM推理服务工程.md) 和 [Prompt Cache工程与路由优化](./12-Prompt-Cache工程与路由优化.md)
 
 > 前面我们讲了如何"存储"和"检索"知识，现在终于到了整个 Chatbot 系统最核心、成本最高、技术含量最密集的一层——**推理服务层**。这一层的设计好坏直接决定了用户体验（响应速度）和公司钱包（GPU 费用）。
 

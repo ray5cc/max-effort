@@ -73,24 +73,24 @@
 - [14-深度学习框架与计算图](./01-技术资料/07-AI-Agent全栈开发/14-深度学习框架与计算图.md): 计算图/自动微分/Eager vs 图执行/TensorFlow工程实践(tf.data/分布式/TF Serving)/PyTorch深度解析(Autograd/torch.compile/DDP/FSDP)/TF vs PyTorch选型
 - [15-LLM推理引擎架构](./01-技术资料/07-AI-Agent全栈开发/15-LLM推理引擎架构.md): PagedAttention(vLLM虚拟内存分页)/RadixAttention(SGLang前缀缓存)/Continuous Batching与Chunked Prefill/量化技术(GPTQ/AWQ/FP8/GGUF K-Quant混合精度)/推测解码(Draft-Verify/Self-Speculative/Medusa/N-gram)/分布式推理(TP/PP/DP/EP)/vLLM V1多进程架构(ZMQ IPC)/SGLang零开销CPU调度器/Prefill-Decode分离/结构化输出(Compressed FSM/GBNF Grammar)/TensorRT-LLM FP8+Sparse Attention/llama.cpp GGUF CPU+GPU混合推理/Ollama模型管理/GB200 NVL72大规模EP部署/生产部署实践与成本优化
 - [16-LLM网关与模型管理](./01-技术资料/07-AI-Agent全栈开发/16-LLM网关与模型管理.md): Proxy Gateway架构(请求生命周期/8ms P95)/统一API适配层(OpenAI兼容格式/100+提供商)/SDK vs Proxy模式对比/多模型路由策略(延迟优先/成本优先/负载均衡/智能路由)/Fallback与重试(指数退避+Jitter/Circuit Breaker)/Virtual Keys多租户管理(速率限制/预算上限/模型访问控制)/成本追踪与分摊/可观测性三大支柱(Tracing/Metrics/Logging)/Langfuse架构(ClickHouse/Eval Pipeline/Dataset Management)/Prompt版本控制与A/B测试/LLM-as-Judge评估/Golden Dataset回归测试/MCP协议桥接/A2A Agent互操作/Responses API vs Chat Completions/安全合规(PII过滤/Guardrails/审计日志)/成本优化(Prompt Caching 90%降本/模型级联/Batch API 50%折扣/Semantic Caching)/生产部署(Docker/K8s/多区域高可用)/企业级网关实战案例
-- [09-AI-Agent工程化](./01-技术资料/09-AI-Agent工程化/README.md): AI Agent 应用的生产级工程实践
+- [09-AI-Agent工程化](./01-技术资料/09-AI-Agent工程化/README.md): AI Agent 应用的生产级工程实践（17篇，按学习路径组织：推理基础→通信协议→核心组件→平台工程→工程保障→全链路集成）
 - [LLM推理服务工程](./01-技术资料/09-AI-Agent工程化/01-LLM推理服务工程.md): vLLM/SGLang/TensorRT-LLM/PagedAttention/RadixAttention/Continuous Batching/量化(FP8/AWQ/GPTQ/GGUF)/分布式推理(TP/PP/EP)/K8s部署/Prefill-Decode分离
-- [AI网关与流量治理](./01-技术资料/09-AI-Agent工程化/02-AI网关与流量治理.md): LiteLLM统一网关/多模型路由(延迟/成本/级联)/Virtual Keys多租户/Fallback+Circuit Breaker/Nginx SSE代理/Prompt Caching/Semantic Caching/成本管控
-- [Agent架构设计模式](./01-技术资料/09-AI-Agent工程化/03-Agent架构设计模式.md): ReAct/Plan-and-Execute/Harness Engineering/Claude Code/Codex CLI/OpenHands/多Agent拓扑(Hub-Spoke/Pipeline/P2P)/上下文管理/人机协同
-- [对话系统全栈工程](./01-技术资料/09-AI-Agent工程化/04-对话系统全栈工程.md): LobeChat(Next.js/Zustand/tRPC)/Open WebUI(SvelteKit/FastAPI)/树形对话模型/Model Runtime抽象/插件系统/Generative UI
-- [流式传输与实时通信](./01-技术资料/09-AI-Agent工程化/05-流式传输与实时通信.md): SSE vs WebSocket/OpenAI SSE协议/Fetch Streaming/背压控制/Nginx代理配置/AG-UI协议/客户端取消
-- [SSE分布式推送与数据一致性](./01-技术资料/09-AI-Agent工程化/04-SSE分布式推送与数据一致性.md): 分布式SSE推送架构/Channel-per-Session/Redis Pub/Sub+Streams双写/事件持久化与重放/Last-Event-ID恢复/幂等消费/背压控制/连接注册表/多节点Failover/跨区域Active-Active/10万→1000万DAU演进
-- [RAG工程化实践](./01-技术资料/09-AI-Agent工程化/06-RAG工程化实践.md): 语义分块/Contextual Retrieval/混合检索(向量+BM25)/Cross-Encoder Re-ranking/RAGAS评估/pgvector/Qdrant/增量索引管线/HyDE/查询改写
-- [安全沙箱与权限体系](./01-技术资料/09-AI-Agent工程化/07-安全沙箱与权限体系.md): Docker/gVisor/Firecracker沙箱/Prompt Injection防御(直接+间接)/分级权限/HITL审批/审计日志/PII脱敏/OWASP LLM Top 10
-- [AI应用可观测性](./01-技术资料/09-AI-Agent工程化/08-AI应用可观测性.md): Metrics+Traces+Logs三大支柱/LangFuse/LangSmith/OpenTelemetry/Prometheus+Grafana/成本归因/告警分级(P0-P3)/LLM质量自动评估
-- [MCP协议与工具生态](./01-技术资料/09-AI-Agent工程化/09-MCP协议与工具生态.md): MCP协议(JSON-RPC 2.0)/Resources+Tools+Prompts三大原语/Server开发(Python/TypeScript)/Client集成/stdio vs HTTP传输/A2A协议/工具治理
-- [LLM微调工程](./01-技术资料/09-AI-Agent工程化/10-LLM微调工程.md): SFT/RLHF/DPO/LoRA/QLoRA/数据工程/评估体系/部署上线
+- [LLM微调工程](./01-技术资料/09-AI-Agent工程化/02-LLM微调工程.md): SFT/RLHF/DPO/LoRA/QLoRA/数据工程/评估体系/部署上线
+- [流式传输与实时通信](./01-技术资料/09-AI-Agent工程化/03-流式传输与实时通信.md): SSE vs WebSocket/OpenAI SSE协议/Fetch Streaming/背压控制/Nginx代理配置/AG-UI协议/客户端取消
+- [SSE分布式推送与数据一致性](./01-技术资料/09-AI-Agent工程化/04-SSE分布式推送与数据一致性.md): 分布式SSE推送架构/Channel-per-Session/Redis Pub/Sub+Streams/事件持久化与重放/At-least-once+幂等/背压控制/连接注册表/高可用Failover/跨区域Active-Active/10万→1000万DAU演进
+- [Agent架构设计模式](./01-技术资料/09-AI-Agent工程化/05-Agent架构设计模式.md): ReAct/Plan-and-Execute/Harness Engineering/Claude Code/Codex CLI/OpenHands/多Agent拓扑(Hub-Spoke/Pipeline/P2P)/上下文管理/人机协同
+- [MCP协议与工具生态](./01-技术资料/09-AI-Agent工程化/06-MCP协议与工具生态.md): MCP协议(JSON-RPC 2.0)/Resources+Tools+Prompts三大原语/Server开发(Python/TypeScript)/Client集成/stdio vs HTTP传输/A2A协议/工具治理
+- [RAG工程化实践](./01-技术资料/09-AI-Agent工程化/07-RAG工程化实践.md): 语义分块/Contextual Retrieval/混合检索(向量+BM25)/Cross-Encoder Re-ranking/RAGAS评估/pgvector/Qdrant/增量索引管线/HyDE/查询改写
+- [对话系统全栈工程](./01-技术资料/09-AI-Agent工程化/08-对话系统全栈工程.md): LobeChat(Next.js/Zustand/tRPC)/Open WebUI(SvelteKit/FastAPI)/树形对话模型/Model Runtime抽象/插件系统/Generative UI
+- [高性能API网关内核设计](./01-技术资料/09-AI-Agent工程化/09-高性能API网关内核设计.md): 请求生命周期阶段模型/插件体系(四级作用域+优先级)/限流算法(固定窗口/滑动窗口/令牌桶/漏桶/Redis Lua)/认证鉴权(API Key/JWT/RBAC/ABAC)/SSE流代理/健康检查/高性能网络模型/AI网关特化/控制面数据面分离
+- [AI网关与流量治理](./01-技术资料/09-AI-Agent工程化/10-AI网关与流量治理.md): 多模型路由(延迟/成本/级联)/Virtual Keys多租户/Fallback+Circuit Breaker/Nginx SSE代理/Prompt Caching/Semantic Caching/成本管控
 - [LLM服务编排与成本治理](./01-技术资料/09-AI-Agent工程化/11-LLM服务编排与成本治理.md): BPE Token计量/统一计费引擎/语义缓存vs精确缓存/多模型路由(加权/延迟/成本/质量)/Circuit Breaker/多租户Virtual Key预算管控/Fallback+指数退避/10万→1000万DAU扩展
-- [Prompt Cache工程与路由优化](./01-技术资料/09-AI-Agent工程化/12-Prompt-Cache工程与路由优化.md): KV Cache复用/Prefix Caching(RadixAttention/APC)/多层缓存(L1 GPU/L2 Host/L3分布式)/缓存感知路由(前缀哈希/一致性哈希)/命中率优化(标准化/前缀分组/预热)/高并发(分片/无锁/请求合并)/高可用(降级/副本/重建)/API层缓存(OpenAI 50%折扣/Anthropic 90%折扣/Gemini Context Cache)
-- [高性能API网关内核设计](./01-技术资料/09-AI-Agent工程化/12-高性能API网关内核设计.md): 请求生命周期阶段模型/插件体系(四级作用域+优先级)/限流算法(固定窗口/滑动窗口/令牌桶/漏桶/Redis Lua)/认证鉴权(API Key/JWT/RBAC/ABAC)/SSE流代理/健康检查(主动+被动三态状态机)/高性能网络模型/可观测性钩子/AI网关特化(Token计数/成本路由/Prompt注入检测)/控制面数据面分离
-- [Agent全链路工程设计](./01-技术资料/09-AI-Agent工程化/13-Agent全链路工程设计.md): CLI架构(Ink/React)/Agentic Loop(Think→Act→Observe)/Tool系统(Zod Schema+权限分级)/Context Window管理/API网关/推理服务(Continuous Batching+KV Cache+PD分离)/SSE流式全链路/MCP集成/Sub-agent/10万→1000万DAU
-- [Chatbot全链路工程设计](./01-技术资料/09-AI-Agent工程化/14-Chatbot全链路工程设计.md): Web前端(流式Markdown+虚拟滚动)/SSE传输/CDN策略/长连接负载均衡/会话管理(消息树+分支)/RAG检索增强(Perplexity模式)/推理加速(Speculative Decoding)/内容安全/多区域Active-Active/10万→1000万DAU
-- [端到端项目实战](./01-技术资料/09-AI-Agent工程化/15-端到端项目实战.md): 企业级AI编码助手/5层架构设计/vLLM部署/LiteLLM网关/ReAct Agent/MCP集成/Next.js前端/LangFuse监控/安全合规/成本优化
+- [Prompt Cache工程与路由优化](./01-技术资料/09-AI-Agent工程化/12-Prompt-Cache工程与路由优化.md): KV Cache复用/Prefix Caching(RadixAttention/APC)/多层缓存(L1 GPU/L2 Host/L3分布式)/缓存感知路由(前缀哈希/一致性哈希)/命中率优化/请求合并/API层缓存(OpenAI/Anthropic/Gemini)
+- [安全沙箱与权限体系](./01-技术资料/09-AI-Agent工程化/13-安全沙箱与权限体系.md): Docker/gVisor/Firecracker沙箱/Prompt Injection防御(直接+间接)/分级权限/HITL审批/审计日志/PII脱敏/OWASP LLM Top 10
+- [AI应用可观测性](./01-技术资料/09-AI-Agent工程化/14-AI应用可观测性.md): Metrics+Traces+Logs三大支柱/LangFuse/LangSmith/OpenTelemetry/Prometheus+Grafana/成本归因/告警分级(P0-P3)/LLM质量自动评估
+- [Agent全链路工程设计](./01-技术资料/09-AI-Agent工程化/15-Agent全链路工程设计.md): CLI架构(Ink/React)/Agentic Loop(Think→Act→Observe)/Tool系统(Zod Schema+权限分级)/Context Window管理/API网关/推理服务(Continuous Batching+KV Cache+PD分离)/SSE流式全链路/MCP集成/Sub-agent/10万→1000万DAU
+- [Chatbot全链路工程设计](./01-技术资料/09-AI-Agent工程化/16-Chatbot全链路工程设计.md): Web前端(流式Markdown+虚拟滚动)/SSE传输/CDN策略/长连接负载均衡/会话管理(消息树+分支)/RAG检索增强(Perplexity模式)/推理加速(Speculative Decoding)/内容安全/多区域Active-Active/10万→1000万DAU
+- [端到端项目实战](./01-技术资料/09-AI-Agent工程化/17-端到端项目实战.md): 企业级AI编码助手/5层架构设计/vLLM部署/LiteLLM网关/ReAct Agent/MCP集成/Next.js前端/LangFuse监控/安全合规/成本优化
 - [08-编码题](./01-技术资料/08-编码题/README.md): 手写代码方法论与解题策略
 - [编码技巧与解题策略](./01-技术资料/08-编码题/01-编码技巧与解题策略.md): 四步解题法/常见代码模式(双指针/哈希表/栈/递归/动态规划/二分/位运算)/代码规范/时间管理/调试技巧/实战案例
 
@@ -151,25 +151,25 @@
 - [14-深度学习框架面试题](./02-面试指南/07-AI-Agent全栈开发面试/14-深度学习框架面试题.md): 计算图/自动微分/TF vs PyTorch/分布式训练 30+道面试题
 - [15-LLM推理引擎面试题](./02-面试指南/07-AI-Agent全栈开发面试/15-LLM推理引擎面试题.md): PagedAttention/Continuous Batching/推测解码/量化/分布式推理/PD分离/vLLM/SGLang/TensorRT-LLM/llama.cpp 34道分层面试题
 - [16-LLM网关与模型管理面试题](./02-面试指南/07-AI-Agent全栈开发面试/16-LLM网关与模型管理面试题.md): LLM网关架构/多模型路由/成本管理/可观测性/评估体系/MCP·A2A协议互操作/LiteLLM/Langfuse/Guardrails/语义缓存/模型级联/CI评估集成 27道分层面试题
-- [09-AI-Agent工程化面试](./02-面试指南/09-AI-Agent工程化面试/README.md): AI Agent工程化落地面试题 171道+(推理部署/AI网关/Agent架构/对话系统/流式传输/RAG/安全/可观测性/MCP/微调/服务编排/API网关内核/Agent全链路/Chatbot全链路/项目实战/编码题)
+- [09-AI-Agent工程化面试](./02-面试指南/09-AI-Agent工程化面试/README.md): AI Agent工程化落地面试题 200道+(推理部署/微调/流式传输/SSE分布式/Agent架构/MCP/RAG/对话系统/API网关/AI网关/服务编排/Prompt Cache/安全/可观测性/Agent全链路/Chatbot全链路/项目实战/编码题)
 - [LLM推理服务工程面试题](./02-面试指南/09-AI-Agent工程化面试/01-LLM推理服务工程面试题.md): PagedAttention/Continuous Batching/量化选型/分布式推理/Prefill-Decode分离 15道分层面试题
-- [AI网关与流量治理面试题](./02-面试指南/09-AI-Agent工程化面试/02-AI网关与流量治理面试题.md): LiteLLM/模型级联/Fallback/Circuit Breaker/SSE代理/成本管控 12道面试题
-- [Agent架构设计模式面试题](./02-面试指南/09-AI-Agent工程化面试/03-Agent架构设计模式面试题.md): ReAct/Harness Engineering/多Agent系统/上下文管理 12道面试题
-- [对话系统全栈工程面试题](./02-面试指南/09-AI-Agent工程化面试/04-对话系统全栈工程面试题.md): 树形消息/Model Runtime/流式渲染/Markdown安全 11道面试题
-- [流式传输与实时通信面试题](./02-面试指南/09-AI-Agent工程化面试/05-流式传输与实时通信面试题.md): SSE vs WebSocket/Fetch Streaming/Nginx配置/AG-UI 10道面试题
-- [RAG工程化实践面试题](./02-面试指南/09-AI-Agent工程化面试/06-RAG工程化实践面试题.md): 混合检索/Re-ranking/RAGAS评估/增量索引 11道面试题
-- [安全沙箱与权限体系面试题](./02-面试指南/09-AI-Agent工程化面试/07-安全沙箱与权限体系面试题.md): 沙箱隔离/Prompt Injection/权限控制/审计日志 10道面试题
-- [AI应用可观测性面试题](./02-面试指南/09-AI-Agent工程化面试/08-AI应用可观测性面试题.md): 三大支柱/LangFuse/成本归因/告警策略 10道面试题
-- [MCP协议与工具生态面试题](./02-面试指南/09-AI-Agent工程化面试/09-MCP协议与工具生态面试题.md): MCP协议/三大原语/Server开发/A2A协议 11道面试题
-- [LLM微调工程面试题](./02-面试指南/09-AI-Agent工程化面试/10-LLM微调工程面试题.md): SFT/RLHF/DPO/LoRA/数据工程/评估 10道面试题
+- [LLM微调工程面试题](./02-面试指南/09-AI-Agent工程化面试/02-LLM微调工程面试题.md): SFT/RLHF/DPO/LoRA/数据工程/评估 10道面试题
+- [流式传输与实时通信面试题](./02-面试指南/09-AI-Agent工程化面试/03-流式传输与实时通信面试题.md): SSE vs WebSocket/Fetch Streaming/Nginx配置/AG-UI 10道面试题
+- [SSE分布式推送与数据一致性面试题](./02-面试指南/09-AI-Agent工程化面试/04-SSE分布式推送与数据一致性面试题.md): 分布式SSE推送/Channel-per-Session/事件持久化/At-least-once+幂等/背压控制/连接注册表/高可用/跨区域 14道分层面试题
+- [Agent架构设计模式面试题](./02-面试指南/09-AI-Agent工程化面试/05-Agent架构设计模式面试题.md): ReAct/Harness Engineering/多Agent系统/上下文管理 12道面试题
+- [MCP协议与工具生态面试题](./02-面试指南/09-AI-Agent工程化面试/06-MCP协议与工具生态面试题.md): MCP协议/三大原语/Server开发/A2A协议 11道面试题
+- [RAG工程化实践面试题](./02-面试指南/09-AI-Agent工程化面试/07-RAG工程化实践面试题.md): 混合检索/Re-ranking/RAGAS评估/增量索引 11道面试题
+- [对话系统全栈工程面试题](./02-面试指南/09-AI-Agent工程化面试/08-对话系统全栈工程面试题.md): 树形消息/Model Runtime/流式渲染/Markdown安全 11道面试题
+- [高性能API网关内核设计面试题](./02-面试指南/09-AI-Agent工程化面试/09-高性能API网关内核设计面试题.md): 请求阶段模型/插件作用域/限流算法对比/健康检查/SSE流代理/控制面数据面分离 13道分层面试题
+- [AI网关与流量治理面试题](./02-面试指南/09-AI-Agent工程化面试/10-AI网关与流量治理面试题.md): 模型级联/Fallback/Circuit Breaker/SSE代理/成本管控 12道面试题
 - [LLM服务编排与成本治理面试题](./02-面试指南/09-AI-Agent工程化面试/11-LLM服务编排与成本治理面试题.md): BPE分词/统一计费/Virtual Key/多模型路由/语义缓存/负载均衡/Fallback链/多租户预算 14道分层面试题
-- [高性能API网关内核设计面试题](./02-面试指南/09-AI-Agent工程化面试/12-高性能API网关内核设计面试题.md): 请求阶段模型/插件作用域/限流算法对比/健康检查/SSE流代理/控制面数据面分离 13道分层面试题
-- [Agent全链路工程设计面试题](./02-面试指南/09-AI-Agent工程化面试/13-Agent全链路工程设计面试题.md): CLI架构/Agentic Loop/Tool系统/API网关/推理服务/流式响应/背压控制/Sub-agent/10万→1000万DAU扩展 16道分层面试题
-- [Chatbot全链路工程设计面试题](./02-面试指南/09-AI-Agent工程化面试/14-Chatbot全链路工程设计面试题.md): SSE选型/流式Markdown/会话存储/RAG Pipeline/长连接LB/数据库分片/Speculative Decoding/内容安全/降级策略 16道分层面试题
-- [端到端项目实战面试题](./02-面试指南/09-AI-Agent工程化面试/15-端到端项目实战面试题.md): 系统架构设计/成本优化/高可用/技术选型 10道场景面试题
-- [AI-Agent工程化编码题](./02-面试指南/09-AI-Agent工程化面试/16-AI-Agent工程化编码题.md): 编码实战练习
-- [SSE分布式推送与数据一致性面试题](./02-面试指南/09-AI-Agent工程化面试/04-SSE分布式推送与数据一致性面试题.md): 单节点瓶颈/Channel-per-Session/Last-Event-ID/事件持久化选型/背压控制/连接注册表/百万DAU架构/跨区域高可用/有序投递/AI编程助手SSE设计/零停机部署 14道分层面试题
-- [Prompt-Cache工程与路由优化面试题](./02-面试指南/09-AI-Agent工程化面试/12-Prompt-Cache工程与路由优化面试题.md): KV Cache复用/Prefix Caching(RadixAttention)/精确匹配vs前缀缓存/OpenAI vs Anthropic/Round-Robin问题/一致性哈希路由/多层缓存/Prompt标准化/Prefix-Aware淘汰/请求合并/缓存感知调度器/故障重建/命中率诊断 15道分层面试题
+- [Prompt Cache工程与路由优化面试题](./02-面试指南/09-AI-Agent工程化面试/12-Prompt-Cache工程与路由优化面试题.md): KV Cache复用/Prefix Caching/一致性哈希路由/命中率优化/多层缓存架构/请求合并/API层Prompt Caching/缓存高可用 15道分层面试题
+- [安全沙箱与权限体系面试题](./02-面试指南/09-AI-Agent工程化面试/13-安全沙箱与权限体系面试题.md): 沙箱隔离/Prompt Injection/权限控制/审计日志 10道面试题
+- [AI应用可观测性面试题](./02-面试指南/09-AI-Agent工程化面试/14-AI应用可观测性面试题.md): 三大支柱/LangFuse/成本归因/告警策略 10道面试题
+- [Agent全链路工程设计面试题](./02-面试指南/09-AI-Agent工程化面试/15-Agent全链路工程设计面试题.md): CLI架构/Agentic Loop/Tool系统/API网关/推理服务/流式响应/背压控制/Sub-agent/10万→1000万DAU扩展 16道分层面试题
+- [Chatbot全链路工程设计面试题](./02-面试指南/09-AI-Agent工程化面试/16-Chatbot全链路工程设计面试题.md): SSE选型/流式Markdown/会话存储/RAG Pipeline/长连接LB/数据库分片/Speculative Decoding/内容安全/降级策略 16道分层面试题
+- [端到端项目实战面试题](./02-面试指南/09-AI-Agent工程化面试/17-端到端项目实战面试题.md): 系统架构设计/成本优化/高可用/技术选型 10道场景面试题
+- [AI-Agent工程化编码题](./02-面试指南/09-AI-Agent工程化面试/18-AI-Agent工程化编码题.md): 编码实战练习
 - [08-编码题面试](./02-面试指南/08-编码题面试/README.md): 各领域手写代码题目集合
 - [前端编码题](./02-面试指南/08-编码题面试/01-前端编码题.md): JavaScript/DOM操作/异步编程/设计模式 16+题(map/debounce/throttle/deepClone/Promise.all/EventEmitter/curry/instanceof/new/async-await/虚拟DOM diff/LazyMan/懒加载/无限滚动/拖拽排序)
 - [后端编码题](./02-面试指南/08-编码题面试/02-后端编码题.md): 多线程/网络编程/设计模式/并发控制 20+题(单例/线程安全计数器/LRU/生产者消费者/HTTP服务器/线程池/Snowflake ID/限流器/分布式锁/对象池/秒杀库存/分布式事务)
