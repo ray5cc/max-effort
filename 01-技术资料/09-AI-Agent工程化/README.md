@@ -15,6 +15,7 @@
 | 03 | [Agent架构设计模式](./05-Agent架构设计模式.md) | ReAct / Plan-and-Execute / Harness Engineering / Claude Code / Codex CLI / OpenHands / 多Agent拓扑 | [面试题](../../02-面试指南/09-AI-Agent工程化面试/05-Agent架构设计模式面试题.md) |
 | 04 | [对话系统全栈工程](./08-对话系统全栈工程.md) | LobeChat / Open WebUI / 树形对话模型 / Model Runtime 抽象 / 插件系统 / 流式渲染 | [面试题](../../02-面试指南/09-AI-Agent工程化面试/08-对话系统全栈工程面试题.md) |
 | 05 | [流式传输与实时通信](./03-流式传输与实时通信.md) | SSE / WebSocket / Fetch Streaming / 背压控制 / Nginx 代理 / AG-UI 协议 | [面试题](../../02-面试指南/09-AI-Agent工程化面试/03-流式传输与实时通信面试题.md) |
+| 16 | [SSE分布式推送与数据一致性](./04-SSE分布式推送与数据一致性.md) | 分布式 SSE 推送 / Channel-per-Session / Redis Pub/Sub+Streams / 事件持久化与重放 / 幂等消费 / 背压控制 / 连接注册表 / Failover / 跨区域 Active-Active | [面试题](../../02-面试指南/09-AI-Agent工程化面试/04-SSE分布式推送与数据一致性面试题.md) |
 | 06 | [RAG工程化实践](./07-RAG工程化实践.md) | 语义分块 / 混合检索 / Re-ranking / RAGAS 评估 / pgvector / Qdrant / 增量索引 | [面试题](../../02-面试指南/09-AI-Agent工程化面试/07-RAG工程化实践面试题.md) |
 | 07 | [安全沙箱与权限体系](./13-安全沙箱与权限体系.md) | Docker / gVisor / Firecracker / Prompt Injection / HITL / 审计日志 / OWASP LLM Top 10 | [面试题](../../02-面试指南/09-AI-Agent工程化面试/13-安全沙箱与权限体系面试题.md) |
 | 08 | [AI应用可观测性](./14-AI应用可观测性.md) | Prometheus / Grafana / LangFuse / OpenTelemetry / 成本归因 / 告警策略 | [面试题](../../02-面试指南/09-AI-Agent工程化面试/14-AI应用可观测性面试题.md) |

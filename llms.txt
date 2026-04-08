@@ -79,6 +79,7 @@
 - [Agent架构设计模式](./01-技术资料/09-AI-Agent工程化/03-Agent架构设计模式.md): ReAct/Plan-and-Execute/Harness Engineering/Claude Code/Codex CLI/OpenHands/多Agent拓扑(Hub-Spoke/Pipeline/P2P)/上下文管理/人机协同
 - [对话系统全栈工程](./01-技术资料/09-AI-Agent工程化/04-对话系统全栈工程.md): LobeChat(Next.js/Zustand/tRPC)/Open WebUI(SvelteKit/FastAPI)/树形对话模型/Model Runtime抽象/插件系统/Generative UI
 - [流式传输与实时通信](./01-技术资料/09-AI-Agent工程化/05-流式传输与实时通信.md): SSE vs WebSocket/OpenAI SSE协议/Fetch Streaming/背压控制/Nginx代理配置/AG-UI协议/客户端取消
+- [SSE分布式推送与数据一致性](./01-技术资料/09-AI-Agent工程化/04-SSE分布式推送与数据一致性.md): 分布式SSE推送架构/Channel-per-Session/Redis Pub/Sub+Streams双写/事件持久化与重放/Last-Event-ID恢复/幂等消费/背压控制/连接注册表/多节点Failover/跨区域Active-Active/10万→1000万DAU演进
 - [RAG工程化实践](./01-技术资料/09-AI-Agent工程化/06-RAG工程化实践.md): 语义分块/Contextual Retrieval/混合检索(向量+BM25)/Cross-Encoder Re-ranking/RAGAS评估/pgvector/Qdrant/增量索引管线/HyDE/查询改写
 - [安全沙箱与权限体系](./01-技术资料/09-AI-Agent工程化/07-安全沙箱与权限体系.md): Docker/gVisor/Firecracker沙箱/Prompt Injection防御(直接+间接)/分级权限/HITL审批/审计日志/PII脱敏/OWASP LLM Top 10
 - [AI应用可观测性](./01-技术资料/09-AI-Agent工程化/08-AI应用可观测性.md): Metrics+Traces+Logs三大支柱/LangFuse/LangSmith/OpenTelemetry/Prometheus+Grafana/成本归因/告警分级(P0-P3)/LLM质量自动评估
