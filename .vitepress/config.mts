@@ -24,7 +24,7 @@ function generateSidebar(rootDir: string) {
       .readdirSync(catPath, { withFileTypes: true })
       .filter(
         (f) =>
-          f.isFile() && f.name.endsWith('.md') && f.name !== 'README.md'
+          f.isFile() && f.name.endsWith('.md') && f.name !== 'README.md' && f.name !== '_index.md'
       )
       .sort((a, b) => a.name.localeCompare(b.name))
 
@@ -99,6 +99,9 @@ export default defineConfig({
     'CLAUDE.md',
     'llms.txt',
     'node_modules/**',
+    '_WORKING_/**',
+    '**/__blocks/**',
+    '**/_index.md',
   ],
 
   markdown: {
